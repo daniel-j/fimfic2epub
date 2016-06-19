@@ -1,0 +1,19 @@
+{
+  "name": "tidyweb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jszip": "^3.0.0",
+    "mithril": "^0.2.5",
+    "parse5": "^2.1.5",
+    "pretty": "^1.0.0",
+    "tidy-html5": "^0.1.1",
+    "xmlserializer": "^0.3.3"
+  }
+}

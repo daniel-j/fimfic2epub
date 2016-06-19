@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Tag Test</title>
+        <link rel="stylesheet" type="text/css" href="style.css" />
+    </head>
+    <body>
+<div><p><span style="font-size:2em; line-height: 1.3em;"><b>Tag Test</b></span></p>
+<p class="indented double">This chapter is designed to test the capabilities of various ePub extraction tools against each BBCode tag supported by FIMFiction.net. First of all, note that this paragraph begins with a tab indent—many tools will remove this. Next, here is the set of non-ANSI characters that I frequently use in my stories: “” ‘’ — … (smart double quotes, smart single quotes, em-dash, and ellipses).</p>
+<p class="indented double">Next are the tags that should work in-line: [b]<b>bold</b>[/b], [i]<i>italics</i>[/i], [u]<span class="u">underline</span>[/u], [s]<span style="text-decoration: line-through;">strikethrough</span>[/s], [smcaps]<span style="font-variant:small-caps;">small caps</span>[/smcaps], [spoiler]<span class="spoiler">spoiler text</span>[/spoiler], [url]<a href="http://www.google.com">hyperlink</a>[/url], [email]<a href="https://www.fimfiction.net/mailto:user@server.com">user@server.com</a>[/email], and finally an in-line image: [img]<img src="images/ch0001pic0001.png" alt="ch0001pic0001" />[/img].</p>
+<p class="indented double"><i>There&#039;s a known bug in translating FIMFiction stories where consecutive italicized paragraphs lose the italics after the first paragraph. Well, this paragraph is supposed to be italicized.</i></p>
+<p class="indented double"><i>And so is this one.</i></p>
+<p class="indented double"><i>And ending with this one.</i></p>
+<p class="indented double">Let’s quickly step through all of the named color tags: <span style="color:red;">red</span>, <span style="color:silver;">silver</span>, <span style="color:orange;">orange</span>, <span style="color:yellow;">yellow</span>, <span style="color:brown;">brown</span>, <span style="color:green;">green</span>, <span style="color:olive;">olive</span>, <span style="color:cornflowerblue;">cornflowerblue</span>, <span style="color:cyan;">cyan</span>, <span style="color:purple;">purple</span>, <span style="color:pink;">pink</span>, <span style="color:hotpink;">hotpink</span>, <span style="color:lime;">lime</span>, <span style="color:white;">white</span> (white), <span style="color:lightgrey;">lightgrey</span>, <span style="color:indigo;">indigo</span>, <span style="color:darkblue;">darkblue</span>, <span style="color:lightblue;">lightblue</span>, <span style="color:blue;">blue</span>, <span style="color:gold;">gold</span>, <span style="color:navy;">navy</span>, <span style="color:chartreuse;">chartreuse</span>, and <span style="color:teal;">teal</span>. Here are some of the colors I use to code character&#039;s thoughts in my “Thought Experiments” series: <span style="color:#0077D0;">#0077D0</span> for Vinyl Scratch, <span style="color:#60BB50;">#60BB50</span> for Spike, <span style="color:purple;">purple</span> for Twilight Sparkle, <span style="color:hotpink;">hotpink</span> for Pinkie Pie, and <span style="color:darkblue;">darkblue</span> for Rainbow Dash.</p>
+<p class="indented double">Size can be indicated by either an absolute number, or in &quot;ems&quot;, which is a percentage scaling:</p>
+<p class="double">[size=24]<span style="font-size:24px; line-height: 1.3em;">Size 24, which should be normal-size text for default settings</span>[/size]</p>
+<p class="double">[size=12]<span style="font-size:12px; line-height: 1.3em;">Size 12, which should be half-size text for default settings</span>[/size]</p>
+<p class="double">[size=48]<span style="font-size:48px; line-height: 1.3em;">Size 48, which should be double-size text for default settings</span>[/size]</p>
+<p class="double">[size=1em]<span style="font-size:1em; line-height: 1.3em;">1 em text</span>[/size]</p>
+<p class="double">[size=.5em]<span style="font-size:.5em; line-height: 1.3em;">0.5 em text</span>[/size]</p>
+<p class="double">[size=2em]<span style="font-size:2em; line-height: 1.3em;">2 em text</span>[/size]</p>
+<hr />
+<p class="indented double">Just above this paragraph should be a horizontal rule, or [hr] tag.</p>
+<p class="double" style="text-align:center;">[center]Centered text[/center]</p>
+<p class="double"><div style='text-align:right;'>[right]Right-aligned text[/right]</div></p><blockquote><p class="double">[quote]	This is a quote.</p>
+<p class="indented double">One big problem I&#039;ve found with ePub extractors is handling multiple-paragraph quotes. This paragraph should still be inside the above quote tag.</p>
+<p class="double" style="text-align:center;">[center]Centered in the quote.[/center]</p>
+<p>[/quote]</p></blockquote>
+<hr />
+<p class="indented double">Here&#039;s an image all by itself:</p>
+<p class="double"><img src="images/ch0001pic0002.jpg" alt="ch0001pic0002" /></p>
+<p class="indented double">Here&#039;s a YouTube video:</p>
+<p class="double"><div class="youtube_container"><span class="link"><a href="http://www.youtube.com/watch?v=_eDXhih_NW4">Youtube Video</a></span></div></p>
+<hr />
+<p class="double"><span class="link"><blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">[left_insert]This creates left-aligned text that wraps at the center of the screen. Here&#039;s some <i>lorum ipsum</i> to demonstrate line-wrapping: Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</blockquote></span></p>
+<p class="double"><span class="link"><blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.[/left_insert]</blockquote></span></p>
+<p class="double"><span class="link"><blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">[right_insert]This creates left-aligned text starting at the center of the screen. Here&#039;s some <i>lorum ipsum</i> to demonstrate line-wrapping: Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</blockquote></span></p>
+<p class="double"><span class="link"><blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.[/right_insert]</blockquote></span></p>
+<hr />
+</div>
+<div class="authors-note">
+<p><b>Author&#039;s Note:</b></p>
+<p>This is here to test whether author&#039;s notes make it into the ePub. This section tends to have most tags stripped out, so expect no [b]bold[/b] text, but do expect [img]<img src="images/ch0001pic0001.png" alt="ch0001pic0001" />[/img] (images).</p>
+</div>
+</body>
+</html>
