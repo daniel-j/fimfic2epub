@@ -1,0 +1,23 @@
+{
+	"manifest_version": 2,
+
+	"name": "fimfic2epub",
+	"description": "",
+	"version": "1.0",
+
+	"background": {
+		"scripts": ["eventPage.js"],
+		"persistent": false
+	},
+
+	"content_scripts": [
+		{
+			"matches": ["https://www.fimfiction.net/story/*"],
+			"js": ["tidy.js", "fimfic2epub.js"]
+		}
+	],
+	"permissions": [
+		"http://*/*",
+		"https://*/*"
+	]
+}

@@ -1,17 +1,16 @@
-#!/usr/bin/env node
 'use strict'
 
-const fs = require('fs')
+import m from 'mithril'
+import render from './mithril-node-render'
+import { pd as pretty } from 'pretty-data'
+import escapeStringRegexp from 'escape-string-regexp'
+import { XmlEntities } from 'html-entities'
+import { saveAs } from 'file-saver'
 
-const m = require('mithril')
-const render = require('./mithril-node-render')
-const pretty = require('pretty-data').pd
-const tidy = require("tidy-html5").tidy_html5
-const escapeStringRegexp = require('escape-string-regexp')
+const entities = new XmlEntities()
+const tidy = tidy_html5
 
-const entities = new require('html-entities').XmlEntities
-
-const XMLHttpRequest = require('xhr2')
+//const XMLHttpRequest = require('xhr2')
 
 let beautifyOptions = {
 	indent_size: 2,
@@ -43,16 +42,34 @@ let mimeMap = {
 	'image/gif': 'Images/*.gif'
 }
 
-const STORY_ID = 180690 // bbcode test tags
+//const STORY_ID = 180690 // bbcode test tags
 //const STORY_ID = 931 // pink eyes
 //const STORY_ID = 119190 // fallout equestria
+const STORY_ID = document.location.pathname.match(/^\/story\/(\d*)/)[1]
 
-let apiUrl = 'http://www.fimfiction.net/api/story.php?story=' + STORY_ID
+let apiUrl = 'https://www.fimfiction.net/api/story.php?story=' + STORY_ID
 
 let storyInfo
 let remoteResources = new Map()
-
 let chapterContent = {}
+
+let epubButton = document.querySelector('.story_container ul.chapters li.bottom a[title="Download Story (.epub)"]')
+let isDownloading = false
+let cachedBlob = null
+
+if (epubButton) {
+	epubButton.addEventListener('click', function (e) {
+		e.preventDefault()
+		if (isDownloading) {
+			return
+		}
+		if (cachedBlob) {
+			saveStory()
+			return
+		}
+		downloadStory()
+	}, false)
+}
 
 function fetch(url, cb, type) {
 	if (url.indexOf('//') === 0) {
@@ -79,7 +96,7 @@ function fetchChapters(cb) {
 	function recursive() {
 		let ch = chapters[currentChapter]
 		console.log('Fetching chapter '+ch.id+' '+ch.title)
-		fetch(ch.link, function (html) {
+		fetch(ch.link.replace('http', 'https'), function (html) {
 			html = parseChapter(ch, html)
 			chapterContent[ch.id] = html
 			currentChapter++
@@ -96,6 +113,7 @@ function fetchChapters(cb) {
 function fetchRemote(cb) {
 	let iter = remoteResources.entries()
 	let counter = 0
+
 	function recursive() {
 		let r = iter.next().value
 		if (!r) {
@@ -105,85 +123,117 @@ function fetchRemote(cb) {
 		let url = r[0]
 		r = r[1]
 		console.log('Fetching remote file '+r.filename, url)
-		fetch(url, function (data, type) {
-			r.type = type
-			let dest = mimeMap[type]
-			if (dest) {
-				r.dest = dest.replace('*', r.filename)
-				zip.file(r.dest, data)
+		chrome.runtime.sendMessage(url, function (objUrl) {
+			if (objUrl) {
+				fetch(objUrl, function (data, type) {
+					r.dest = null
+					r.type = type
+					let dest = mimeMap[type]
+
+					if (dest) {
+						r.dest = dest.replace('*', r.filename)
+						zip.file(r.dest, data)
+					}
+					URL.revokeObjectURL(objUrl)
+					counter++
+					recursive()
+				}, 'arraybuffer')
 			} else {
-				r.dest = null
+				counter++
+				recursive()
 			}
-			counter++
-			recursive()
-		}, 'arraybuffer')
+		})
 	}
 	recursive()
 }
 
+function downloadStory() {
+	isDownloading = true
+	console.log('Fetching story...')
+	fetch(apiUrl, function (raw) {
 
-console.log('Fetching story...')
-fetch(apiUrl, function (raw) {
-
-	let data
-	try {
-		data = JSON.parse(raw)
-	} catch (e) {
-		console.log('Unable to fetch story json')
-		return
-	}
-	storyInfo = data.story
-	storyInfo.uuid = 'urn:fimfiction:'+storyInfo.id
-	storyInfo.publishDate = '1970-01-01' // TODO!
-	console.log(storyInfo)
-	remoteResources.set(storyInfo.full_image, {filename: 'cover'})
-
-	zip.file('toc.ncx', createNcx())
-	zip.file('nav.xhtml', createNav())
-
-	fetchChapters(function () {
-
-		fetchRemote(function () {
-
-			remoteResources.forEach((r, url) => {
-				if (r.chapter && r.originalUrl) {
-					chapterContent[r.chapter] = chapterContent[r.chapter].replace(
-							new RegExp(escapeStringRegexp(r.originalUrl), 'g'),
-							r.dest
-						)
-				}
-			})
-
-			for (let id in chapterContent) {
-				let html = chapterContent[id]
-				let filename = 'chapter_'+id+'.xhtml'
-				zip.file(filename, html)
-			}
-
-			zip.file('cover.xhtml', createCoverPage())
-			zip.file('content.opf', createOpf())
-
-			zip
-			.generateNodeStream({
-				type: 'nodebuffer',
-				streamFiles: true,
-				mimeType: 'application/epub+zip',
-				compression: 'DEFLATE',
-				compressionOptions: {level: 9}
-			})
-			.pipe(fs.createWriteStream('out.epub'))
-			.on('finish', function () {
-				// JSZip generates a readable stream with a "end" event,
-				// but is piped here in a writable stream which emits a "finish" event.
-				console.log("out.epub written.");
-			})
-		})
-
+		let data
+		try {
+			data = JSON.parse(raw)
+		} catch (e) {
+			console.log('Unable to fetch story json')
+			return
+		}
+		storyInfo = data.story
+		storyInfo.uuid = 'urn:fimfiction:'+storyInfo.id
+		storyInfo.publishDate = '1970-01-01' // TODO!
+		console.log(storyInfo)
+		remoteResources.set(storyInfo.full_image, {filename: 'cover'})
+		let coverImage = new Image()
+		coverImage.src = storyInfo.full_image
+		coverImage.addEventListener('load', function () {
 		
+
+			zip.file('toc.ncx', createNcx())
+			zip.file('nav.xhtml', createNav())
+
+			fetchChapters(function () {
+				fetchRemote(function () {
+
+					remoteResources.forEach((r, url) => {
+						if (r.chapter && r.originalUrl && r.dest) {
+							chapterContent[r.chapter] = chapterContent[r.chapter].replace(
+									new RegExp(escapeStringRegexp(r.originalUrl), 'g'),
+									r.dest
+								)
+						} else {
+							r.remote = true
+						}
+					})
+
+					for (let id in chapterContent) {
+						let html = chapterContent[id]
+						let filename = 'chapter_'+id+'.xhtml'
+						zip.file(filename, html)
+					}
+
+					zip.file('cover.xhtml', createCoverPage(coverImage.width, coverImage.height))
+					zip.file('content.opf', createOpf())
+
+					/*zip
+					.generateNodeStream({
+						type: 'nodebuffer',
+						streamFiles: true,
+						mimeType: 'application/epub+zip',
+						compression: 'DEFLATE',
+						compressionOptions: {level: 9}
+					})
+					.pipe(fs.createWriteStream('out.epub'))
+					.on('finish', function () {
+						// JSZip generates a readable stream with a "end" event,
+						// but is piped here in a writable stream which emits a "finish" event.
+						console.log("out.epub written.");
+					})*/
+					zip
+					.generateAsync({
+						type: 'blob',
+						mimeType: 'application/epub+zip',
+						compression: 'DEFLATE',
+						compressionOptions: {level: 9}
+					})
+					.then((blob) => {
+						cachedBlob = blob
+						saveStory()
+						isDownloading = false
+					})
+					
+				})
+
+				
+			})
+		}, false)
 	})
-})
+}
 
 
+function saveStory() {
+	saveAs(cachedBlob, storyInfo.title+' by '+storyInfo.author.name+'.epub')
+}
 
 //const parse5 = require('parse5')
 //const xmlserializer = require('xmlserializer')
@@ -288,7 +338,10 @@ function subjects(s) {
 function createOpf() {
 
 	let remotes = []
-	remoteResources.forEach((r) => {
+	remoteResources.forEach((r, url) => {
+		if (!r.dest) {
+			return
+		}
 		let attrs = {id: r.filename, href: r.dest, 'media-type': r.type}
 		if (r.filename === 'cover') {
 			attrs.properties = 'cover-image'
@@ -403,19 +456,19 @@ function createNav() {
 	return navDocument
 }
 
-function createCoverPage() {
+function createCoverPage(w, h) {
 	let coverPage = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 `+pretty.xml(render(
 		m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
 			m('head', [
-				m('meta', {name: 'viewport', content: 'width='+100+', height='+100}),
+				m('meta', {name: 'viewport', content: 'width='+w+', height='+h}),
 				m('title', 'Cover'),
 				m('link', {rel: 'stylesheet', type: 'text/css', href: 'coverstyle.css'})
 			]),
 			m('body', {'epub:type': 'cover'}, [
-				m('svg', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 100 100', id: 'cover'},
-					m('image', {width: 100, height: 100, 'xlink:href': 'Images/cover.jpg'})
+				m('svg', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 '+w+' '+h, id: 'cover'},
+					m('image', {width: w, height: h, 'xlink:href': 'Images/cover.jpg'})
 				)
 			])
 		])
