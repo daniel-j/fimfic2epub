@@ -1,6 +1,7 @@
 /* global chrome */
 'use strict'
 
+import JSZip from 'jszip'
 import m from 'mithril'
 import render from './mithril-node-render'
 import { pd as pretty } from 'pretty-data'
@@ -8,6 +9,9 @@ import escapeStringRegexp from 'escape-string-regexp'
 import { XmlEntities } from 'html-entities'
 import { saveAs } from 'file-saver'
 import tidy from 'exports?tidy_html5!tidy-html5'
+
+import styleCss from './style'
+import coverstyleCss from './coverstyle'
 
 const entities = new XmlEntities()
 
@@ -104,7 +108,7 @@ function fetchChapters (cb) {
   recursive()
 }
 
-function fetchRemote (cb) {
+function fetchRemote (zip, cb) {
   let iter = remoteResources.entries()
   let counter = 0
 
@@ -143,6 +147,17 @@ function fetchRemote (cb) {
 
 function downloadStory () {
   isDownloading = true
+
+  const zip = new JSZip()
+  zip.file('mimetype', 'application/epub+zip')
+  zip.folder('META-INF').file('container.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>
+`)
+
   console.log('Fetching story...')
 
   fetch(apiUrl, function (raw) {
@@ -161,12 +176,15 @@ function downloadStory () {
     let coverImage = new Image()
     coverImage.src = storyInfo.full_image
 
+    zip.file('style.css', styleCss)
+    zip.file('coverstyle.css', coverstyleCss)
+
     coverImage.addEventListener('load', function () {
       zip.file('toc.ncx', createNcx())
       zip.file('nav.xhtml', createNav())
 
       fetchChapters(function () {
-        fetchRemote(function () {
+        fetchRemote(zip, function () {
           remoteResources.forEach((r, url) => {
             if (r.chapter && r.originalUrl && r.dest) {
               chapterContent[r.chapter] = chapterContent[r.chapter].replace(
@@ -238,7 +256,7 @@ function parseChapter (ch, html) {
       ]),
       m('body', [
         m('div', {id: 'chapter_container'}, '@@CHAPTER@@'),
-        m('div', {id: 'author_notes'}, '@@NOTES@@')
+        '@@NOTES@@'
       ])
     ])
   )
@@ -265,7 +283,7 @@ function parseChapter (ch, html) {
   chapter = chapter.substring(0, pos)
 
   chapterPage = chapterPage.replace('@@CHAPTER@@', chapter)
-  chapterPage = chapterPage.replace('@@NOTES@@', authorNotes)
+  chapterPage = chapterPage.replace('@@NOTES@@', authorNotes ? '<div id="author_notes">' + authorNotes + '</div>' : '')
 
   chapterPage = chapterPage.replace(/<center>/g, '<div style="text-align: center;">')
   chapterPage = chapterPage.replace(/<\/center>/g, '</div>')
@@ -299,20 +317,6 @@ function parseChapter (ch, html) {
 
   return chapterPage
 }
-
-const JSZip = require('jszip')
-
-const zip = new JSZip()
-
-zip.file('mimetype', 'application/epub+zip')
-
-zip.folder('META-INF').file('container.xml', `<?xml version="1.0" encoding="UTF-8"?>
-<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-  <rootfiles>
-    <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
-  </rootfiles>
-</container>
-`)
 
 function subjects (s) {
   var list = []
@@ -454,101 +458,3 @@ function createCoverPage (w, h) {
   // console.log(coverPage)
   return coverPage
 }
-
-zip.file('style.css', `
-body {
-  background-color: white;
-  color: black;
-}
-p {
-  margin-top: 0.0em;
-  margin-bottom: 0.0em;
-  text-indent: 0.0em;
-}
-p.double {
-  margin-top: 1.0em;
-}
-p.double2 {
-  margin-top: 1.0em;
-  margin-bottom: 1.0em;
-}
-p.indented {
-  text-indent: 1.0em;
-}
-
-img {
-  height: auto;
-  width: auto;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-blockquote {
-  margin: 10px 0px;
-  padding: 20px;
-  border: none;
-  border-left: 5px solid rgba(0,0,0,0.2);
-  background: rgba(0,0,0,0.1);
-}
-blockquote.left_insert {
-  box-sizing:border-box;
-  -moz-box-sizing:border-box;
-  margin-right:25px;
-  padding: 15px;
-  background-color: #F7F7F7;
-  border: 1px solid #AAA;
-  width: 50%;
-  float:left;
-  box-shadow: 5px 5px 0px #EEE;
-}
-blockquote.right_insert {
-  box-sizing:border-box;
-  -moz-box-sizing:border-box;
-  margin-left:25px;
-  padding: 15px;
-  background-color: #F7F7F7;
-  border: 1px solid #AAA;
-  width: 50%;
-  float:right;
-  box-shadow: 5px 5px 0px #EEE;
-}
-
-hr {
-  background-color: #ddd;
-  margin-top: 12px;
-  margin-bottom: 12px;
-  color: #ddd;
-  height: 1px;
-  border: 0px;
-}
-
-#author_notes {
-  clear: both;
-  border: 1px solid;
-  border-radius: 3px;
-  line-height: 1.7em;
-  padding: 16px;
-  margin-top: 1.0em;
-  margin-bottom: 1.0em;
-}
-
-#toc [hidden] {
-  display: none;
-}
-`)
-
-zip.file('coverstyle.css', `
-@page {padding: 0; margin:0;}
-html, body {
-  padding:0;
-  margin: 0;
-  height: 100%;
-}
-#cover {
-  width: 100%;
-  height: 100%;
-  display: block;
-  margin: 0;
-  padding: 0;
-}
-`)

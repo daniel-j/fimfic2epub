@@ -20,6 +20,10 @@ export default {
           presets: ['es2015'],
           plugins: ['transform-strict-mode']
         }
+      },
+      {
+        test: /\.styl$/,
+        loader: 'raw-loader!stylus-loader'
       }
     ],
     noParse: [
@@ -28,7 +32,7 @@ export default {
   },
 
   resolve: {
-    extensions: ['', '.js', '.json'],
+    extensions: ['', '.js', '.json', '.styl'],
     root: [path.join(__dirname, '/src')]
   },
 

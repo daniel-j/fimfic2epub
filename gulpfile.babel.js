@@ -71,10 +71,9 @@ gulp.task('clean', () => del('extension/fimfic2epub.js'))
 
 // Main tasks
 gulp.task('webpack', webpackTask)
-gulp.task('script', ['webpack'])
-gulp.task('watch:script', () => {
-  return watch(['src/**/*.js'], watchOpts, function () {
-    return sequence('script')
+gulp.task('watch:webpack', () => {
+  return watch(['src/**/*.js', 'src/**/*.styl'], watchOpts, function () {
+    return sequence('webpack')
   })
 })
 
@@ -89,10 +88,10 @@ gulp.task('watch:lint', () => {
 
 // Default task
 gulp.task('default', (done) => {
-  sequence('clean', ['script', 'lint'], done)
+  sequence('clean', ['webpack', 'lint'], done)
 })
 
 // Watch task
 gulp.task('watch', (done) => {
-  sequence('default', ['watch:lint', 'watch:script'], done)
+  sequence('default', ['watch:lint', 'watch:webpack'], done)
 })
