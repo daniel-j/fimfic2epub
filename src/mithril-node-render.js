@@ -1,9 +1,5 @@
 'use strict'
 
-var VOID_TAGS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr',
-  'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 'track',
-  'wbr', '!doctype']
-
 function isArray (thing) {
   return Object.prototype.toString.call(thing) === '[object Array]'
 }
@@ -25,9 +21,9 @@ function escapeHtml (s, replaceDoubleQuote) {
   if (typeof (s) !== 'string') {
     s = s + ''
   }
-  s = s.replace(/\&/g, '&amp;').replace(/</g, '&lt;').replace(/\>/g, '&gt;')
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   if (replaceDoubleQuote) {
-    return s.replace(/\"/g, '&quot;')
+    return s.replace(/"/g, '&quot;')
   }
   return s
 }
@@ -121,7 +117,7 @@ function render (view, options) {
     return '' + view
   }
   var children = createChildrenContent(view)
-  if (!children/* && VOID_TAGS.indexOf(view.tag.toLowerCase()) >= 0*/) {
+  if (!children) {
     return '<' + view.tag + createAttrString(view, options.escapeAttributeValue) + '/>'
   }
   return [
