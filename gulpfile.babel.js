@@ -9,6 +9,11 @@ import watch from 'gulp-watch'
 import lazypipe from 'lazypipe'
 import filter from 'gulp-filter'
 
+import jsonedit from 'gulp-json-editor'
+import zip from 'gulp-zip'
+
+import { execFile } from 'child_process'
+
 // script
 import standard from 'gulp-standard'
 import webpack from 'webpack'
@@ -94,4 +99,41 @@ gulp.task('default', (done) => {
 // Watch task
 gulp.task('watch', (done) => {
   sequence('default', ['watch:lint', 'watch:webpack'], done)
+})
+
+// creates extensions for chrome and firefox
+gulp.task('pack', (done) => {
+  sequence('default', ['pack:firefox', 'pack:chrome'], done)
+})
+
+gulp.task('pack:firefox', () => {
+  let manifest = filter('extension/manifest.json', {restore: true})
+
+  return gulp.src('extension/**/*')
+    .pipe(manifest)
+    .pipe(jsonedit(function (json) {
+      if (json.content_scripts) {
+        json.applications = {
+          gecko: {
+            id: 'fimfic2epub@mozilla.org'
+          }
+        }
+        delete json.background.persistent
+      }
+      return json
+    }))
+    .pipe(manifest.restore)
+    .pipe(zip('extension.xpi'))
+    .pipe(gulp.dest('./'))
+})
+
+gulp.task('pack:chrome', (done) => {
+  execFile('./packchrome.sh', [], (error, stdout, stderr) => {
+    // gutil.log('[pack:chrome]', stdout)
+    if (error || stderr) {
+      done(new gutil.PluginError('pack:chrome', stderr, {showStack: false}))
+      return
+    }
+    done()
+  })
 })

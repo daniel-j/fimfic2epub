@@ -1,11 +1,11 @@
 {
   "name": "fimfic2epub.js",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "author": "djazz",
   "scripts": {
-    "pack": "./pack.sh"
+    "pack": "gulp pack -p"
   },
   "dependencies": {
     "escape-string-regexp": "^1.0.5",
@@ -26,9 +26,11 @@
     "exports-loader": "^0.6.3",
     "gulp": "^3.9.1",
     "gulp-filter": "^4.0.0",
+    "gulp-json-editor": "^2.2.1",
     "gulp-standard": "^7.0.1",
     "gulp-util": "^3.0.7",
     "gulp-watch": "^4.3.8",
+    "gulp-zip": "^3.2.0",
     "lazypipe": "^1.0.1",
     "raw-loader": "^0.5.1",
     "run-sequence": "^1.2.1",
@@ -39,8 +41,7 @@
   },
   "standard": {
     "env": {
-      "browser": true,
-      "node": true
+      "browser": true
     }
   }
 }

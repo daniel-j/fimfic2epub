@@ -21,7 +21,9 @@ function fetch (url, cb, type) {
   x.send()
 }
 
-chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
+let onMessage = chrome.extension.onMessage ? chrome.extension.onMessage : chrome.runtime.onMessage
+
+onMessage.addListener(function (request, sender, sendResponse) {
   fetch(request, sendResponse, 'blob')
   return true
 })

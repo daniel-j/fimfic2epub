@@ -2,3 +2,4 @@ node_modules/
 extension/fimfic2epub.js
 extension.crx
 extension.pem
+extension.xpi
