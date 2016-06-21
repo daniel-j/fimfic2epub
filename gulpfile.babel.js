@@ -62,7 +62,7 @@ function webpackTask (callback) {
 }
 
 let lintPipe = lazypipe()
-  .pipe(filter, ['**/*', '!extension/fimfic2epub.js', '!extension/tidy.js'])
+  .pipe(filter, ['**/*', '!extension/fimfic2epub.js'])
   .pipe(standard)
   .pipe(standard.reporter, 'default', { breakOnError: false })
 

@@ -1,4 +1,4 @@
-/* global tidy, chrome */
+/* global chrome */
 'use strict'
 
 import m from 'mithril'
@@ -7,6 +7,7 @@ import { pd as pretty } from 'pretty-data'
 import escapeStringRegexp from 'escape-string-regexp'
 import { XmlEntities } from 'html-entities'
 import { saveAs } from 'file-saver'
+import tidy from 'exports?tidy_html5!tidy-html5'
 
 const entities = new XmlEntities()
 

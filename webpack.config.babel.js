@@ -1,6 +1,5 @@
 'use strict'
 
-// import webpack from 'webpack'
 import path from 'path'
 
 let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1

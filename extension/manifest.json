@@ -13,7 +13,7 @@
 	"content_scripts": [
 		{
 			"matches": ["https://www.fimfiction.net/story/*", "http://www.fimfiction.net/story/*"],
-			"js": ["tidy.js", "fimfic2epub.js"]
+			"js": ["fimfic2epub.js"]
 		}
 	],
 	"permissions": [
