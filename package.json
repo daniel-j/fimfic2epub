@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "description": "",
   "author": "djazz",
+  "scripts": {
+    "pack": "./pack.sh"
+  },
   "dependencies": {
     "escape-string-regexp": "^1.0.5",
     "file-saver": "^1.3.2",
