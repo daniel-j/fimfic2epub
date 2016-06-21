@@ -7,6 +7,7 @@ import del from 'del'
 import Sequence from 'run-sequence'
 import watch from 'gulp-watch'
 import lazypipe from 'lazypipe'
+import filter from 'gulp-filter'
 
 // script
 import standard from 'gulp-standard'
@@ -61,10 +62,9 @@ function webpackTask (callback) {
 }
 
 let lintPipe = lazypipe()
+  .pipe(filter, ['**/*', '!extension/fimfic2epub.js', '!extension/tidy.js'])
   .pipe(standard)
-    .pipe(standard.reporter, 'default', {
-      breakOnError: false
-    })
+  .pipe(standard.reporter, 'default', { breakOnError: false })
 
 // Cleanup task
 gulp.task('clean', () => del('extension/fimfic2epub.js'))
@@ -79,7 +79,7 @@ gulp.task('watch:script', () => {
 })
 
 gulp.task('lint', () => {
-  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js']).pipe(lintPipe())
+  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js', 'extension/**/*.js']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
   return watch(['src/**/*.js'], watchOpts, function (file) {
