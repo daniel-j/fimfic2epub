@@ -1,5 +1,4 @@
 /* global chrome, safari */
-'use strict'
 
 import JSZip from 'jszip'
 import m from 'mithril'

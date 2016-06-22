@@ -18,8 +18,7 @@ export default {
       {
         test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
           sourceMaps: inProduction,
-          presets: ['es2015'],
-          plugins: ['transform-strict-mode']
+          presets: ['es2015-webpack']
         }
       },
       {
@@ -34,7 +33,10 @@ export default {
 
   resolve: {
     extensions: ['', '.js', '.json', '.styl'],
-    root: [path.join(__dirname, '/src')]
+    modules: [
+      path.resolve('./src'),
+      'node_modules'
+    ]
   },
 
   plugins: [],

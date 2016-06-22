@@ -1,5 +1,4 @@
 /* global chrome, safari */
-'use strict'
 
 function fetch (url, cb, type) {
   if (url.indexOf('//') === 0) {

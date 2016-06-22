@@ -21,7 +21,7 @@
     "babel-core": "^6.9.1",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-strict-mode": "^6.8.0",
-    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-es2015-webpack": "^6.4.1",
     "babel-preset-node6": "^11.0.0",
     "del": "^2.2.0",
     "exports-loader": "^0.6.3",
@@ -38,7 +38,7 @@
     "standard": "^7.1.2",
     "stylus": "^0.54.5",
     "stylus-loader": "^2.1.1",
-    "webpack": "^1.13.1"
+    "webpack": "^2.1.0-beta.13"
   },
   "standard": {
     "env": {

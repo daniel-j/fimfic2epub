@@ -29,8 +29,11 @@ let watchOpts = {
 }
 
 if (inProduction) {
+  webpackConfig.plugins.push(new webpack.LoaderOptionsPlugin({
+    minimize: true,
+    debug: false
+  }))
   webpackConfig.plugins.push(new webpack.optimize.DedupePlugin())
-  webpackConfig.plugins.push(new webpack.optimize.OccurenceOrderPlugin(false))
   webpackConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
     compress: {
       warnings: false,
