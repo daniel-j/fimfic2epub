@@ -3,12 +3,13 @@
 
 import JSZip from 'jszip'
 import m from 'mithril'
-import render from './mithril-node-render'
+import render from './lib/mithril-node-render'
 import { pd as pretty } from 'pretty-data'
 import escapeStringRegexp from 'escape-string-regexp'
 import { XmlEntities } from 'html-entities'
 import { saveAs } from 'file-saver'
 import tidy from 'exports?tidy_html5!tidy-html5'
+import zeroFill from 'zero-fill'
 
 import styleCss from './style'
 import coverstyleCss from './coverstyle'
@@ -31,7 +32,8 @@ let tidyOptions = {
   'output-xhtml': 'yes',
   'alt-text': 'Image',
   'wrap': '0',
-  'quiet': 'yes'
+  'quiet': 'yes',
+  'show-warnings': 0
 }
 
 let mimeMap = {
@@ -49,7 +51,7 @@ let apiUrl = 'https://www.fimfiction.net/api/story.php?story=' + STORY_ID
 
 let storyInfo
 let remoteResources = new Map()
-let chapterContent = {}
+let chapterContent = []
 
 let epubButton = document.querySelector('.story_container ul.chapters li.bottom a[title="Download Story (.epub)"]')
 let isDownloading = false
@@ -94,10 +96,10 @@ function fetchChapters (cb) {
   let currentChapter = 0
   function recursive () {
     let ch = chapters[currentChapter]
-    console.log('Fetching chapter ' + ch.id + ' ' + ch.title)
+    console.log('Fetching chapter ' + (currentChapter + 1) + ' of ' + chapters.length + ': ' + ch.title)
     fetchRemote(ch.link.replace('http', 'https'), function (html) {
-      html = parseChapter(ch, html)
-      chapterContent[ch.id] = html
+      html = parseChapter(currentChapter, ch, html)
+      chapterContent[currentChapter] = html
       currentChapter++
       if (currentChapter < chapterCount) {
         recursive()
@@ -176,7 +178,7 @@ function fetchRemoteFiles (zip, cb) {
     }
     let url = r[0]
     r = r[1]
-    console.log('Fetching remote file ' + r.filename, url)
+    console.log('Fetching remote file ' + (counter + 1) + ' of ' + remoteResources.size + ': ' + r.filename, url)
     fetchRemote(url, function (data, type) {
       r.dest = null
       r.type = type
@@ -206,7 +208,7 @@ function downloadStory () {
 </container>
 `)
 
-  console.log('Fetching story...')
+  console.log('Fetching story metadata...')
 
   fetchRemote(apiUrl, function (raw, type) {
     let data
@@ -219,7 +221,7 @@ function downloadStory () {
     storyInfo = data.story
     storyInfo.uuid = 'urn:fimfiction:' + storyInfo.id
     storyInfo.publishDate = '1970-01-01' // TODO!
-    console.log(storyInfo)
+
     remoteResources.set(storyInfo.full_image, {filename: 'cover'})
     let coverImage = new Image()
     coverImage.src = storyInfo.full_image
@@ -244,9 +246,9 @@ function downloadStory () {
             }
           })
 
-          for (let id in chapterContent) {
-            let html = chapterContent[id]
-            let filename = 'chapter_' + id + '.xhtml'
+          for (let num = 0; num < chapterContent.length; num++) {
+            let html = chapterContent[num]
+            let filename = 'chapter_' + zeroFill(3, num + 1) + '.xhtml'
             zip.file(filename, html)
           }
 
@@ -308,21 +310,7 @@ function saveStory () {
   }
 }
 
-function parseChapter (ch, html) {
-  let chapterPage = '<!doctype html>' + render(
-    m('html', {xmlns: NS.XHTML}, [
-      m('head', [
-        m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'style.css'}),
-        m('title', ch.title)
-      ]),
-      m('body', [
-        m('div', {id: 'chapter_container'}, '@@CHAPTER@@'),
-        '@@NOTES@@'
-      ])
-    ])
-  )
-
+function parseChapter (num, ch, html) {
   let chapterTitle = html.match(/<a\s+[^>]*id="chapter_title"[^>]*>(.*?)<\/a>/)
 
   if (!chapterTitle) {
@@ -344,8 +332,19 @@ function parseChapter (ch, html) {
 
   chapter = chapter.substring(0, pos)
 
-  chapterPage = chapterPage.replace('@@CHAPTER@@', chapter)
-  chapterPage = chapterPage.replace('@@NOTES@@', authorNotes ? '<div id="author_notes">' + authorNotes + '</div>' : '')
+  let chapterPage = '<!doctype html>' + render(
+    m('html', {xmlns: NS.XHTML}, [
+      m('head', [
+        m('meta', {charset: 'utf-8'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: 'style.css'}),
+        m('title', ch.title)
+      ]),
+      m('body', [
+        m('div#chapter_container', m.trust(chapter)),
+        authorNotes ? m('div#author_notes', m.trust(authorNotes)) : null
+      ])
+    ])
+  )
 
   chapterPage = chapterPage.replace(/<center>/g, '<div style="text-align: center;">')
   chapterPage = chapterPage.replace(/<\/center>/g, '</div>')
@@ -371,9 +370,9 @@ function parseChapter (ch, html) {
     if (remoteResources.has(cleanurl)) {
       return match
     }
-    let filename = 'ch' + ch.id + '_' + remoteCounter
+    let filename = 'ch_' + zeroFill(3, num + 1) + '_' + remoteCounter
     remoteCounter++
-    remoteResources.set(cleanurl, {filename: filename, chapter: ch.id, originalUrl: url})
+    remoteResources.set(cleanurl, {filename: filename, chapter: num, originalUrl: url})
     return match
   })
 
@@ -404,9 +403,9 @@ function createOpf () {
   let contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(render(
     m('package', {xmlns: NS.OPF, version: '3.0', 'unique-identifier': 'BookId'}, [
       m('metadata', {'xmlns:dc': NS.DC, 'xmlns:opf': NS.OPF}, [
-        m('dc:identifier', {id: 'BookId'}, storyInfo.uuid),
+        m('dc:identifier#BookId', storyInfo.uuid),
         m('dc:title', storyInfo.title),
-        m('dc:creator', {id: 'cre'}, storyInfo.author.name),
+        m('dc:creator#cre', storyInfo.author.name),
         m('meta', {refines: '#cre', property: 'role', scheme: 'marc:relators'}, 'aut'),
         m('dc:date', storyInfo.publishDate),
         m('dc:publisher', 'Fimfiction'),
@@ -423,15 +422,15 @@ function createOpf () {
         m('item', {id: 'style', href: 'style.css', 'media-type': 'text/css'}),
         m('item', {id: 'coverstyle', href: 'coverstyle.css', 'media-type': 'text/css'}),
         m('item', {id: 'coverpage', href: 'cover.xhtml', 'media-type': 'application/xhtml+xml', properties: 'svg'})
-      ].concat(storyInfo.chapters.map((ch) =>
-        m('item', {id: 'chapter_' + ch.id, href: 'chapter_' + ch.id + '.xhtml', 'media-type': 'application/xhtml+xml'})
+      ].concat(storyInfo.chapters.map((ch, num) =>
+        m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml'})
       ), remotes)),
 
       m('spine', {toc: 'ncx'}, [
         m('itemref', {idref: 'coverpage'}),
         m('itemref', {idref: 'nav'})
-      ].concat(storyInfo.chapters.map((ch) =>
-        m('itemref', {idref: 'chapter_' + ch.id})
+      ].concat(storyInfo.chapters.map((ch, num) =>
+        m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
       ))),
 
       false ? m('guide', [
@@ -468,8 +467,8 @@ function createNcx () {
       m('navMap', navPoints([
         ['Cover', 'cover.xhtml'],
         ['Contents', 'nav.xhtml']
-      ].concat(storyInfo.chapters.map((ch) =>
-        [ch.title, 'chapter_' + ch.id + '.xhtml']
+      ].concat(storyInfo.chapters.map((ch, num) =>
+        [ch.title, 'chapter_' + zeroFill(3, num + 1) + '.xhtml']
       ))))
     ])
   ))
@@ -486,13 +485,13 @@ function createNav () {
         m('title', 'Contents')
       ]),
       m('body', [
-        m('nav', {'epub:type': 'toc', id: 'toc'}, [
+        m('nav#toc', {'epub:type': 'toc'}, [
           m('h1', 'Contents'),
           m('ol', [
             m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover')),
             m('li', {hidden: ''}, m('a', {href: 'nav.xhtml'}, 'Contents'))
-          ].concat(storyInfo.chapters.map((ch) =>
-            m('li', m('a', {href: 'chapter_' + ch.id + '.xhtml'}, ch.title))
+          ].concat(storyInfo.chapters.map((ch, num) =>
+            m('li', m('a', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
           )))
         ])
       ])
@@ -511,7 +510,7 @@ function createCoverPage (w, h) {
         m('link', {rel: 'stylesheet', type: 'text/css', href: 'coverstyle.css'})
       ]),
       m('body', {'epub:type': 'cover'}, [
-        m('svg', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + w + ' ' + h, id: 'cover'},
+        m('svg#cover', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + w + ' ' + h},
           m('image', {width: w, height: h, 'xlink:href': 'Images/cover.jpg'})
         )
       ])

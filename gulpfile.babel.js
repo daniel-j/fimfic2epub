@@ -67,6 +67,7 @@ function webpackTask (callback) {
 }
 
 let lintPipe = lazypipe()
+  .pipe(filter, ['**/*', '!src/lib/**/*'])
   .pipe(standard)
   .pipe(standard.reporter, 'default', { breakOnError: false })
 
