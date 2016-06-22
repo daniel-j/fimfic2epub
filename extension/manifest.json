@@ -4,7 +4,7 @@
 	"name": "fimfic2epub",
 	"short_name": "ff2epub",
 	"description": "Improved EPUB exporter for Fimfiction",
-	"version": "1.0.1",
+	"version": "1.0.2",
 
 	"icons": {
 		"128": "icon-128.png"

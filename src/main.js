@@ -59,6 +59,7 @@ if (epubButton) {
   epubButton.addEventListener('click', function (e) {
     e.preventDefault()
     if (isDownloading) {
+      alert("Calm down, I'm working on it (it's processing)")
       return
     }
     if (cachedBlob) {
