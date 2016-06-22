@@ -12,7 +12,7 @@ import filter from 'gulp-filter'
 import jsonedit from 'gulp-json-editor'
 import zip from 'gulp-zip'
 
-import { execFile } from 'child_process'
+import { execFile, exec } from 'child_process'
 
 // script
 import standard from 'gulp-standard'
@@ -62,7 +62,7 @@ function webpackTask (callback) {
       chunks: false,
       chunkModules: false
     }))
-    callback()
+    sequence(['pack:firefox', 'pack:chrome', 'pack:safari'], callback)
   })
 }
 
@@ -103,7 +103,7 @@ gulp.task('watch', (done) => {
 
 // creates extensions for chrome and firefox
 gulp.task('pack', (done) => {
-  sequence('default', ['pack:firefox', 'pack:chrome'], done)
+  sequence('default', ['pack:firefox', 'pack:chrome', 'pack:safari'], done)
 })
 
 gulp.task('pack:firefox', () => {
@@ -113,6 +113,7 @@ gulp.task('pack:firefox', () => {
     .pipe(manifest)
     .pipe(jsonedit(function (json) {
       if (json.content_scripts) {
+        // tweak the manifest so Firefox can read it
         json.applications = {
           gecko: {
             id: 'fimfic2epub@mozilla.org'
@@ -132,6 +133,17 @@ gulp.task('pack:chrome', (done) => {
     // gutil.log('[pack:chrome]', stdout)
     if (error || stderr) {
       done(new gutil.PluginError('pack:chrome', stderr, {showStack: false}))
+      return
+    }
+    done()
+  })
+})
+
+gulp.task('pack:safari', (done) => {
+  exec('cp -r extension/ fimfic2epub.safariextension', [], (error, stdout, stderr) => {
+    // gutil.log('[pack:chrome]', stdout)
+    if (error || stderr) {
+      done(new gutil.PluginError('pack:safari', stderr, {showStack: false}))
       return
     }
     done()

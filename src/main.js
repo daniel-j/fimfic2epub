@@ -33,7 +33,9 @@ let tidyOptions = {
   'alt-text': 'Image',
   'wrap': '0',
   'quiet': 'yes',
-  'show-warnings': 0
+  'show-warnings': 0,
+  'newline': 'LF',
+  'tidy-mark': 'no'
 }
 
 let mimeMap = {
@@ -42,12 +44,7 @@ let mimeMap = {
   'image/gif': 'Images/*.gif'
 }
 
-// const STORY_ID = 180690 // bbcode test tags
-// const STORY_ID = 931 // pink eyes
-// const STORY_ID = 119190 // fallout equestria
 const STORY_ID = document.location.pathname.match(/^\/story\/(\d*)/)[1]
-
-let apiUrl = 'https://www.fimfiction.net/api/story.php?story=' + STORY_ID
 
 let storyInfo
 let remoteResources = new Map()
@@ -210,7 +207,7 @@ function downloadStory () {
 
   console.log('Fetching story metadata...')
 
-  fetchRemote(apiUrl, function (raw, type) {
+  fetchRemote('https://www.fimfiction.net/api/story.php?story=' + STORY_ID, function (raw, type) {
     let data
     try {
       data = JSON.parse(raw)
@@ -236,7 +233,7 @@ function downloadStory () {
       fetchChapters(function () {
         fetchRemoteFiles(zip, function () {
           remoteResources.forEach((r, url) => {
-            if (r.chapter && r.originalUrl && r.dest) {
+            if (typeof r.chapter !== 'undefined' && r.originalUrl && r.dest) {
               chapterContent[r.chapter] = chapterContent[r.chapter].replace(
                   new RegExp(escapeStringRegexp(r.originalUrl), 'g'),
                   r.dest
