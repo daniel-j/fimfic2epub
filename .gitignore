@@ -1,5 +1,8 @@
+.DS_Store
 node_modules/
 extension/fimfic2epub.js
+extension/eventPage.js
 extension.crx
 extension.pem
 extension.xpi
+fimfic2epub.safariextension/

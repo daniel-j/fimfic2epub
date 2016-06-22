@@ -6,7 +6,8 @@ let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf
 
 export default {
   entry: {
-    fimfic2epub: ['./src/main']
+    fimfic2epub: ['./src/main'],
+    eventPage: ['./src/eventPage']
   },
   output: {
     path: path.join(__dirname, '/'),

@@ -67,12 +67,11 @@ function webpackTask (callback) {
 }
 
 let lintPipe = lazypipe()
-  .pipe(filter, ['**/*', '!extension/fimfic2epub.js'])
   .pipe(standard)
   .pipe(standard.reporter, 'default', { breakOnError: false })
 
 // Cleanup task
-gulp.task('clean', () => del('extension/fimfic2epub.js'))
+gulp.task('clean', () => del(['extension/fimfic2epub.js', 'extension/eventPage.js']))
 
 // Main tasks
 gulp.task('webpack', webpackTask)
@@ -83,7 +82,7 @@ gulp.task('watch:webpack', () => {
 })
 
 gulp.task('lint', () => {
-  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js', 'extension/**/*.js']).pipe(lintPipe())
+  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
   return watch(['src/**/*.js'], watchOpts, function (file) {

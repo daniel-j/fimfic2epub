@@ -1,4 +1,4 @@
-/* global chrome */
+/* global chrome, safari */
 'use strict'
 
 import JSZip from 'jszip'
@@ -95,7 +95,7 @@ function fetchChapters (cb) {
   function recursive () {
     let ch = chapters[currentChapter]
     console.log('Fetching chapter ' + ch.id + ' ' + ch.title)
-    fetch(ch.link.replace('http', 'https'), function (html) {
+    fetchRemote(ch.link.replace('http', 'https'), function (html) {
       html = parseChapter(ch, html)
       chapterContent[ch.id] = html
       currentChapter++
@@ -109,7 +109,62 @@ function fetchChapters (cb) {
   recursive()
 }
 
-function fetchRemote (zip, cb) {
+let safariQueue = {}
+
+function safariHandler (ev) {
+  let type = ev.message.type
+  let url = ev.message.input
+  let data = ev.message.output // arraybuffer
+  if (!safariQueue[url]) {
+    // console.error("Unable to get callback for " + url, JSON.stringify(safariQueue))
+    return
+  }
+  let cb = safariQueue[url].cb
+  let responseType = safariQueue[url].responseType
+  console.log(url, cb, responseType, data)
+  delete safariQueue[url]
+
+  if (responseType === 'blob') {
+    let blob = new Blob([data], {type: type})
+    cb(blob, type)
+  } else {
+    if (!responseType) {
+      let blob = new Blob([data], {type: type})
+      let fr = new FileReader()
+      fr.onloadend = function () {
+        cb(fr.result, type)
+      }
+      fr.readAsText(blob)
+      /*
+      let str = ''
+      let arr = new Uint8Array(data)
+      for (let i = 0; i < arr.length; i++) {
+        str += String.fromCharCode(arr[i])
+      }
+      cb(str, type)
+      */
+    } else {
+      cb(data, type)
+    }
+  }
+}
+if (typeof safari !== 'undefined') {
+  safari.self.addEventListener('message', safariHandler, false)
+}
+
+function fetchRemote (url, cb, responseType) {
+  if (typeof chrome !== 'undefined' && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage(url, function (objurl) {
+      fetch(objurl, cb, responseType)
+      URL.revokeObjectURL(objurl)
+    })
+  } else {
+    safariQueue[url] = {cb: cb, responseType: responseType}
+    safari.self.tab.dispatchMessage('remote', url)
+  }
+}
+
+function fetchRemoteFiles (zip, cb) {
   let iter = remoteResources.entries()
   let counter = 0
 
@@ -122,26 +177,18 @@ function fetchRemote (zip, cb) {
     let url = r[0]
     r = r[1]
     console.log('Fetching remote file ' + r.filename, url)
-    chrome.runtime.sendMessage(url, function (objUrl) {
-      if (objUrl) {
-        fetch(objUrl, function (data, type) {
-          r.dest = null
-          r.type = type
-          let dest = mimeMap[type]
+    fetchRemote(url, function (data, type) {
+      r.dest = null
+      r.type = type
+      let dest = mimeMap[type]
 
-          if (dest) {
-            r.dest = dest.replace('*', r.filename)
-            zip.file(r.dest, data)
-          }
-          URL.revokeObjectURL(objUrl)
-          counter++
-          recursive()
-        }, 'arraybuffer')
-      } else {
-        counter++
-        recursive()
+      if (dest) {
+        r.dest = dest.replace('*', r.filename)
+        zip.file(r.dest, data)
       }
-    })
+      counter++
+      recursive()
+    }, 'arraybuffer')
   }
   recursive()
 }
@@ -161,7 +208,7 @@ function downloadStory () {
 
   console.log('Fetching story...')
 
-  fetch(apiUrl, function (raw) {
+  fetchRemote(apiUrl, function (raw, type) {
     let data
     try {
       data = JSON.parse(raw)
@@ -185,7 +232,7 @@ function downloadStory () {
       zip.file('nav.xhtml', createNav())
 
       fetchChapters(function () {
-        fetchRemote(zip, function () {
+        fetchRemoteFiles(zip, function () {
           remoteResources.forEach((r, url) => {
             if (r.chapter && r.originalUrl && r.dest) {
               chapterContent[r.chapter] = chapterContent[r.chapter].replace(
@@ -223,7 +270,7 @@ function downloadStory () {
           })
           */
 
-          console.log('packing epub...')
+          console.log('Packaging epub...')
 
           zip
           .generateAsync({
@@ -243,8 +290,22 @@ function downloadStory () {
   })
 }
 
+function blobToDataURL (blob, callback) {
+  let a = new FileReader()
+  a.onloadend = function (e) { callback(a.result) }
+  a.readAsDataURL(blob)
+}
+
 function saveStory () {
-  saveAs(cachedBlob, storyInfo.title + ' by ' + storyInfo.author.name + '.epub')
+  console.log('Saving epub...')
+  if (typeof safari !== 'undefined') {
+    blobToDataURL(cachedBlob, function (dataurl) {
+      document.location.href = dataurl
+      alert('Rename downloaded file to .epub')
+    })
+  } else {
+    saveAs(cachedBlob, storyInfo.title + ' by ' + storyInfo.author.name + '.epub')
+  }
 }
 
 function parseChapter (ch, html) {
@@ -320,7 +381,7 @@ function parseChapter (ch, html) {
 }
 
 function subjects (s) {
-  var list = []
+  let list = []
   for (let i = 0; i < s.length; i++) {
     list.push(m('dc:subject', s[i]))
   }
@@ -383,7 +444,7 @@ function createOpf () {
 }
 
 function navPoints (list) {
-  var arr = []
+  let arr = []
   for (let i = 0; i < list.length; i++) {
     list[i]
     arr.push(m('navPoint', {id: 'navPoint-' + (i + 1), playOrder: i + 1}, [
