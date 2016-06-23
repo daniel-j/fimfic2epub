@@ -65,7 +65,7 @@ function webpackTask (callback) {
       chunks: false,
       chunkModules: false
     }))
-    sequence(['pack:firefox', 'pack:chrome', 'pack:safari'], callback)
+    sequence('pack', callback)
   })
 }
 
@@ -106,7 +106,7 @@ gulp.task('watch', (done) => {
 
 // creates extensions for chrome and firefox
 gulp.task('pack', (done) => {
-  sequence('default', ['pack:firefox', 'pack:chrome', 'pack:safari'], done)
+  sequence(['pack:firefox', 'pack:chrome', 'pack:safari'], done)
 })
 
 gulp.task('pack:firefox', () => {
