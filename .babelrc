@@ -1,7 +1,6 @@
 {
   "presets": [
     "node6"
-  ],
-  "plugins": ["transform-strict-mode"]
+  ]
 }
 
