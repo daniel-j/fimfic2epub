@@ -17,8 +17,7 @@ export default {
     loaders: [
       {
         test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
-          sourceMaps: inProduction,
-          presets: ['es2015-loose-native-modules']
+          sourceMaps: inProduction
         }
       },
       {
