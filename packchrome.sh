@@ -4,6 +4,8 @@ CHROME=`command -v chrome || command -v chromium || command -v "/Applications/Go
 
 rm -f extension.crx
 
+z=`cd extension && zip -Xr9D ../extension.zip .`
+
 code=-1
 
 if [ ! -f extension.pem ]; then

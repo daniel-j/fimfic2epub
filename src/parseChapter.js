@@ -10,13 +10,6 @@ import { NS, tidyOptions } from './constants'
 const entities = new XmlEntities()
 
 export default function parseChapter (num, ch, html, remoteResources, callback) {
-  let chapterTitle = html.match(/<a\s+[^>]*id="chapter_title"[^>]*>(.*?)<\/a>/)
-
-  if (!chapterTitle) {
-    return tidy('<?xml version="1.0" encoding="utf-8"?>\n' + chapterPage, tidyOptions)
-  }
-  chapterTitle = chapterTitle[1]
-
   let chapterPos = html.indexOf('<div id="chapter_container">')
   let chapter = html.substring(chapterPos + 29)
 
