@@ -1,4 +1,3 @@
-'use strict'
 
 // gulp and utilities
 import gulp from 'gulp'
@@ -34,6 +33,7 @@ if (inProduction) {
     debug: false
   }))
   webpackConfig.plugins.push(new webpack.optimize.DedupePlugin())
+  /*
   webpackConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
     compress: {
       warnings: false,
@@ -46,6 +46,7 @@ if (inProduction) {
     screw_ie8: true,
     sourceMap: false
   }))
+  */
 }
 
 let wpCompiler = webpack(Object.assign({}, webpackConfig, {

@@ -5,7 +5,7 @@
   "description": "",
   "author": "djazz",
   "scripts": {
-    "pack": "gulp pack -p"
+    "build": "gulp -p"
   },
   "dependencies": {
     "escape-string-regexp": "^1.0.5",
@@ -20,9 +20,6 @@
   "devDependencies": {
     "babel-core": "^6.9.1",
     "babel-loader": "^6.2.4",
-    "babel-preset-es2015": "^6.9.0",
-    "babel-preset-es2015-loose": "^7.0.0",
-    "babel-preset-es2015-loose-native-modules": "^1.0.0",
     "babel-preset-node6": "^11.0.0",
     "del": "^2.2.0",
     "exports-loader": "^0.6.3",

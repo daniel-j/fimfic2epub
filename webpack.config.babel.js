@@ -1,8 +1,7 @@
-'use strict'
 
 import path from 'path'
 
-let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+// let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 export default {
   entry: {
@@ -15,11 +14,13 @@ export default {
   },
   module: {
     loaders: [
+      /*
       {
         test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
           sourceMaps: inProduction
         }
       },
+      */
       {
         test: /\.styl$/,
         loader: 'raw-loader!stylus-loader'

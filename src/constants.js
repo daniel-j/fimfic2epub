@@ -1,5 +1,5 @@
 
-export const NS = {
+export let NS = {
   OPF: 'http://www.idpf.org/2007/opf',
   OPS: 'http://www.idpf.org/2007/ops',
   DC: 'http://purl.org/dc/elements/1.1/',
@@ -9,7 +9,7 @@ export const NS = {
   XLINK: 'http://www.w3.org/1999/xlink'
 }
 
-export const tidyOptions = {
+export let tidyOptions = {
   'indent': 'auto',
   'numeric-entities': 'yes',
   'output-xhtml': 'yes',
@@ -21,13 +21,13 @@ export const tidyOptions = {
   'tidy-mark': 'no'
 }
 
-export const mimeMap = {
+export let mimeMap = {
   'image/jpeg': 'Images/*.jpg',
   'image/png': 'Images/*.png',
   'image/gif': 'Images/*.gif'
 }
 
-export const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
+export let containerXml = `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
     <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
