@@ -4,19 +4,70 @@ import render from './lib/mithril-node-render'
 import { pd as pretty } from 'pretty-data'
 import zeroFill from 'zero-fill'
 
+import { cleanMarkup } from './cleanMarkup'
 import { NS } from './constants'
 
-function subjects (s) {
-  let list = []
-  for (let i = 0; i < s.length; i++) {
-    list.push(m('dc:subject', s[i]))
+function nth (d) {
+  if (d > 3 && d < 21) return 'th'
+  switch (d % 10) {
+    case 1: return 'st'
+    case 2: return 'nd'
+    case 3: return 'rd'
+    default: return 'th'
   }
-  return list
 }
 
-export function createOpf (storyInfo, remoteResources) {
+function prettyDate (d) {
+  // format: 27th Oct 2011
+  let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  return d.getDate() + nth(d) + ' ' + months[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear()
+}
+
+export function createChapter (ch, html, callback) {
+  let authorNotesPos = html.indexOf('<div class="authors-note"')
+  let authorNotes = ''
+  if (authorNotesPos !== -1) {
+    authorNotesPos = authorNotesPos + html.substring(authorNotesPos).indexOf('<b>Author\'s Note:</b>')
+    authorNotes = html.substring(authorNotesPos + 22)
+    authorNotes = authorNotes.substring(0, authorNotes.indexOf('\t\n\t</div>'))
+    authorNotes = authorNotes.trim()
+  }
+
+  let chapterPos = html.indexOf('<div id="chapter_container">')
+  let chapter = html.substring(chapterPos + 29)
+
+  let pos = chapter.indexOf('\t</div>\t\t\n\t')
+
+  chapter = chapter.substring(0, pos)
+
+  let sections = [
+    m('div#chapter_container', m.trust(chapter)),
+    authorNotes ? m('div#author_notes', {className: authorNotesPos < chapterPos ? 'top' : 'bottom'}, m.trust(authorNotes)) : null
+  ]
+
+  if (authorNotes && authorNotesPos < chapterPos) {
+    sections.reverse()
+  }
+
+  let chapterPage = '<!doctype html>' + render(
+    m('html', {xmlns: NS.XHTML}, [
+      m('head', [
+        m('meta', {charset: 'utf-8'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
+        m('title', ch.title)
+      ]),
+      m('body', sections)
+    ])
+  )
+
+  cleanMarkup(chapterPage, (html) => {
+    callback(html)
+  })
+}
+
+export function createOpf (ffc) {
   let remotes = []
-  remoteResources.forEach((r, url) => {
+  ffc.remoteResources.forEach((r, url) => {
     if (!r.dest) {
       return
     }
@@ -30,39 +81,47 @@ export function createOpf (storyInfo, remoteResources) {
   let contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(render(
     m('package', {xmlns: NS.OPF, version: '3.0', 'unique-identifier': 'BookId'}, [
       m('metadata', {'xmlns:dc': NS.DC, 'xmlns:opf': NS.OPF}, [
-        m('dc:identifier#BookId', storyInfo.uuid),
-        m('dc:title', storyInfo.title),
-        m('dc:creator#cre', storyInfo.author.name),
+        m('dc:identifier#BookId', ffc.storyInfo.uuid),
+        m('dc:title', ffc.storyInfo.title),
+        m('dc:creator#cre', ffc.storyInfo.author.name),
         m('meta', {refines: '#cre', property: 'role', scheme: 'marc:relators'}, 'aut'),
-        m('dc:date', storyInfo.publishDate),
+        m('dc:date', new Date((ffc.storyInfo.publishDate || ffc.storyInfo.date_modified) * 1000).toISOString().substring(0, 10)),
         m('dc:publisher', 'Fimfiction'),
-        m('dc:description', storyInfo.description),
-        m('dc:source', storyInfo.url),
+        m('dc:description', ffc.storyInfo.description),
+        m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
         m('meta', {name: 'cover', content: 'cover'}),
-        m('meta', {property: 'dcterms:modified'}, new Date(storyInfo.date_modified * 1000).toISOString().replace('.000', ''))
-      ].concat(subjects(['Pony']))),
+        m('meta', {property: 'dcterms:modified'}, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', ''))
+      ].concat(ffc.categories.map((tag) =>
+        m('dc:subject', tag.name)
+      ))),
 
       m('manifest', [
         m('item', {id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml'}),
-        m('item', {id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav'}),
-        m('item', {id: 'style', href: 'style.css', 'media-type': 'text/css'}),
-        m('item', {id: 'coverstyle', href: 'coverstyle.css', 'media-type': 'text/css'}),
-        m('item', {id: 'coverpage', href: 'cover.xhtml', 'media-type': 'application/xhtml+xml', properties: 'svg'})
-      ].concat(storyInfo.chapters.map((ch, num) =>
-        m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml'})
+        m('item', {id: 'nav', 'href': 'Text/nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav'}),
+        m('item', {id: 'style', href: 'Styles/style.css', 'media-type': 'text/css'}),
+        m('item', {id: 'coverstyle', href: 'Styles/coverstyle.css', 'media-type': 'text/css'}),
+        ffc.includeTitlePage ? m('item', {id: 'titlestyle', href: 'Styles/titlestyle.css', 'media-type': 'text/css'}) : null,
+
+        m('item', {id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasCoverImage ? 'svg' : undefined}),
+        ffc.includeTitlePage ? m('item', {id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml'}) : null
+
+      ].concat(ffc.storyInfo.chapters.map((ch, num) =>
+        m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml'})
       ), remotes)),
 
       m('spine', {toc: 'ncx'}, [
         m('itemref', {idref: 'coverpage'}),
-        m('itemref', {idref: 'nav'})
-      ].concat(storyInfo.chapters.map((ch, num) =>
+        ffc.includeTitlePage ? m('itemref', {idref: 'titlepage'}) : null,
+        m('itemref', {idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 ? 'no' : undefined})
+      ].concat(ffc.storyInfo.chapters.map((ch, num) =>
         m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
       ))),
 
-      false ? m('guide', [
-
-      ]) : null
+      m('guide', [
+        m('reference', {type: 'cover', title: 'Cover', href: 'Text/cover.xhtml'}),
+        m('reference', {type: 'toc', title: 'Contents', href: 'Text/nav.xhtml'})
+      ])
     ])
   ))
   // console.log(contentOpf)
@@ -81,21 +140,20 @@ function navPoints (list) {
   return arr
 }
 
-export function createNcx (storyInfo) {
+export function createNcx (ffc) {
   let tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(render(
     m('ncx', {version: '2005-1', xmlns: NS.DAISY}, [
       m('head', [
-        m('meta', {content: storyInfo.uuid, name: 'dtb:uid'}),
+        m('meta', {content: ffc.storyInfo.uuid, name: 'dtb:uid'}),
         m('meta', {content: 0, name: 'dtb:depth'}),
         m('meta', {content: 0, name: 'dtb:totalPageCount'}),
         m('meta', {content: 0, name: 'dtb:maxPageNumber'})
       ]),
-      m('docTitle', m('text', storyInfo.title)),
+      m('docTitle', m('text', ffc.storyInfo.title)),
       m('navMap', navPoints([
-        ['Cover', 'cover.xhtml'],
-        ['Contents', 'nav.xhtml']
-      ].concat(storyInfo.chapters.map((ch, num) =>
-        [ch.title, 'chapter_' + zeroFill(3, num + 1) + '.xhtml']
+        ['Cover', 'Text/cover.xhtml']
+      ].concat(ffc.storyInfo.chapters.map((ch, num) =>
+        [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
       ))))
     ])
   ))
@@ -103,21 +161,20 @@ export function createNcx (storyInfo) {
   return tocNcx
 }
 
-export function createNav (storyInfo) {
+export function createNav (ffc) {
   let navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en'}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'style.css'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
         m('title', 'Contents')
       ]),
-      m('body', [
+      m('body#navpage', [
         m('nav#toc', {'epub:type': 'toc'}, [
           m('h1', 'Contents'),
           m('ol', [
-            m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover')),
-            m('li', {hidden: ''}, m('a', {href: 'nav.xhtml'}, 'Contents'))
-          ].concat(storyInfo.chapters.map((ch, num) =>
+            m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover'))
+          ].concat(ffc.storyInfo.chapters.map((ch, num) =>
             m('li', m('a', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
           )))
         ])
@@ -129,20 +186,78 @@ export function createNav (storyInfo) {
 }
 
 export function createCoverPage (coverFilename, w, h) {
+  let body
+
+  if (typeof coverFilename === 'string') {
+    body = m('svg#cover', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + w + ' ' + h},
+      m('image', {width: w, height: h, 'xlink:href': coverFilename})
+    )
+  } else {
+    let ffc = coverFilename
+    body = [
+      m('h1', ffc.storyInfo.title),
+      m('h2', ffc.storyInfo.author.name)
+    ]
+  }
+
   let coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {name: 'viewport', content: 'width=' + w + ', height=' + h}),
         m('title', 'Cover'),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'coverstyle.css'})
+        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/coverstyle.css'})
       ]),
-      m('body', {'epub:type': 'cover'}, [
-        m('svg#cover', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + w + ' ' + h},
-          m('image', {width: w, height: h, 'xlink:href': coverFilename})
-        )
-      ])
+      m('body', {'epub:type': 'cover'}, body)
     ])
   ))
   // console.log(coverPage)
   return coverPage
+}
+
+function dateBox (heading, date) {
+  return m('.datebox', m('.wrap', [
+    m('span.heading', heading),
+    m('br'),
+    m('span.date', prettyDate(date))
+  ]))
+}
+
+export function createTitlePage (ffc) {
+  let titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en'}, [
+      m('head', [
+        m('meta', {charset: 'utf-8'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/titlestyle.css'}),
+        m('title', ffc.storyInfo.title)
+      ]),
+      m('body#titlepage', [
+        m('h1', ffc.storyInfo.title),
+        m('h2', ffc.storyInfo.author.name),
+        m('a', {href: ffc.storyInfo.url}, 'Read on Fimfiction'),
+        m('hr'),
+        ffc.categories.length > 0 ? [
+          m('div#categories', ffc.categories.map((tag) =>
+            m('div', {className: tag.className}, tag.name)
+          )),
+          m('hr')
+        ] : null,
+        ffc.storyInfo.prequel ? [m('div', [
+          'This story is a sequel to ',
+          m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
+        ]), m('hr')] : null,
+        m('div#description', m.trust(ffc.storyInfo.description)),
+        m('hr'),
+        m('.extra_story_data', [
+          ffc.storyInfo.publishDate && dateBox('First Published', new Date(ffc.storyInfo.publishDate * 1000)),
+          dateBox('Last Modified', new Date(ffc.storyInfo.date_modified * 1000)),
+          ffc.tags.map((t) =>
+            m('span', {className: 'character_icon', title: t.name}, m('img', {src: t.image, className: 'character_icon'}))
+          )
+        ])
+      ])
+    ])
+  ))
+  // console.log(titlePage)
+  return titlePage
 }

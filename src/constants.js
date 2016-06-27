@@ -18,7 +18,8 @@ export let tidyOptions = {
   'quiet': 'yes',
   'show-warnings': 0,
   'newline': 'LF',
-  'tidy-mark': 'no'
+  'tidy-mark': 'no',
+  'show-body-only': 'auto'
 }
 
 export let mimeMap = {
