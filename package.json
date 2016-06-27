@@ -5,7 +5,7 @@
   "description": "",
   "author": "djazz",
   "scripts": {
-    "build": "gulp -p",
+    "build": "gulp -p"
   },
   "bin": {
     "fimfic2epub": "./bin/fimfic2epub.js"
