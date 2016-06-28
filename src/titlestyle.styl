@@ -1,24 +1,70 @@
 
+.title {
+  margin: 1em 0;
+  text-align: left;
+  vertical-align: middle;
+  
+  .story_name, .author {
+    display: inline-block;
+    font-family: sans-serif;
+    text-align: left;
+  }
+
+  .story_name {
+    font-size: 1.5em;
+    color: #222;
+    font-weight: bold;
+    margin-right: 5px;
+  }
+
+  .author {
+    margin: 0;
+    font-size: 0.9em;
+    color: #444;
+    font-weight: normal;
+    display: inline-block;
+    
+    a {
+      font-weight: bold;
+    }
+  }
+}
+
+.readlink {
+  text-align: left;
+  font-size: 0.9em;
+  line-height: 1.1em;
+}
+
+.extra_story_data {
+  text-align: left;
+}
+
+// Last Modified and First Published
 .datebox {
-  line-height: 38px;
-  color: #333;
+  color: #222;
   padding-left: 10px;
-  font-size: 0.75em;
   font-weight: bold;
   display: inline-block;
-  padding: 0px 10px;
+  padding: 0 10px;
+  padding-top: 2px;
+  padding-bottom: 4px;
   border-radius: 3px;
   background-color: #fff;
   vertical-align: middle;
   border: 1px solid #999;
   margin: 0px 2px;
+  margin-bottom: 6px;
+  height: 2em;
   
   .heading, .date {
     font-family: sans-serif;
+    font-size: 0.8em;
+    text-align: center;
   }
 
   .wrap {
-    line-height: 1.2em;
+    line-height: 0.9em;
     vertical-align: middle;
     display: inline-block;
     text-align: center;
@@ -26,10 +72,11 @@
 
   .heading {
     font-weight: normal;
-    color: #555;
+    color: #444;
   }
 }
 
+// Character icon
 span.character_icon {
   vertical-align: middle;
   margin: 0 2px;
@@ -39,26 +86,27 @@ span.character_icon {
   display: inline-block;
   vertical-align: middle;
   border: 1px solid #999;
+  margin-bottom: 6px;
 
   img.character_icon {
     border-radius: 0;
     display: block;
+    height: 2em;
   }
 }
 
 // Ratings
 .content-rating-everyone, .content-rating-teen, .content-rating-mature {
-  padding: 4px 6px;
-  vertical-align: 6px;
+  padding: 0.5em;
   color: #fff;
   border: 1px solid rgba(0,0,0,0.2);
   text-shadow: -1px -1px rgba(0,0,0,0.2);
   border-radius: 4px;
-  font-size: 12px;
-  margin-right: 5px;
+  margin-bottom: 4px;
   display: inline-block;
-  line-height: 16px;
+  line-height: 1.0em;
   font-family: sans-serif;
+  font-weight: bold;
 }
 .content-rating-everyone {
   background: #78ac40;
@@ -74,9 +122,12 @@ span.character_icon {
 }
 
 // Categories
+#categories {
+  text-align: left;
+}
 .story_category {
   display: inline-block;
-  padding: 8px 12px;
+  padding: 0.5em;
   line-height: 1.0em;
   color: #555;
   text-decoration: none;

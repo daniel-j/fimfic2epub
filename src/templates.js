@@ -203,7 +203,7 @@ export function createCoverPage (coverFilename, w, h) {
   let coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
-        m('meta', {name: 'viewport', content: 'width=' + w + ', height=' + h}),
+        typeof coverFilename === 'string' ? m('meta', {name: 'viewport', content: 'width=' + w + ', height=' + h}) : null,
         m('title', 'Cover'),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/coverstyle.css'})
       ]),
@@ -232,21 +232,24 @@ export function createTitlePage (ffc) {
         m('title', ffc.storyInfo.title)
       ]),
       m('body#titlepage', [
-        m('h1', ffc.storyInfo.title),
-        m('h2', ffc.storyInfo.author.name),
-        m('a', {href: ffc.storyInfo.url}, 'Read on Fimfiction'),
+        m('.title', [
+          m('.story_name', ffc.storyInfo.title + ' '),
+          m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
+        ]),
+        m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Read on Fimfiction')),
         m('hr'),
-        ffc.categories.length > 0 ? [
-          m('div#categories', ffc.categories.map((tag) =>
+        m('#categories', [
+          m('div', {className: 'content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
+          ffc.categories.map((tag) =>
             m('div', {className: tag.className}, tag.name)
-          )),
-          m('hr')
-        ] : null,
+          )
+        ]),
+        m('hr'),
         ffc.storyInfo.prequel ? [m('div', [
           'This story is a sequel to ',
           m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
         ]), m('hr')] : null,
-        m('div#description', m.trust(ffc.storyInfo.description)),
+        m('#description', m.trust(ffc.storyInfo.description)),
         m('hr'),
         m('.extra_story_data', [
           ffc.storyInfo.publishDate && dateBox('First Published', new Date(ffc.storyInfo.publishDate * 1000)),

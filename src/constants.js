@@ -35,3 +35,4 @@ export let containerXml = `<?xml version="1.0" encoding="UTF-8"?>
   </rootfiles>
 </container>
 `
+export let youtubeKey = 'AIzaSyCF1taix0lTr7-e_XBZazIXfAr8IvxTJhA'
