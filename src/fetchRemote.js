@@ -55,11 +55,7 @@ export default function fetchRemote (url, cb, responseType) {
   if (url.indexOf('//') === 0) {
     url = 'http:' + url
   }
-  if (isNode) {
-    fetchNode(url, cb, responseType)
-    return
-  }
-  if (document.location.protocol === 'https:' && url.indexOf('http:') === 0) {
+  if (!isNode && document.location.protocol === 'https:' && url.indexOf('http:') === 0) {
     fetchBackground(url, cb, responseType)
     return
   }
@@ -72,17 +68,3 @@ export default function fetchRemote (url, cb, responseType) {
   }, responseType)
 }
 
-function fetchNode (url, cb, responseType) {
-  process.request({
-    url: url,
-    encoding: responseType ? null : 'utf8'
-  }, (error, response, body) => {
-    if (error) {
-      console.error(error)
-      cb()
-      return
-    }
-    let type = response.headers['content-type']
-    cb(body, type)
-  })
-}

@@ -41,135 +41,142 @@ export default class FimFic2Epub {
   }
 
   download () {
-    if (this.isDownloading) {
-      alert("Calm down, I'm working on it (it's processing)")
-      return
-    }
-    if (this.cachedBlob) {
-      this.saveStory()
-      return
-    }
-    this.build()
+    return new Promise((resolve, reject) => {
+      if (this.isDownloading) {
+        reject()
+        return
+      }
+      if (this.cachedBlob) {
+        resolve()
+        return
+      }
+      this.build().then(resolve).catch(reject)
+    })
   }
 
   build () {
-    this.isDownloading = true
+    return new Promise((resolve, reject) => {
+      this.isDownloading = true
 
-    this.zip = new JSZip()
-    this.zip.file('mimetype', 'application/epub+zip')
-    this.zip.file('META-INF/container.xml', containerXml)
+      this.zip = new JSZip()
+      this.zip.file('mimetype', 'application/epub+zip')
+      this.zip.file('META-INF/container.xml', containerXml)
 
-    console.log('Fetching story metadata...')
+      console.log('Fetching story metadata...')
 
-    fetchRemote('https://www.fimfiction.net/api/story.php?story=' + this.storyId, (raw, type) => {
-      let data
-      try {
-        data = JSON.parse(raw)
-      } catch (e) {
-        console.log('Unable to fetch story json')
-        return
-      }
-      if (data.error) {
-        console.error(data.error)
-        return
-      }
-      this.storyInfo = data.story
-      this.storyInfo.chapters = this.storyInfo.chapters || []
-      this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
+      fetchRemote('https://www.fimfiction.net/api/story.php?story=' + this.storyId, (raw, type) => {
+        let data
+        try {
+          data = JSON.parse(raw)
+        } catch (e) {
+          console.log('Unable to fetch story json')
+          return
+        }
+        if (data.error) {
+          console.error(data.error)
+          return
+        }
+        this.storyInfo = data.story
+        this.storyInfo.chapters = this.storyInfo.chapters || []
+        this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
 
-      this.zip.file('Styles/style.css', styleCss)
-      this.zip.file('Styles/coverstyle.css', coverstyleCss)
-      if (this.includeTitlePage) {
-        this.zip.file('Styles/titlestyle.css', titlestyleCss)
-      }
+        this.zip.file('Styles/style.css', styleCss)
+        this.zip.file('Styles/coverstyle.css', coverstyleCss)
+        if (this.includeTitlePage) {
+          this.zip.file('Styles/titlestyle.css', titlestyleCss)
+        }
 
-      this.zip.file('toc.ncx', template.createNcx(this))
-      this.zip.file('Text/nav.xhtml', template.createNav(this))
+        this.zip.file('toc.ncx', template.createNcx(this))
+        this.zip.file('Text/nav.xhtml', template.createNav(this))
 
-      this.fetchTitlePage()
-    })
-  }
-
-  fetchTitlePage () {
-    fetchRemote(this.storyInfo.url, (raw, type) => {
-      this.extractTitlePageInfo(raw, () => this.checkCoverImage())
-    })
-  }
-
-  extractTitlePageInfo (html, cb) {
-    let descPos = html.indexOf('<div class="description" id="description')
-    descPos = descPos + html.substring(descPos).indexOf('">') + 2
-    html = html.substring(descPos)
-    let ma = html.match(/<a href="(.*?)" class="source">Source<\/a>/)
-    this.storyInfo.source_image = null
-    if (ma) {
-      this.storyInfo.source_image = ma[1]
-    }
-    let endCatsPos = html.indexOf('<hr />')
-    let startCatsPos = html.substring(0, endCatsPos).lastIndexOf('</div>')
-    let catsHtml = html.substring(startCatsPos, endCatsPos)
-    html = html.substring(endCatsPos + 6)
-
-    let categories = []
-    let matchCategory = /<a href="(.*?)" class="(.*?)">(.*?)<\/a>/g
-    for (let c; (c = matchCategory.exec(catsHtml));) {
-      categories.push({
-        url: 'http://www.fimfiction.net' + c[1],
-        className: c[2],
-        name: entities.decode(c[3])
+        this.fetchTitlePage(resolve, reject)
       })
-    }
-    this.categories = categories
-
-    ma = html.match(/This story is a sequel to <a href="([^"]*)">(.*?)<\/a>/)
-    if (ma) {
-      this.storyInfo.prequel = {
-        url: 'http://www.fimfiction.net' + ma[1],
-        title: entities.decode(ma[2])
-      }
-      html = html.substring(html.indexOf('<hr />') + 6)
-    }
-    let endDescPos = html.indexOf('</div>\n')
-    let description = html.substring(0, endDescPos).trim()
-
-    html = html.substring(endDescPos + 7)
-    let extraPos = html.indexOf('<div class="extra_story_data">')
-    html = html.substring(extraPos + 30)
-
-    ma = html.match(/<span class="published">First Published<\/span><br \/><span>(.*?)<\/span>/)
-    if (ma) {
-      let date = ma[1]
-      date = date.replace(/^(\d+)[a-z]+? ([a-zA-Z]+? \d+)$/, '$1 $2')
-      this.storyInfo.publishDate = (new Date(date).getTime() / 1000) | 0
-    }
-
-    html = html.substring(0, html.indexOf('<div class="button-group"'))
-
-    let tags = []
-    tags.byImage = {}
-    let matchTag = /<a href="\/tag\/(.*?)" class="character_icon" title="(.*?)" style=".*?"><img src="(.*?)" class="character_icon" \/><\/a>/g
-    for (let tag; (tag = matchTag.exec(html));) {
-      let t = {
-        url: 'http://www.fimfiction.net/tag/' + tag[1],
-        name: entities.decode(tag[2]),
-        image: entities.decode(tag[3])
-      }
-      tags.push(t)
-      tags.byImage[t.image] = t
-      if (this.includeTitlePage) {
-        this.remoteResources.set(t.image, {filename: 'tag_' + tag[1], originalUrl: t.image, where: ['tags']})
-      }
-    }
-    this.tags = tags
-
-    cleanMarkup(description, (html) => {
-      this.storyInfo.description = html
-      this.findRemoteResources('description', 'description', html)
-      cb()
     })
   }
 
-  checkCoverImage () {
+  fetchTitlePage (resolve, reject) {
+    console.log('Fetching index page...')
+    fetchRemote(this.storyInfo.url, (raw, type) => {
+      this.extractTitlePageInfo(raw).then(() => this.checkCoverImage(resolve, reject))
+    })
+  }
+
+  extractTitlePageInfo (html) {
+    return new Promise((resolve, reject) => {
+      let descPos = html.indexOf('<div class="description" id="description')
+      descPos = descPos + html.substring(descPos).indexOf('">') + 2
+      html = html.substring(descPos)
+      let ma = html.match(/<a href="(.*?)" class="source">Source<\/a>/)
+      this.storyInfo.source_image = null
+      if (ma) {
+        this.storyInfo.source_image = ma[1]
+      }
+      let endCatsPos = html.indexOf('<hr />')
+      let startCatsPos = html.substring(0, endCatsPos).lastIndexOf('</div>')
+      let catsHtml = html.substring(startCatsPos, endCatsPos)
+      html = html.substring(endCatsPos + 6)
+
+      let categories = []
+      let matchCategory = /<a href="(.*?)" class="(.*?)">(.*?)<\/a>/g
+      for (let c; (c = matchCategory.exec(catsHtml));) {
+        categories.push({
+          url: 'http://www.fimfiction.net' + c[1],
+          className: c[2],
+          name: entities.decode(c[3])
+        })
+      }
+      this.categories = categories
+
+      ma = html.match(/This story is a sequel to <a href="([^"]*)">(.*?)<\/a>/)
+      if (ma) {
+        this.storyInfo.prequel = {
+          url: 'http://www.fimfiction.net' + ma[1],
+          title: entities.decode(ma[2])
+        }
+        html = html.substring(html.indexOf('<hr />') + 6)
+      }
+      let endDescPos = html.indexOf('</div>\n')
+      let description = html.substring(0, endDescPos).trim()
+
+      html = html.substring(endDescPos + 7)
+      let extraPos = html.indexOf('<div class="extra_story_data">')
+      html = html.substring(extraPos + 30)
+
+      ma = html.match(/<span class="published">First Published<\/span><br \/><span>(.*?)<\/span>/)
+      if (ma) {
+        let date = ma[1]
+        date = date.replace(/^(\d+)[a-z]+? ([a-zA-Z]+? \d+)$/, '$1 $2')
+        this.storyInfo.publishDate = (new Date(date).getTime() / 1000) | 0
+      }
+
+      html = html.substring(0, html.indexOf('<div class="button-group"'))
+
+      let tags = []
+      tags.byImage = {}
+      let matchTag = /<a href="\/tag\/(.*?)" class="character_icon" title="(.*?)" style=".*?"><img src="(.*?)" class="character_icon" \/><\/a>/g
+      for (let tag; (tag = matchTag.exec(html));) {
+        let t = {
+          url: 'http://www.fimfiction.net/tag/' + tag[1],
+          name: entities.decode(tag[2]),
+          image: entities.decode(tag[3])
+        }
+        tags.push(t)
+        tags.byImage[t.image] = t
+        if (this.includeTitlePage) {
+          this.remoteResources.set(t.image, {filename: 'tag-' + tag[1], originalUrl: t.image, where: ['tags']})
+        }
+      }
+      this.tags = tags
+
+      cleanMarkup(description, (html) => {
+        this.storyInfo.description = html
+        this.findRemoteResources('description', 'description', html)
+        resolve()
+      })
+    })
+  }
+
+  checkCoverImage (resolve, reject) {
     this.hasCoverImage = !!this.storyInfo.full_image
 
     if (this.hasCoverImage) {
@@ -180,19 +187,19 @@ export default class FimFic2Epub {
         coverImage.src = this.storyInfo.full_image
 
         coverImage.addEventListener('load', () => {
-          this.processStory(coverImage)
+          this.processStory(resolve, reject, coverImage)
         }, false)
       } else {
         fetchRemote(this.storyInfo.full_image, (data, type) => {
-          this.processStory(process.sizeOf(data))
+          this.processStory(resolve, reject, process.sizeOf(data))
         }, 'buffer')
       }
     } else {
-      this.processStory()
+      this.processStory(resolve, reject)
     }
   }
 
-  processStory (coverImage) {
+  processStory (resolve, reject, coverImage) {
     console.log('Fetching chapters...')
 
     this.fetchChapters(() => {
@@ -251,21 +258,12 @@ export default class FimFic2Epub {
           .then((blob) => {
             this.cachedBlob = blob
             this.isDownloading = false
-            this.saveStory()
+            resolve()
           })
         } else {
-          this.zip
-          .generateNodeStream({
-            type: 'nodebuffer',
-            streamFiles: true,
-            mimeType: 'application/epub+zip',
-            compression: 'DEFLATE',
-            compressionOptions: {level: 9}
-          })
-          .pipe(process.fs.createWriteStream(this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub'))
-          .on('finish', () => {
-            console.log('Saved epub')
-          })
+          this.cachedBlob = true
+          this.isDownloading = false
+          resolve()
         }
       })
     })
@@ -377,13 +375,31 @@ export default class FimFic2Epub {
 
   saveStory () {
     console.log('Saving epub...')
+
+    let filename = this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub'
+
+    if (isNode) {
+      this.zip
+      .generateNodeStream({
+        type: 'nodebuffer',
+        streamFiles: true,
+        mimeType: 'application/epub+zip',
+        compression: 'DEFLATE',
+        compressionOptions: {level: 9}
+      })
+      .pipe(process.fs.createWriteStream(filename))
+      .on('finish', () => {
+        console.log('Saved epub as', filename)
+      })
+      return
+    }
     if (typeof safari !== 'undefined') {
       blobToDataURL(this.cachedBlob, (dataurl) => {
         document.location.href = dataurl
         alert('Rename downloaded file to .epub')
       })
     } else {
-      saveAs(this.cachedBlob, this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub')
+      saveAs(this.cachedBlob, filename)
     }
   }
 }

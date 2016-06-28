@@ -10,6 +10,8 @@ const epubButton = document.querySelector('.story_container ul.chapters li.botto
 if (epubButton) {
   epubButton.addEventListener('click', function (e) {
     e.preventDefault()
-    ffc.download()
+    ffc.download().then(() => {
+      ffc.saveStory()
+    })
   }, false)
 }

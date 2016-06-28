@@ -16,4 +16,6 @@ const STORY_ID = process.argv[2]
 
 const ffc = new FimFic2Epub(STORY_ID)
 
-ffc.download()
+ffc.download().then(() => {
+  ffc.saveStory()
+})
