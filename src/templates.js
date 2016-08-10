@@ -24,6 +24,8 @@ function prettyDate (d) {
 }
 
 export function createChapter (ch, html, callback) {
+  let trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
+
   let authorNotesPos = html.indexOf('<div class="authors-note"')
   let authorNotes = ''
   if (authorNotesPos !== -1) {
@@ -31,6 +33,7 @@ export function createChapter (ch, html, callback) {
     authorNotes = html.substring(authorNotesPos + 22)
     authorNotes = authorNotes.substring(0, authorNotes.indexOf('\t\n\t</div>'))
     authorNotes = authorNotes.trim()
+    authorNotes = authorNotes.replace(trimWhitespace, '')
   }
 
   let chapterPos = html.indexOf('<div id="chapter_container">')
@@ -38,7 +41,10 @@ export function createChapter (ch, html, callback) {
 
   let pos = chapter.indexOf('\t</div>\t\t\n\t')
 
-  chapter = chapter.substring(0, pos)
+  chapter = chapter.substring(0, pos).trim()
+
+  // remove leading and trailing <br /> tags and whitespace
+  chapter = chapter.replace(trimWhitespace, '')
 
   let sections = [
     [
