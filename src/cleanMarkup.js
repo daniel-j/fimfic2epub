@@ -1,5 +1,5 @@
 
-import m from 'mithril'
+import m from 'mithril/render/hyperscript'
 import render from './lib/mithril-node-render'
 import isNode from 'detect-node'
 
