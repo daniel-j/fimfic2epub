@@ -41,7 +41,13 @@ export function createChapter (ch, html, callback) {
   chapter = chapter.substring(0, pos)
 
   let sections = [
-    m('div#chapter_container', m.trust(chapter)),
+    [
+      m('.chapter-title', [
+        m('h1', ch.title),
+        m('hr')
+      ]),
+      m.trust(chapter)
+    ],
     authorNotes ? m('div#author_notes', {className: authorNotesPos < chapterPos ? 'top' : 'bottom'}, m.trust(authorNotes)) : null
   ]
 
