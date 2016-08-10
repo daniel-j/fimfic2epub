@@ -1,7 +1,9 @@
 
-import m from 'mithril/render/hyperscript'
+import hyperscript from 'mithril/render/hyperscript'
 import render from './lib/mithril-node-render'
 import isNode from 'detect-node'
+
+const m = hyperscript
 
 import fetch from './fetch'
 import { tidyOptions, youtubeKey } from './constants'
@@ -71,7 +73,7 @@ export function cleanMarkup (html, callback) {
           m('img', {src: thumbnail, alt: title})
         ),
         m('figcaption', m('a', {href: youtubeUrl}, caption))
-      ]))
+      ]), {strict: true})
     })
 
     html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')

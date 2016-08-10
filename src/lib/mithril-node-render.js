@@ -1,5 +1,9 @@
 'use strict'
 
+var VOID_TAGS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr',
+  'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 'track',
+  'wbr', '!doctype']
+
 function isArray (thing) {
   return Object.prototype.toString.call(thing) === '[object Array]'
 }
@@ -21,9 +25,9 @@ function escapeHtml (s, replaceDoubleQuote) {
   if (typeof (s) !== 'string') {
     s = s + ''
   }
-  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  s = s.replace(/\&/g, '&amp;').replace(/</g, '&lt;').replace(/\>/g, '&gt;')
   if (replaceDoubleQuote) {
-    return s.replace(/"/g, '&quot;')
+    return s.replace(/\"/g, '&quot;')
   }
   return s
 }
@@ -65,12 +69,15 @@ function createAttrString (view, escapeAttributeValue) {
   }).join('')
 }
 
-function createChildrenContent (view) {
+function createChildrenContent (view, options) {
+  if (view.text != null) {
+    return options.escapeString(view.text)
+  }
   if (isArray(view.children) && !view.children.length) {
     return ''
   }
 
-  return render(view.children)
+  return render(view.children, options)
 }
 
 function render (view, options) {
@@ -78,7 +85,8 @@ function render (view, options) {
 
   var defaultOptions = {
     escapeAttributeValue: escapeHtml,
-    escapeString: escapeHtml
+    escapeString: escapeHtml,
+    strict: false
   }
 
   Object.keys(defaultOptions).forEach(function (key) {
@@ -104,21 +112,31 @@ function render (view, options) {
   }
 
   // compontent
-  if (view.view) {
-    var scope = view.controller ? new view.controller() : {}
-    var result = render(view.view(scope), options)
-    if (scope.onunload) {
-      scope.onunload()
+  if (typeof view.tag === 'object' && view.tag.view) {
+    var compontent = view.tag
+    var node = view
+    if (compontent.oninit) {
+      compontent.oninit(node)
+    }
+    var result = render(compontent.view(node), options)
+    if (compontent.onremove) {
+      compontent.onremove(node)
     }
     return result
   }
 
-  if (view.$trusted) {
-    return '' + view
+  if (view.tag === '<') {
+    return '' + view.children
   }
-  var children = createChildrenContent(view)
-  if (!children) {
-    return '<' + view.tag + createAttrString(view, options.escapeAttributeValue) + '/>'
+  var children = createChildrenContent(view, options)
+  if (view.tag === '#') {
+    return options.escapeString(children)
+  }
+  if (view.tag === '[') {
+    return '' + children
+  }
+  if (!children && (options.strict || VOID_TAGS.indexOf(view.tag.toLowerCase()) >= 0)) {
+    return '<' + view.tag + createAttrString(view, options.escapeAttributeValue) + (options.strict ? '/' : '') + '>'
   }
   return [
     '<', view.tag, createAttrString(view, options.escapeAttributeValue), '>',

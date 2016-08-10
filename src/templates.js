@@ -1,5 +1,5 @@
 
-import m from 'mithril/render/hyperscript'
+import hyperscript from 'mithril/render/hyperscript'
 import trust from 'mithril/render/trust'
 import render from './lib/mithril-node-render'
 import { pd as pretty } from 'pretty-data'
@@ -7,6 +7,9 @@ import zeroFill from 'zero-fill'
 
 import { cleanMarkup } from './cleanMarkup'
 import { NS } from './constants'
+
+const m = hyperscript
+m.trust = trust
 
 function nth (d) {
   if (d > 3 && d < 21) return 'th'
@@ -42,8 +45,8 @@ export function createChapter (ch, html, callback) {
   chapter = chapter.substring(0, pos)
 
   let sections = [
-    m('div#chapter_container', trust(chapter)),
-    authorNotes ? m('div#author_notes', {className: authorNotesPos < chapterPos ? 'top' : 'bottom'}, trust(authorNotes)) : null
+    m('div#chapter_container', m.trust(chapter)),
+    authorNotes ? m('div#author_notes', {className: authorNotesPos < chapterPos ? 'top' : 'bottom'}, m.trust(authorNotes)) : null
   ]
 
   if (authorNotes && authorNotesPos < chapterPos) {
@@ -59,7 +62,7 @@ export function createChapter (ch, html, callback) {
       ]),
       m('body', sections)
     ])
-  )
+  , {strict: true})
 
   cleanMarkup(chapterPage, (html) => {
     callback(html)
@@ -124,7 +127,7 @@ export function createOpf (ffc) {
         m('reference', {type: 'toc', title: 'Contents', href: 'Text/nav.xhtml'})
       ])
     ])
-  ))
+  , {strict: true}))
   // console.log(contentOpf)
   return contentOpf
 }
@@ -157,7 +160,7 @@ export function createNcx (ffc) {
         [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
       ))))
     ])
-  ))
+  , {strict: true}))
   // console.log(tocNcx)
   return tocNcx
 }
@@ -181,7 +184,7 @@ export function createNav (ffc) {
         ])
       ])
     ])
-  ))
+  , {strict: true}))
   // console.log(navDocument)
   return navDocument
 }
@@ -210,7 +213,7 @@ export function createCoverPage (coverFilename, w, h) {
       ]),
       m('body', {'epub:type': 'cover'}, body)
     ])
-  ))
+  , {strict: true}))
   // console.log(coverPage)
   return coverPage
 }
@@ -250,7 +253,7 @@ export function createTitlePage (ffc) {
           'This story is a sequel to ',
           m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
         ]), m('hr')] : null,
-        m('#description', trust(ffc.storyInfo.description)),
+        m('#description', m.trust(ffc.storyInfo.description)),
         m('hr'),
         m('.extra_story_data', [
           ffc.storyInfo.publishDate && dateBox('First Published', new Date(ffc.storyInfo.publishDate * 1000)),
@@ -261,7 +264,7 @@ export function createTitlePage (ffc) {
         ])
       ])
     ])
-  ))
+  , {strict: true}))
   // console.log(titlePage)
   return titlePage
 }
