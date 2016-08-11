@@ -1,6 +1,6 @@
 
 import hyperscript from 'mithril/render/hyperscript'
-import render from './lib/mithril-node-render'
+import render from 'mithril-node-render'
 import isNode from 'detect-node'
 
 const m = hyperscript

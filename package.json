@@ -17,6 +17,7 @@
     "html-entities": "^1.2.0",
     "jszip": "^3.0.0",
     "mithril": "github:lhorie/mithril.js#rewrite",
+    "mithril-node-render": "github:stephanhoyer/mithril-node-render#rewrite",
     "pretty-data": "^0.40.0",
     "tidy-html5": "^0.1.1",
     "zero-fill": "^2.2.3"

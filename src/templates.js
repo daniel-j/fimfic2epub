@@ -1,7 +1,7 @@
 
 import hyperscript from 'mithril/render/hyperscript'
 import trust from 'mithril/render/trust'
-import render from './lib/mithril-node-render'
+import render from 'mithril-node-render'
 import { pd as pretty } from 'pretty-data'
 import zeroFill from 'zero-fill'
 
