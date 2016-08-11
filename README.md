@@ -18,8 +18,10 @@ Installation & usage (command line)
 You can install the tool by running `npm install -g daniel-j/fimfic2epub`. You can then run it with `$ fimfic2epub <story id>`. This will save the EPUB in the current working directory.
 
 Example:
-	# Download Tag Test by McPoodle
-	$ fimfic2epub 180690
+```
+# Download Tag Test by McPoodle
+$ fimfic2epub 180690
+```
 
 
 Building
