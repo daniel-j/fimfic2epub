@@ -1,3 +1,4 @@
+# git ignore
 .DS_Store
 node_modules/
 extension/fimfic2epub.js
@@ -8,3 +9,7 @@ extension.xpi
 extension.zip
 fimfic2epub.safariextension/
 *.epub
+
+# npm ignore
+extension/
+assets/

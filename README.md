@@ -15,11 +15,11 @@ Right now the addon is not available in Add-ons for Firefox, but it's fully comp
 Installation & usage (command line)
 -------------------
 
-You can install the tool by running `npm install -g daniel-j/fimfic2epub`. You can then run it with `$ fimfic2epub <story id>`. This will save the EPUB in the current working directory.
+You can install the tool by running `npm install -g fimfic2epub`. You can then run it with `$ fimfic2epub <story id>`. This will save the EPUB in the current working directory.
 
 Example:
 ```
-# Download Tag Test by McPoodle
+Download Tag Test by McPoodle
 $ fimfic2epub 180690
 ```
 
