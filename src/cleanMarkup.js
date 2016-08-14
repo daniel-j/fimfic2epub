@@ -1,16 +1,17 @@
 
 import m from 'mithril'
 import render from './lib/mithril-node-render'
-import isNode from 'detect-node'
 
 import fetch from './fetch'
 import { tidyOptions, youtubeKey } from './constants'
+
+import isNode from 'detect-node'
 
 let tidy
 if (!isNode) {
   tidy = require('exports?tidy_html5!tidy-html5')
 } else {
-  tidy = process.tidy
+  tidy = require('tidy-html5').tidy_html5
 }
 
 export function cleanMarkup (html, callback) {

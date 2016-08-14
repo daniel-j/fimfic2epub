@@ -2,7 +2,8 @@
 import isNode from 'detect-node'
 
 function fetchNode (url, cb, responseType) {
-  process.request({
+  const request = require('request')
+  request({
     url: url,
     encoding: responseType ? null : 'utf8',
     headers: {

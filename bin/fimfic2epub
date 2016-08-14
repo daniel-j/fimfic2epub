@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+const FimFic2Epub = require('../fimfic2epub')
+
+const STORY_ID = process.argv[2]
+
+const ffc = new FimFic2Epub(STORY_ID)
+
+ffc.download().then(() => {
+  ffc.saveStory()
+})

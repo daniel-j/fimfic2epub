@@ -20,40 +20,43 @@ import webpackConfig from './webpack.config.babel.js'
 
 const sequence = Sequence.use(gulp)
 
-let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 let watchOpts = {
   readDelay: 500,
   verbose: true
 }
 
-if (inProduction) {
-  webpackConfig.plugins.push(new webpack.LoaderOptionsPlugin({
-    minimize: true,
-    debug: false
-  }))
-  webpackConfig.plugins.push(new webpack.optimize.DedupePlugin())
-  /*
-  webpackConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
-    compress: {
-      warnings: false,
-      screw_ie8: true
-    },
-    comments: false,
-    mangle: {
-      screw_ie8: true
-    },
-    screw_ie8: true,
-    sourceMap: false
-  }))
-  */
-}
+webpackConfig.forEach((c) => {
+  if (inProduction) {
+    c.plugins.push(new webpack.LoaderOptionsPlugin({
+      minimize: true,
+      debug: false
+    }))
+    c.plugins.push(new webpack.optimize.DedupePlugin())
+    /*
+    c.plugins.push(new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false,
+        screw_ie8: true
+      },
+      comments: false,
+      mangle: {
+        screw_ie8: true
+      },
+      screw_ie8: true,
+      sourceMap: false
+    }))
+    */
+  }
+  Object.assign({}, c, {
+    cache: {},
+    devtool: inProduction ? null : 'inline-source-map',
+    debug: !inProduction
+  })
+})
 
-let wpCompiler = webpack(Object.assign({}, webpackConfig, {
-  cache: {},
-  devtool: inProduction ? null : 'inline-source-map',
-  debug: !inProduction
-}))
+const wpCompiler = webpack(webpackConfig)
 
 function webpackTask (callback) {
   // run webpack

@@ -1,7 +1,6 @@
 
 import JSZip from 'jszip'
 import escapeStringRegexp from 'escape-string-regexp'
-import { saveAs } from 'file-saver'
 import zeroFill from 'zero-fill'
 import { XmlEntities } from 'html-entities'
 
@@ -23,7 +22,7 @@ function blobToDataURL (blob, callback) {
   a.readAsDataURL(blob)
 }
 
-export default class FimFic2Epub {
+module.exports = class FimFic2Epub {
 
   constructor (storyId) {
     this.storyId = storyId
@@ -190,8 +189,9 @@ export default class FimFic2Epub {
           this.processStory(resolve, reject, coverImage)
         }, false)
       } else {
+        const sizeOf = require('image-size')
         fetchRemote(this.storyInfo.full_image, (data, type) => {
-          this.processStory(resolve, reject, process.sizeOf(data))
+          this.processStory(resolve, reject, sizeOf(data))
         }, 'buffer')
       }
     } else {
@@ -374,11 +374,21 @@ export default class FimFic2Epub {
   }
 
   saveStory () {
-    console.log('Saving epub...')
-
     let filename = this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub'
 
+    console.log('Saving epub...')
+
     if (isNode) {
+      const fs = require('fs')
+      /*this.zip.generateAsync({
+        type: 'nodebuffer',
+        mimeType: 'application/epub+zip',
+        compression: 'DEFLATE',
+        compressionOptions: {level: 9}
+      }).then((epub) => {
+        console.log(epub)
+      })*/
+
       this.zip
       .generateNodeStream({
         type: 'nodebuffer',
@@ -387,9 +397,12 @@ export default class FimFic2Epub {
         compression: 'DEFLATE',
         compressionOptions: {level: 9}
       })
-      .pipe(process.fs.createWriteStream(filename))
+      .pipe(fs.createWriteStream(filename))
       .on('finish', () => {
         console.log('Saved epub as', filename)
+      })
+      .on('error', (err) => {
+        throw err
       })
       return
     }
@@ -399,6 +412,7 @@ export default class FimFic2Epub {
         alert('Rename downloaded file to .epub')
       })
     } else {
+      const saveAs = require('file-saver')
       saveAs(this.cachedBlob, filename)
     }
   }
