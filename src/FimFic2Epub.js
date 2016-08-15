@@ -408,8 +408,7 @@ module.exports = class FimFic2Epub {
   // example usage: .pipe(fs.createWriteStream(filename))
   streamFile () {
     if (!this.hasDownloaded) {
-      reject('Not downloaded.')
-      return
+      return null
     }
     return this.zip
     .generateNodeStream({
