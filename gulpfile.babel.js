@@ -34,26 +34,21 @@ webpackConfig.forEach((c) => {
       debug: false
     }))
     c.plugins.push(new webpack.optimize.DedupePlugin())
-    /*
-    c.plugins.push(new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false,
-        screw_ie8: true
-      },
-      comments: false,
-      mangle: {
-        screw_ie8: true
-      },
-      screw_ie8: true,
-      sourceMap: false
-    }))
-    */
+    if (c.uglify) {
+      c.plugins.push(new webpack.optimize.UglifyJsPlugin({
+        compress: {
+          warnings: false,
+          screw_ie8: true
+        },
+        comments: false,
+        mangle: {
+          screw_ie8: true
+        },
+        screw_ie8: true,
+        sourceMap: !!c.devtool
+      }))
+    }
   }
-  Object.assign({}, c, {
-    cache: {},
-    devtool: inProduction ? null : 'inline-source-map',
-    debug: !inProduction
-  })
 })
 
 const wpCompiler = webpack(webpackConfig)
@@ -79,7 +74,17 @@ let lintPipe = lazypipe()
   .pipe(standard.reporter, 'default', { breakOnError: false })
 
 // Cleanup task
-gulp.task('clean', () => del(['extension/fimfic2epub.js', 'extension/eventPage.js']))
+gulp.task('clean', () => del([
+  'extension/fimfic2epub.js',
+  'extension/eventPage.js',
+  'extension/*.js.map',
+  'fimfic2epub.js',
+  'fimfic2epub.js.map',
+  'extension.zip',
+  'extension.xpi',
+  'extension.crx',
+  'fimfic2epub.safariextension/'
+]))
 
 // Main tasks
 gulp.task('webpack', webpackTask)
@@ -90,7 +95,7 @@ gulp.task('watch:webpack', () => {
 })
 
 gulp.task('lint', () => {
-  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js']).pipe(lintPipe())
+  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js', 'bin/fimfic2epub']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
   return watch(['src/**/*.js'], watchOpts, function (file) {
@@ -147,7 +152,7 @@ gulp.task('pack:chrome', (done) => {
 })
 
 gulp.task('pack:safari', (done) => {
-  exec('cp -r extension/ fimfic2epub.safariextension', [], (error, stdout, stderr) => {
+  exec('rm -rf fimfic2epub.safariextension/; cp -r extension/ fimfic2epub.safariextension', [], (error, stdout, stderr) => {
     // gutil.log('[pack:chrome]', stdout)
     if (error || stderr) {
       done(new gutil.PluginError('pack:safari', stderr, {showStack: false}))

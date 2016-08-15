@@ -3,6 +3,7 @@ import JSZip from 'jszip'
 import escapeStringRegexp from 'escape-string-regexp'
 import zeroFill from 'zero-fill'
 import { XmlEntities } from 'html-entities'
+import sanitize from 'sanitize-filename'
 
 import isNode from 'detect-node'
 
@@ -16,12 +17,6 @@ import { mimeMap, containerXml } from './constants'
 
 const entities = new XmlEntities()
 
-function blobToDataURL (blob, callback) {
-  let a = new FileReader()
-  a.onloadend = function (e) { callback(a.result) }
-  a.readAsDataURL(blob)
-}
-
 module.exports = class FimFic2Epub {
 
   constructor (storyId) {
@@ -32,7 +27,7 @@ module.exports = class FimFic2Epub {
     this.remoteResources = new Map()
     this.storyInfo = null
     this.isDownloading = false
-    this.cachedBlob = null
+    this.cachedFile = null
     this.hasCoverImage = false
     this.includeTitlePage = true
     this.categories = []
@@ -42,10 +37,10 @@ module.exports = class FimFic2Epub {
   download () {
     return new Promise((resolve, reject) => {
       if (this.isDownloading) {
-        reject()
+        reject('Already downloading')
         return
       }
-      if (this.cachedBlob) {
+      if (this.cachedFile) {
         resolve()
         return
       }
@@ -78,6 +73,8 @@ module.exports = class FimFic2Epub {
         this.storyInfo = data.story
         this.storyInfo.chapters = this.storyInfo.chapters || []
         this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
+
+        this.filename = sanitize(this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub')
 
         this.zip.file('Styles/style.css', styleCss)
         this.zip.file('Styles/coverstyle.css', coverstyleCss)
@@ -245,26 +242,8 @@ module.exports = class FimFic2Epub {
 
         this.zip.file('content.opf', template.createOpf(this))
 
-        console.log('Packaging epub...')
-
-        if (!isNode) {
-          this.zip
-          .generateAsync({
-            type: 'blob',
-            mimeType: 'application/epub+zip',
-            compression: 'DEFLATE',
-            compressionOptions: {level: 9}
-          })
-          .then((blob) => {
-            this.cachedBlob = blob
-            this.isDownloading = false
-            resolve()
-          })
-        } else {
-          this.cachedBlob = true
-          this.isDownloading = false
-          resolve()
-        }
+        this.isDownloading = false
+        resolve()
       })
     })
   }
@@ -373,47 +352,35 @@ module.exports = class FimFic2Epub {
     }
   }
 
-  saveStory () {
-    let filename = this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub'
-
-    console.log('Saving epub...')
-
-    if (isNode) {
-      const fs = require('fs')
-      /*this.zip.generateAsync({
-        type: 'nodebuffer',
-        mimeType: 'application/epub+zip',
-        compression: 'DEFLATE',
-        compressionOptions: {level: 9}
-      }).then((epub) => {
-        console.log(epub)
-      })*/
-
+  // for node, resolve a Buffer, in browser resolve a Blob
+  getFile () {
+    return new Promise((resolve, reject) => {
+      if (this.cachedFile) {
+        resolve(this.cachedFile, this.filename)
+        return
+      }
       this.zip
-      .generateNodeStream({
-        type: 'nodebuffer',
-        streamFiles: true,
+      .generateAsync({
+        type: isNode ? 'nodebuffer' : 'blob',
         mimeType: 'application/epub+zip',
         compression: 'DEFLATE',
         compressionOptions: {level: 9}
+      }).then((file) => {
+        this.cachedFile = file
+        resolve(file)
       })
-      .pipe(fs.createWriteStream(filename))
-      .on('finish', () => {
-        console.log('Saved epub as', filename)
-      })
-      .on('error', (err) => {
-        throw err
-      })
-      return
-    }
-    if (typeof safari !== 'undefined') {
-      blobToDataURL(this.cachedBlob, (dataurl) => {
-        document.location.href = dataurl
-        alert('Rename downloaded file to .epub')
-      })
-    } else {
-      const saveAs = require('file-saver')
-      saveAs(this.cachedBlob, filename)
-    }
+    })
+  }
+
+  // example usage: .pipe(fs.createWriteStream(filename))
+  streamFile () {
+    return this.zip
+    .generateNodeStream({
+      type: 'nodebuffer',
+      streamFiles: true,
+      mimeType: 'application/epub+zip',
+      compression: 'DEFLATE',
+      compressionOptions: {level: 9}
+    })
   }
 }

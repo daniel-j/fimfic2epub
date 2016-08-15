@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Tool to generate EPUB ebooks from fimfiction stories",
   "author": "djazz",
   "scripts": {
@@ -10,13 +10,13 @@
     "fimfic2epub": "./bin/fimfic2epub"
   },
   "main": "fimfic2epub.js",
-  "engines": {
-    "node": ">=0.6.0"
-  },
+
   "files": [
     "fimfic2epub.js",
+    "fimfic2epub.js.map",
     "bin/"
   ],
+
   "dependencies": {
     "detect-node": "^2.0.3",
     "escape-string-regexp": "^1.0.5",
@@ -26,17 +26,19 @@
     "mithril": "^0.2.5",
     "pretty-data": "^0.40.0",
     "request": "^2.74.0",
+    "sanitize-filename": "^1.6.0",
     "tidy-html5": "^0.1.1",
     "zero-fill": "^2.2.3"
   },
   "devDependencies": {
-    "file-saver": "^1.3.2",
-    "babel-register": "^6.11.6",
-    "babel-preset-node6": "^11.0.0",
     "babel-core": "^6.13.2",
     "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.13.2",
+    "babel-preset-node6": "^11.0.0",
+    "babel-register": "^6.11.6",
     "del": "^2.2.2",
     "exports-loader": "^0.6.3",
+    "file-saver": "^1.3.2",
     "gulp": "^3.9.1",
     "gulp-filter": "^4.0.0",
     "gulp-json-editor": "^2.2.1",
@@ -53,6 +55,7 @@
     "webpack": "^2.1.0-beta.13",
     "webpack-node-externals": "^1.3.3"
   },
+
   "standard": {
     "env": {
       "browser": true

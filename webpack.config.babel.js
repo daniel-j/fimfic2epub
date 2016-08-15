@@ -2,7 +2,7 @@
 import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 
-// let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 const bundleExtensionConfig = {
   entry: {
@@ -17,13 +17,12 @@ const bundleExtensionConfig = {
 
   module: {
     loaders: [
-      /*
       {
         test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
-          sourceMaps: inProduction
+          sourceMaps: true,
+          presets: ['es2015']
         }
       },
-      */
       {
         test: /\.styl$/,
         loader: 'raw-loader!stylus-loader'
@@ -45,8 +44,9 @@ const bundleExtensionConfig = {
   externals: ['request', 'fs', 'tidy-html5', 'image-size'],
 
   plugins: [],
-  devtool: 'inline-source-map',
-  debug: true
+  devtool: 'source-map',
+  debug: true,
+  uglify: inProduction
 }
 
 const bundleNpmModuleConfig = {
@@ -62,13 +62,12 @@ const bundleNpmModuleConfig = {
 
   module: {
     loaders: [
-      /*
       {
         test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
-          sourceMaps: inProduction
+          sourceMaps: !inProduction,
+          presets: ['es2015']
         }
       },
-      */
       {
         test: /\.styl$/,
         loader: 'raw-loader!stylus-loader'
@@ -90,8 +89,9 @@ const bundleNpmModuleConfig = {
   externals: [nodeExternals(), 'exports?tidy_html5!tidy-html5'],
 
   plugins: [],
-  devtool: 'inline-source-map',
-  debug: true
+  devtool: 'source-map',
+  debug: true,
+  uglify: inProduction
 }
 
 export default [bundleExtensionConfig, bundleNpmModuleConfig]

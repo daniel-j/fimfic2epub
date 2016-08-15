@@ -15,12 +15,18 @@ Right now the addon is not available in Add-ons for Firefox, but it's fully comp
 Installation & usage (command line)
 -------------------
 
-You can install the tool by running `npm install -g fimfic2epub`. You can then run it with `$ fimfic2epub <story id>`. This will save the EPUB in the current working directory.
+You can install the tool by running `npm install -g fimfic2epub`. You can then run it with `$ fimfic2epub <story id> <optional filename>`. By default the EPUB will be saved in the current working directory with the filename `Title by Author.epub`. You can set filename to `-` and the epub will be emitted to stdout instead.
 
 Example:
 ```
-Download Tag Test by McPoodle
+Download with automatic filename:
 $ fimfic2epub 180690
+
+Download and save to a specified filename:
+$ fimfic2epub 180690 path/to/file.epub
+
+Same as above, but use a pipe:
+$ fimfic2epub 180690 - > path/to/file.epub
 ```
 
 
