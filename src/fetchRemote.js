@@ -45,9 +45,11 @@ function fetchBackground (url, cb, responseType) {
       fetch(objurl, cb, responseType)
       URL.revokeObjectURL(objurl)
     })
-  } else {
+  } else if (typeof safari !== 'undefined') {
     safariQueue[url] = {cb: cb, responseType: responseType}
     safari.self.tab.dispatchMessage('remote', url)
+  } else {
+    cb(null)
   }
 }
 
@@ -67,4 +69,3 @@ export default function fetchRemote (url, cb, responseType) {
     }
   }, responseType)
 }
-

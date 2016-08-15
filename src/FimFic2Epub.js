@@ -4,7 +4,7 @@ import escapeStringRegexp from 'escape-string-regexp'
 import zeroFill from 'zero-fill'
 import { XmlEntities } from 'html-entities'
 import sanitize from 'sanitize-filename'
-
+import URL from 'url'
 import isNode from 'detect-node'
 
 import { styleCss, coverstyleCss, titlestyleCss } from './styles'
@@ -21,6 +21,16 @@ module.exports = class FimFic2Epub {
 
   constructor (storyId) {
     this.storyId = storyId
+    if (isNaN(storyId)) {
+      let url = URL.parse(storyId, false, true)
+      if (url.hostname === 'www.fimfiction.net' || url.hostname === 'fimfiction.net') {
+        let m = url.pathname.match(/^\/story\/(\d+)/)
+        if (m) {
+          this.storyId = m[1]
+        }
+      }
+    }
+    this.hasDownloaded = false
     this.isDownloading = false
     this.zip = null
     this.chapterContent = []
@@ -29,6 +39,7 @@ module.exports = class FimFic2Epub {
     this.isDownloading = false
     this.cachedFile = null
     this.hasCoverImage = false
+    this.coverImageDimensions = {width: 0, height: 0}
     this.includeTitlePage = true
     this.categories = []
     this.tags = []
@@ -40,7 +51,7 @@ module.exports = class FimFic2Epub {
         reject('Already downloading')
         return
       }
-      if (this.cachedFile) {
+      if (this.hasDownloaded) {
         resolve()
         return
       }
@@ -58,18 +69,21 @@ module.exports = class FimFic2Epub {
 
       console.log('Fetching story metadata...')
 
-      fetchRemote('https://www.fimfiction.net/api/story.php?story=' + this.storyId, (raw, type) => {
+      let url = 'https://www.fimfiction.net/api/story.php?story=' + this.storyId
+      fetchRemote(url, (raw, type) => {
         let data
         try {
           data = JSON.parse(raw)
-        } catch (e) {
-          console.log('Unable to fetch story json')
+        } catch (e) {}
+        if (!data) {
+          reject('Unable to fetch story json')
           return
         }
         if (data.error) {
-          console.error(data.error)
+          reject(data.error)
           return
         }
+
         this.storyInfo = data.story
         this.storyInfo.chapters = this.storyInfo.chapters || []
         this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
@@ -92,7 +106,8 @@ module.exports = class FimFic2Epub {
 
   fetchTitlePage (resolve, reject) {
     console.log('Fetching index page...')
-    fetchRemote(this.storyInfo.url, (raw, type) => {
+    let url = this.storyInfo.url
+    fetchRemote(url, (raw, type) => {
       this.extractTitlePageInfo(raw).then(() => this.checkCoverImage(resolve, reject))
     })
   }
@@ -183,24 +198,32 @@ module.exports = class FimFic2Epub {
         coverImage.src = this.storyInfo.full_image
 
         coverImage.addEventListener('load', () => {
-          this.processStory(resolve, reject, coverImage)
+          this.coverImageDimensions.width = coverImage.width
+          this.coverImageDimensions.height = coverImage.height
+          this.processStory(resolve, reject)
         }, false)
+        coverImage.addEventListener('error', () => {
+          console.warn('Unable to fetch cover image, skipping...')
+          this.hasCoverImage = false
+          this.processStory(resolve, reject)
+        })
       } else {
-        const sizeOf = require('image-size')
-        fetchRemote(this.storyInfo.full_image, (data, type) => {
-          this.processStory(resolve, reject, sizeOf(data))
-        }, 'buffer')
+        this.processStory(resolve, reject)
       }
     } else {
       this.processStory(resolve, reject)
     }
   }
 
-  processStory (resolve, reject, coverImage) {
+  processStory (resolve, reject) {
     console.log('Fetching chapters...')
 
     this.fetchChapters(() => {
+      console.log('Fetching remote files...')
+
       this.fetchRemoteFiles(() => {
+        console.log('Finishing build...')
+
         let coverFilename = ''
         this.remoteResources.forEach((r, url) => {
           let dest = '../' + r.dest
@@ -230,19 +253,20 @@ module.exports = class FimFic2Epub {
 
         this.chapterContent.length = 0
 
-        if (this.includeTitlePage) {
-          this.zip.file('Text/title.xhtml', template.createTitlePage(this))
-        }
-
         if (this.hasCoverImage) {
-          this.zip.file('Text/cover.xhtml', template.createCoverPage(coverFilename, coverImage.width, coverImage.height))
+          this.zip.file('Text/cover.xhtml', template.createCoverPage(coverFilename, this.coverImageDimensions.width, this.coverImageDimensions.height))
         } else {
           this.zip.file('Text/cover.xhtml', template.createCoverPage(this))
+        }
+
+        if (this.includeTitlePage) {
+          this.zip.file('Text/title.xhtml', template.createTitlePage(this))
         }
 
         this.zip.file('content.opf', template.createOpf(this))
 
         this.isDownloading = false
+        this.hasDownloaded = true
         resolve()
       })
     })
@@ -275,6 +299,10 @@ module.exports = class FimFic2Epub {
         if (dest) {
           r.dest = dest.replace('*', r.filename)
           this.zip.file(r.dest, data)
+          if (isNode && r.filename === 'cover') {
+            const sizeOf = require('image-size')
+            this.coverImageDimensions = sizeOf(data)
+          }
         }
         completeCount++
         recursive()
@@ -306,7 +334,8 @@ module.exports = class FimFic2Epub {
         return
       }
       console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
-      fetchRemote(ch.link.replace('http', 'https'), (html) => {
+      let url = ch.link.replace('http', 'https')
+      fetchRemote(url, (html) => {
         template.createChapter(ch, html, (html) => {
           this.findRemoteResources('ch_' + zeroFill(3, index + 1), index, html)
           this.chapterContent[index] = html
@@ -359,6 +388,10 @@ module.exports = class FimFic2Epub {
         resolve(this.cachedFile, this.filename)
         return
       }
+      if (!this.hasDownloaded) {
+        reject('Not downloaded.')
+        return
+      }
       this.zip
       .generateAsync({
         type: isNode ? 'nodebuffer' : 'blob',
@@ -374,6 +407,10 @@ module.exports = class FimFic2Epub {
 
   // example usage: .pipe(fs.createWriteStream(filename))
   streamFile () {
+    if (!this.hasDownloaded) {
+      reject('Not downloaded.')
+      return
+    }
     return this.zip
     .generateNodeStream({
       type: 'nodebuffer',
