@@ -4,6 +4,11 @@ fimfic2epub
 This is a tool to generate better EPUB ebooks from [fimfiction](http://www.fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
 
 
+Demo
+----
+You can have a look at what a generated EPUB looks like [here](http://books.djazz.se/?epub=epub_content%2Fsummer_island). It was generated from the story [Summer Island](http://www.fimfiction.net/story/289663/summer-island).
+
+
 Usage (browser extension)
 -----------------
 
