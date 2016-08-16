@@ -19,17 +19,49 @@ const entities = new XmlEntities()
 
 module.exports = class FimFic2Epub {
 
-  constructor (storyId) {
-    this.storyId = storyId
-    if (isNaN(storyId)) {
-      let url = URL.parse(storyId, false, true)
+  static getStoryId (id) {
+    if (isNaN(id)) {
+      let url = URL.parse(id, false, true)
       if (url.hostname === 'www.fimfiction.net' || url.hostname === 'fimfiction.net') {
         let m = url.pathname.match(/^\/story\/(\d+)/)
         if (m) {
-          this.storyId = m[1]
+          id = m[1]
         }
       }
     }
+    return id
+  }
+
+  static getFilename (storyInfo) {
+    return sanitize(storyInfo.title + ' by ' + storyInfo.author.name + '.epub')
+  }
+
+  static fetchStoryInfo (storyId) {
+    return new Promise((resolve, reject) => {
+      storyId = FimFic2Epub.getStoryId(storyId)
+      let url = 'https://www.fimfiction.net/api/story.php?story=' + storyId
+      fetchRemote(url, (raw, type) => {
+        let data
+        try {
+          data = JSON.parse(raw)
+        } catch (e) {}
+        if (!data) {
+          reject('Unable to fetch story info')
+          return
+        }
+        if (data.error) {
+          reject(data.error)
+          return
+        }
+        if (!data.story.chapters) data.story.chapters = []
+        resolve(data.story)
+      })
+    })
+  }
+
+  constructor (storyId) {
+    this.storyId = FimFic2Epub.getStoryId(storyId)
+
     this.hasDownloaded = false
     this.isDownloading = false
     this.zip = null
@@ -69,26 +101,11 @@ module.exports = class FimFic2Epub {
 
       console.log('Fetching story metadata...')
 
-      let url = 'https://www.fimfiction.net/api/story.php?story=' + this.storyId
-      fetchRemote(url, (raw, type) => {
-        let data
-        try {
-          data = JSON.parse(raw)
-        } catch (e) {}
-        if (!data) {
-          reject('Unable to fetch story json')
-          return
-        }
-        if (data.error) {
-          reject(data.error)
-          return
-        }
-
-        this.storyInfo = data.story
-        this.storyInfo.chapters = this.storyInfo.chapters || []
+      FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
+        this.storyInfo = storyInfo
         this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
 
-        this.filename = sanitize(this.storyInfo.title + ' by ' + this.storyInfo.author.name + '.epub')
+        this.filename = FimFic2Epub.getFilename(this.storyInfo)
 
         this.zip.file('Styles/style.css', styleCss)
         this.zip.file('Styles/coverstyle.css', coverstyleCss)
@@ -100,14 +117,13 @@ module.exports = class FimFic2Epub {
         this.zip.file('Text/nav.xhtml', template.createNav(this))
 
         this.fetchTitlePage(resolve, reject)
-      })
+      }).catch(reject)
     })
   }
 
   fetchTitlePage (resolve, reject) {
     console.log('Fetching index page...')
-    let url = this.storyInfo.url
-    fetchRemote(url, (raw, type) => {
+    fetchRemote(this.storyInfo.url, (raw, type) => {
       this.extractTitlePageInfo(raw).then(() => this.checkCoverImage(resolve, reject))
     })
   }
