@@ -53,7 +53,17 @@ module.exports = class FimFic2Epub {
           reject(data.error)
           return
         }
-        if (!data.story.chapters) data.story.chapters = []
+        let story = data.story
+        // this is so the metadata can be cached.
+        if (!story.chapters) story.chapters = []
+        delete story.likes
+        delete story.dislikes
+        delete story.views
+        delete story.total_views
+        delete story.comments
+        story.chapters.forEach((ch) => {
+          delete ch.views
+        })
         resolve(data.story)
       })
     })
@@ -416,7 +426,7 @@ module.exports = class FimFic2Epub {
         compressionOptions: {level: 9}
       }).then((file) => {
         this.cachedFile = file
-        resolve(file)
+        resolve(file, this.filename)
       })
     })
   }
