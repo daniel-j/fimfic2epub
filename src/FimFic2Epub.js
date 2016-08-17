@@ -411,7 +411,7 @@ module.exports = class FimFic2Epub {
   getFile () {
     return new Promise((resolve, reject) => {
       if (this.cachedFile) {
-        resolve(this.cachedFile, this.filename)
+        resolve(this.cachedFile)
         return
       }
       if (!this.hasDownloaded) {
@@ -426,7 +426,7 @@ module.exports = class FimFic2Epub {
         compressionOptions: {level: 9}
       }).then((file) => {
         this.cachedFile = file
-        resolve(file, this.filename)
+        resolve(file)
       })
     })
   }
