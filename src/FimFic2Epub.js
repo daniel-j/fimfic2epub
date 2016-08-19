@@ -117,14 +117,14 @@ module.exports = class FimFic2Epub {
 
         this.filename = FimFic2Epub.getFilename(this.storyInfo)
 
-        this.zip.file('Styles/style.css', styleCss)
-        this.zip.file('Styles/coverstyle.css', coverstyleCss)
+        this.zip.file('OEBPS/Styles/style.css', styleCss)
+        this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
         if (this.includeTitlePage) {
-          this.zip.file('Styles/titlestyle.css', titlestyleCss)
+          this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
         }
 
-        this.zip.file('toc.ncx', template.createNcx(this))
-        this.zip.file('Text/nav.xhtml', template.createNav(this))
+        this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
+        this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
 
         this.fetchTitlePage(resolve, reject)
       }).catch(reject)
@@ -273,23 +273,23 @@ module.exports = class FimFic2Epub {
 
         for (let num = 0; num < this.chapterContent.length; num++) {
           let html = this.chapterContent[num]
-          let filename = 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'
+          let filename = 'OEBPS/Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'
           this.zip.file(filename, html)
         }
 
         this.chapterContent.length = 0
 
         if (this.hasCoverImage) {
-          this.zip.file('Text/cover.xhtml', template.createCoverPage(coverFilename, this.coverImageDimensions.width, this.coverImageDimensions.height))
+          this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(coverFilename, this.coverImageDimensions.width, this.coverImageDimensions.height))
         } else {
-          this.zip.file('Text/cover.xhtml', template.createCoverPage(this))
+          this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
         }
 
         if (this.includeTitlePage) {
-          this.zip.file('Text/title.xhtml', template.createTitlePage(this))
+          this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
         }
 
-        this.zip.file('content.opf', template.createOpf(this))
+        this.zip.file('OEBPS/content.opf', template.createOpf(this))
 
         this.isDownloading = false
         this.hasDownloaded = true
@@ -324,7 +324,7 @@ module.exports = class FimFic2Epub {
 
         if (dest) {
           r.dest = dest.replace('*', r.filename)
-          this.zip.file(r.dest, data)
+          this.zip.file('OEBPS/' + r.dest, data)
           if (isNode && r.filename === 'cover') {
             const sizeOf = require('image-size')
             this.coverImageDimensions = sizeOf(data)
