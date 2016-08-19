@@ -77,18 +77,21 @@ export function createChapter (ch, html, callback) {
   })
 }
 
-// some eReaders doesn't understand linear=no, so sort those items to the end of the spine/book.
-/* function sortItemsLinear (a, b) {
-  let linearA = a.attrs.linear !== 'no'
-  let linearB = b.attrs.linear !== 'no'
-  if (linearA === linearB) {
-    return 0
-  } else if (linearA) {
-    return -1
-  } else {
-    return 1
+// some eReaders doesn't understand linear=no, so push those items to the end of the spine/book.
+function sortSpineItems (items) {
+  let count = items.length
+  for (let i = 0; i < count; i++) {
+    let item = items[i]
+    if (item.attrs.linear === 'no') {
+      // push it to the end
+      items.splice(i, 1)
+      items.push(item)
+      count--
+      i--
+    }
   }
-} */
+  return items
+}
 
 export function createOpf (ffc) {
   let remotes = []
@@ -136,13 +139,13 @@ export function createOpf (ffc) {
         m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml'})
       ), remotes)),
 
-      m('spine', {toc: 'ncx'}, [
+      m('spine', {toc: 'ncx'}, sortSpineItems([
         m('itemref', {idref: 'coverpage'}),
         ffc.includeTitlePage ? m('itemref', {idref: 'titlepage'}) : null,
         m('itemref', {idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 ? 'no' : undefined})
       ].concat(ffc.storyInfo.chapters.map((ch, num) =>
         m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
-      ))),
+      )))),
 
       m('guide', [
         m('reference', {type: 'cover', title: 'Cover', href: 'Text/cover.xhtml'}),
