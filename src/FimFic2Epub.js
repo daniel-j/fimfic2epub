@@ -439,7 +439,7 @@ module.exports = class FimFic2Epub {
     return this.zip
     .generateNodeStream({
       type: 'nodebuffer',
-      streamFiles: true,
+      streamFiles: false,
       mimeType: 'application/epub+zip',
       compression: 'DEFLATE',
       compressionOptions: {level: 9}
