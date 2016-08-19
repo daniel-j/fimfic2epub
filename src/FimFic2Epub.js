@@ -211,7 +211,7 @@ module.exports = class FimFic2Epub {
       }
       this.tags = tags
 
-      cleanMarkup(description, (html) => {
+      cleanMarkup(description).then((html) => {
         this.storyInfo.description = html
         this.findRemoteResources('description', 'description', html)
         resolve()

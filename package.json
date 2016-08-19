@@ -14,19 +14,19 @@
     "fimfic2epub": "./bin/fimfic2epub"
   },
   "main": "fimfic2epub.js",
-
   "files": [
     "fimfic2epub.js",
     "fimfic2epub.js.map",
     "bin/"
   ],
-
   "dependencies": {
     "detect-node": "^2.0.3",
     "escape-string-regexp": "^1.0.5",
     "html-entities": "^1.2.0",
+    "html-to-text": "^2.1.3",
     "image-size": "^0.5.0",
     "jszip": "^3.1.1",
+    "match-words": "^0.1.0",
     "mithril": "^0.2.5",
     "pretty-data": "^0.40.0",
     "request": "^2.74.0",
@@ -59,11 +59,12 @@
     "webpack": "^2.1.0-beta.20",
     "webpack-node-externals": "^1.3.3"
   },
-
   "standard": {
     "env": {
       "browser": true
     },
-    "globals": ["FIMFIC2EPUB_VERSION"]
+    "globals": [
+      "FIMFIC2EPUB_VERSION"
+    ]
   }
 }

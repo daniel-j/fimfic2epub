@@ -4,6 +4,7 @@ import render from './lib/mithril-node-render'
 import { pd as pretty } from 'pretty-data'
 import zeroFill from 'zero-fill'
 
+import htmlWordCount from './html-wordcount'
 import { cleanMarkup } from './cleanMarkup'
 import { NS } from './constants'
 
@@ -46,34 +47,44 @@ export function createChapter (ch, html, callback) {
   // remove leading and trailing <br /> tags and whitespace
   chapter = chapter.replace(trimWhitespace, '')
 
-  let sections = [
-    [
-      m('.chapter-title', [
-        m('h1', ch.title),
-        m('hr')
-      ]),
-      m.trust(chapter)
-    ],
-    authorNotes ? m('div#author_notes', {className: authorNotesPos < chapterPos ? 'top' : 'bottom'}, m.trust(authorNotes)) : null
-  ]
+  Promise.all([cleanMarkup(chapter), cleanMarkup(authorNotes)]).then((values) => {
+    let [cleanChapter, cleanAuthorNotes] = values
 
-  if (authorNotes && authorNotesPos < chapterPos) {
-    sections.reverse()
-  }
+    ch.realWordCount = htmlWordCount(cleanChapter)
 
-  let chapterPage = '<!doctype html>' + render(
-    m('html', {xmlns: NS.XHTML}, [
-      m('head', [
-        m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
-        m('title', ch.title)
-      ]),
-      m('body', sections)
-    ])
-  )
+    let content = [
+      m.trust(cleanChapter),
+      cleanAuthorNotes ? m('div#author_notes', {className: authorNotesPos < chapterPos ? 'top' : 'bottom'}, [
+        m('p', m('b', 'Author\'s Note:')),
+        m.trust(cleanAuthorNotes)]) : null
+    ]
 
-  cleanMarkup(chapterPage, (html) => {
-    callback(html)
+    // if author notes are a the beginning of the chapter
+    if (cleanAuthorNotes && authorNotesPos < chapterPos) {
+      content.reverse()
+    }
+
+    let chapterPage = '<!doctype html>' + render(
+      m('html', {xmlns: NS.XHTML}, [
+        m('head', [
+          m('meta', {charset: 'utf-8'}),
+          m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
+          m('title', ch.title)
+        ]),
+        m('body', [
+          m('.chapter-title', [
+            m('h1', ch.title),
+            m('hr')
+          ]),
+          content,
+          m('p.double', {style: 'text-align: center; clear: both;'},
+            m('a.chaptercomments', {href: ch.link + '#comment_list'}, 'Read chapter comments online')
+          )
+        ])
+      ])
+    )
+
+    callback(chapterPage)
   })
 }
 
