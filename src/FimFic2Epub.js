@@ -36,14 +36,14 @@ module.exports = class FimFic2Epub {
     return sanitize(storyInfo.title + ' by ' + storyInfo.author.name + '.epub')
   }
 
-  static fetchStoryInfo (storyId) {
+  static fetchStoryInfo (storyId, raw = false) {
     return new Promise((resolve, reject) => {
       storyId = FimFic2Epub.getStoryId(storyId)
       let url = 'https://www.fimfiction.net/api/story.php?story=' + storyId
-      fetchRemote(url, (raw, type) => {
+      fetchRemote(url, (content, type) => {
         let data
         try {
-          data = JSON.parse(raw)
+          data = JSON.parse(content)
         } catch (e) {}
         if (!data) {
           reject('Unable to fetch story info')
@@ -54,6 +54,10 @@ module.exports = class FimFic2Epub {
           return
         }
         let story = data.story
+        if (raw) {
+          resolve(story)
+          return
+        }
         // this is so the metadata can be cached.
         if (!story.chapters) story.chapters = []
         delete story.likes
@@ -64,7 +68,9 @@ module.exports = class FimFic2Epub {
         story.chapters.forEach((ch) => {
           delete ch.views
         })
-        resolve(data.story)
+        // Add version number
+        story.FIMFIC2EPUB_VERSION = FIMFIC2EPUB_VERSION
+        resolve(story)
       })
     })
   }

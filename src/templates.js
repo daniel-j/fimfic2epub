@@ -116,10 +116,11 @@ export function createOpf (ffc) {
         m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
         m('meta', {name: 'cover', content: 'cover'}),
-        m('meta', {property: 'dcterms:modified'}, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', ''))
+        m('meta', {property: 'dcterms:modified'}, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', '')),
+        m('dc:subject', 'Fimfiction')
       ].concat(ffc.categories.map((tag) =>
         m('dc:subject', tag.name)
-      ))),
+      ), m('meta', {name: 'fimfic2epub version', content: FIMFIC2EPUB_VERSION}))),
 
       m('manifest', [
         m('item', {id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml'}),

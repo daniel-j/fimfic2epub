@@ -63,6 +63,7 @@
   "standard": {
     "env": {
       "browser": true
-    }
+    },
+    "globals": ["FIMFIC2EPUB_VERSION"]
   }
 }

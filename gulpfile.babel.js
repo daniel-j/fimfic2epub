@@ -49,6 +49,9 @@ webpackConfig.forEach((c) => {
       }))
     }
   }
+  c.plugins.push(new webpack.DefinePlugin({
+    FIMFIC2EPUB_VERSION: JSON.stringify(require('./package.json').version)
+  }))
 })
 
 const wpCompiler = webpack(webpackConfig)
