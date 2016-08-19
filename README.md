@@ -1,3 +1,5 @@
+[![NPM](https://nodei.co/npm/fimfic2epub.png?compact=true)](https://www.npmjs.com/package/fimfic2epub)
+
 fimfic2epub
 ===========
 
