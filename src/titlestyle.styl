@@ -1,4 +1,6 @@
 
+@require 'mixins'
+
 .title {
   margin: 1em 0;
   text-align: left;
@@ -42,7 +44,7 @@
 
 // Last Modified and First Published
 .datebox {
-  color: #222;
+  textcolor(#222);
   padding-left: 10px;
   font-weight: bold;
   display: inline-block;
@@ -50,7 +52,7 @@
   padding-top: 2px;
   padding-bottom: 4px;
   border-radius: 3px;
-  background-color: #fff;
+  bgcolor(#fff);
   vertical-align: middle;
   border: 1px solid #999;
   margin: 0px 2px;
@@ -72,7 +74,7 @@
 
   .heading {
     font-weight: normal;
-    color: #444;
+    textcolor(#444);
   }
 }
 
@@ -81,7 +83,7 @@ span.character_icon {
   vertical-align: middle;
   margin: 0 2px;
   padding: 3px;
-  background: #fff;
+  bgcolor(#fff);
   border-radius: 3px;
   display: inline-block;
   vertical-align: middle;
@@ -98,7 +100,7 @@ span.character_icon {
 // Ratings
 .content-rating-everyone, .content-rating-teen, .content-rating-mature {
   padding: 0.5em;
-  color: #fff;
+  textcolor(#fff);
   border: 1px solid rgba(0,0,0,0.2);
   text-shadow: -1px -1px rgba(0,0,0,0.2);
   border-radius: 4px;
@@ -109,15 +111,15 @@ span.character_icon {
   font-weight: bold;
 }
 .content-rating-everyone {
-  background: #78ac40;
+  bgcolor(#78ac40);
   box-shadow: 0px 1px 0px #90ce4d inset;
 }
 .content-rating-teen {
-  background: #ffb400;
+  bgcolor(#ffb400);
   box-shadow: 0px 1px 0px #ffd800 inset;
 }
 .content-rating-mature {
-  background: #c03d2f;
+  bgcolor(#c03d2f);
   box-shadow: 0px 1px 0px #e64938 inset;
 }
 
@@ -129,137 +131,136 @@ span.character_icon {
   display: inline-block;
   padding: 0.5em;
   line-height: 1.0em;
-  color: #555;
   text-decoration: none;
-  background-color: #eee;
+  bgcolor(#eee);
+  textcolor(#fff);
   border-radius: 4px;
   margin-bottom: 4px;
-  color: #fff;
   font-family: sans-serif;
 }
 
 .story_category_sex {
-  background-color: #992584;
+  bgcolor(#992584);
   box-shadow: 0px 1px 0px #b82c9e inset;
   text-shadow: -1px -1px #7a1e6a;
   border: 1px solid #821f70;
 }
 .story_category_gore {
-  background-color: #742828;
+  bgcolor(#742828);
   box-shadow: 0px 1px 0px #8b3030 inset;
   text-shadow: -1px -1px #5d2020;
   border: 1px solid #632222;
 }
 .story_category_romance {
-  background-color: #974bff;
+  bgcolor(#974bff);
   box-shadow: 0px 1px 0px #b55aff inset;
   text-shadow: -1px -1px #793ccc;
   border: 1px solid #8040d9;
 }
 .story_category_dark {
-  background-color: #b93737;
+  bgcolor(#b93737);
   box-shadow: 0px 1px 0px #de4242 inset;
   text-shadow: -1px -1px #942c2c;
   border: 1px solid #9d2f2f;
 }
 .story_category_sad {
-  background-color: #bd42a7;
+  bgcolor(#bd42a7);
   box-shadow: 0px 1px 0px #e34fc8 inset;
   text-shadow: -1px -1px #973586;
   border: 1px solid #a1388e;
 }
 .story_category_tragedy {
-  background-color: #ffb54b;
+  bgcolor(#ffb54b);
   box-shadow: 0px 1px 0px #ffd95a inset;
   text-shadow: -1px -1px #cc913c;
   border: 1px solid #d99a40;
 }
 .story_category_comedy {
-  background-color: #f59c00;
+  bgcolor(#f59c00);
   box-shadow: 0px 1px 0px #fb0 inset;
   text-shadow: -1px -1px #c47d00;
   border: 1px solid #d08500;
 }
 .story_category_random {
-  background-color: #3f74ce;
+  bgcolor(#3f74ce);
   box-shadow: 0px 1px 0px #4c8bf7 inset;
   text-shadow: -1px -1px #325da5;
   border: 1px solid #3663af;
 }
 .story_category_slice_of_life {
-  background-color: #4b86ff;
+  bgcolor(#4b86ff);
   box-shadow: 0px 1px 0px #5aa1ff inset;
   text-shadow: -1px -1px #3c6bcc;
   border: 1px solid #4072d9;
 }
 .story_category_adventure {
-  background-color: #45c950;
+  bgcolor(#45c950);
   box-shadow: 0px 1px 0px #53f160 inset;
   text-shadow: -1px -1px #37a140;
   border: 1px solid #3bab44;
 }
 .story_category_alternate_universe {
-  background-color: #888;
+  bgcolor(#888);
   box-shadow: 0px 1px 0px #a3a3a3 inset;
   text-shadow: -1px -1px #6d6d6d;
   border: 1px solid #747474;
 }
 .story_category_crossover {
-  background-color: #47b8a0;
+  bgcolor(#47b8a0);
   box-shadow: 0px 1px 0px #55ddc0 inset;
   text-shadow: -1px -1px #399380;
   border: 1px solid #3c9c88;
 }
 .story_category_human {
-  background-color: #b5835a;
+  bgcolor(#b5835a);
   box-shadow: 0px 1px 0px #d99d6c inset;
   text-shadow: -1px -1px #916948;
   border: 1px solid #9a6f4d;
 }
 .story_category_anthro {
-  background-color: #b5695a;
+  bgcolor(#b5695a);
   box-shadow: 0px 1px 0px #d97e6c inset;
   text-shadow: -1px -1px #915448;
   border: 1px solid #9a594d;
 }
 .story_category_scifi {
-  background-color: #5d63a5;
+  bgcolor(#5d63a5);
   box-shadow: 0px 1px 0px #7077c6 inset;
   text-shadow: -1px -1px #4a4f84;
   border: 1px solid #4f548c;
 }
 .story_category_equestria_girls {
-  background-color: #4d3281;
+  bgcolor(#4d3281);
   box-shadow: 0px 1px 0px #5c3c9b inset;
   text-shadow: -1px -1px #3e2867;
   border: 1px solid #412b6e;
 }
 .story_category_horror {
-  background-color: #6d232f;
+  bgcolor(#6d232f);
   box-shadow: 0px 1px 0px #832a38 inset;
   text-shadow: -1px -1px #571c26;
   border: 1px solid #5d1e28;
 }
 .story_category_mystery {
-  background-color: #444;
+  bgcolor(#444);
   box-shadow: 0px 1px 0px #525252 inset;
   text-shadow: -1px -1px #363636;
   border: 1px solid #3a3a3a;
 }
 .story_category_drama {
-  background-color: #ec50ca;
+  bgcolor(#ec50ca);
   box-shadow: 0px 1px 0px #ff60f2 inset;
   text-shadow: -1px -1px #bd40a2;
   border: 1px solid #c944ac;
 }
 .story_category_thriller {
-  background-color: #d62b2b;
+  bgcolor(#d62b2b);
   box-shadow: 0px 1px 0px #ff3434 inset;
   text-shadow: -1px -1px #ab2222;
   border: 1px solid #b62525;
 }
 .story_category_second_person {
-  background-color: #02a1db;
+  bgcolor(#02a1db);
   box-shadow: 0px 1px 0px #02c1ff inset;
   text-shadow: -1px -1px #0281af;
   border: 1px solid #0289ba;

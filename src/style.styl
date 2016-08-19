@@ -1,4 +1,6 @@
 
+@require 'mixins'
+
 body {
   background-color: white;
   color: black;
@@ -48,12 +50,11 @@ img {
 }
 
 hr {
-  background-color: #999;
   margin-top: 0.8em;
   margin-bottom: 0.8em;
-  color: #999;
-  height: 1px;
-  border: 0px;
+  height: 0;
+  border: 0;
+  border-bottom: 1px solid #999;
 }
 
 blockquote {
@@ -61,7 +62,12 @@ blockquote {
   padding: 20px;
   border: none;
   border-left: 5px solid rgba(0,0,0,0.2);
-  background: rgba(0,0,0,0.1);
+  bgcolor(rgba(0,0,0,0.1));
+  
+  /:root[__ibooks_internal_theme*="Night"] & {
+    border-color: rgba(255,255,255,0.2);
+    bgcolor(rgba(255,255,255,0.1));
+  }
 
   &.left_insert, &.right_insert {
     box-sizing: border-box;
@@ -71,6 +77,15 @@ blockquote {
     border: 1px solid #AAA;
     width: 50%;
     box-shadow: 5px 5px 0px #EEE;
+    /:root[__ibooks_internal_theme*="Gray"] & {
+      bgcolor(rgba(0,0,0,0.1));
+      box-shadow: 5px 5px 0px #666;
+    }
+    
+    /:root[__ibooks_internal_theme*="Night"] & {
+      bgcolor(rgba(255,255,255,0.1));
+      box-shadow: none;
+    }
   }
   &.left_insert {
     margin-right: 25px;
@@ -114,12 +129,20 @@ figure.youtube {
 
 #author_notes {
   clear: both;
-  border: 1px solid;
+  border: 1px solid #ddd;
   border-radius: 3px;
   line-height: 1.7em;
   padding: 16px;
   margin-top: 1.0em;
   margin-bottom: 1.0em;
+  background-color: #EEE;
+  color: #555;
+  
+  /:root[__ibooks_internal_theme*="Gray"] &, /:root[__ibooks_internal_theme*="Night"] & {
+    border-color: #333;
+    bgcolor(#1A1A1A);
+    textcolor(#aaa);
+  }
 }
 
 #toc {
