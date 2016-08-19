@@ -78,7 +78,7 @@ export function createChapter (ch, html, callback) {
 }
 
 // some eReaders doesn't understand linear=no, so sort those items to the end of the spine/book.
-function sortItemsLinear (a, b) {
+/* function sortItemsLinear (a, b) {
   let linearA = a.attrs.linear !== 'no'
   let linearB = b.attrs.linear !== 'no'
   if (linearA === linearB) {
@@ -88,7 +88,7 @@ function sortItemsLinear (a, b) {
   } else {
     return 1
   }
-}
+} */
 
 export function createOpf (ffc) {
   let remotes = []
@@ -142,7 +142,7 @@ export function createOpf (ffc) {
         m('itemref', {idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 ? 'no' : undefined})
       ].concat(ffc.storyInfo.chapters.map((ch, num) =>
         m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
-      )).sort(sortItemsLinear)),
+      ))),
 
       m('guide', [
         m('reference', {type: 'cover', title: 'Cover', href: 'Text/cover.xhtml'}),
