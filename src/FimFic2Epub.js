@@ -130,7 +130,6 @@ module.exports = class FimFic2Epub {
         }
 
         this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
-        this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
 
         this.fetchTitlePage(resolve, reject)
       }).catch(reject)
@@ -251,6 +250,8 @@ module.exports = class FimFic2Epub {
     console.log('Fetching chapters...')
 
     this.fetchChapters(() => {
+      this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
+
       console.log('Fetching remote files...')
 
       this.fetchRemoteFiles(() => {

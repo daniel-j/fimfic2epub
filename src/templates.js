@@ -64,8 +64,8 @@ export function createChapter (ch, html, callback) {
       content.reverse()
     }
 
-    let chapterPage = '<!doctype html>' + render(
-      m('html', {xmlns: NS.XHTML}, [
+    let chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
+      m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
         m('head', [
           m('meta', {charset: 'utf-8'}),
           m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
@@ -82,7 +82,7 @@ export function createChapter (ch, html, callback) {
           )
         ])
       ])
-    )
+    ))
 
     callback(chapterPage)
   })
@@ -203,7 +203,7 @@ export function createNcx (ffc) {
 
 export function createNav (ffc) {
   let navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en'}, [
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
@@ -211,11 +211,15 @@ export function createNav (ffc) {
       ]),
       m('body#navpage', [
         m('nav#toc', {'epub:type': 'toc'}, [
-          m('h1', 'Contents'),
+          m('h3', 'Contents'),
           m('ol', [
             m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover'))
           ].concat(ffc.storyInfo.chapters.map((ch, num) =>
-            m('li', m('a', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
+            m('li', [
+              m('a.leftalign', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
+              // m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000)), m('span', {style: 'display: none'}, ' · ')]),
+              // m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB')))
+            ])
           )))
         ])
       ])
@@ -254,17 +258,26 @@ export function createCoverPage (coverFilename, w, h) {
   return coverPage
 }
 
-function dateBox (heading, date) {
-  return m('.datebox', m('.wrap', [
+function infoBox (heading, data) {
+  return m('.infobox', m('.wrap', [
     m('span.heading', heading),
     m('br'),
-    m('span.date', prettyDate(date))
+    m('span.data', data)
   ]))
+}
+
+function calcWordCount (chapters) {
+  let count = 0
+  for (let i = 0; i < chapters.length; i++) {
+    let ch = chapters[i]
+    count += ch.realWordCount
+  }
+  return count
 }
 
 export function createTitlePage (ffc) {
   let titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en'}, [
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
@@ -277,23 +290,27 @@ export function createTitlePage (ffc) {
           m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Read on Fimfiction')),
-        m('hr'),
-        m('#categories', [
+        // m('hr'),
+        m('.categories', [
           m('div', {className: 'content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
           ffc.categories.map((tag) =>
             m('div', {className: tag.className}, tag.name)
           )
         ]),
-        m('hr'),
+        // m('hr'),
         ffc.storyInfo.prequel ? [m('div', [
           'This story is a sequel to ',
           m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
         ]), m('hr')] : null,
         m('#description', m.trust(ffc.storyInfo.description)),
-        m('hr'),
-        m('.extra_story_data', [
-          ffc.storyInfo.publishDate && dateBox('First Published', new Date(ffc.storyInfo.publishDate * 1000)),
-          dateBox('Last Modified', new Date(ffc.storyInfo.date_modified * 1000)),
+        m('.bottom', [
+          m('span', {className: 'completed-status-' + ffc.storyInfo.status.toLowerCase()}, ffc.storyInfo.status),
+          ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
+          infoBox('Last Modified', prettyDate(new Date(ffc.storyInfo.date_modified * 1000))),
+          infoBox('Word Count', calcWordCount(ffc.storyInfo.chapters).toLocaleString('en-GB'))
+        ]),
+        // m('hr'),
+        m('.characters', [
           ffc.tags.map((t) =>
             m('span', {className: 'character_icon', title: t.name}, m('img', {src: t.image, className: 'character_icon'}))
           )

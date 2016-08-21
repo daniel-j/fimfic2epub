@@ -173,10 +173,36 @@ a.chaptercomments {
 }
 
 #toc {
+  h3 {
+    font-weight: normal;
+    text-align: center;
+    margin: 0;
+    margin-bottom: 0.5em;
+  }
   ol {
     list-style-type: none;
     padding: 0;
     margin: 0;
+
+    li {
+      // overflow: auto;
+
+      a, .floatbox {
+        padding: 0.3em;
+        padding-left: 0;
+        padding-right: 0;
+        display: inline-block;
+      }
+      .floatbox {
+        float: right;
+      }
+
+      span.date, span.wordcount {
+        font-size: 0.8em;
+        color: #888;
+        text-align: left;
+      }
+    }
   }
 
   [hidden] {

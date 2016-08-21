@@ -38,28 +38,31 @@
   line-height: 1.1em;
 }
 
-.extra_story_data {
+.categories {
+  text-align: left;
+  margin: 0.5em 0;
+  margin-top: 1em;
+}
+
+.bottom {
+  margin-top: 1em;
+  text-align: left;
+}
+
+.characters {
+  margin-top: 0.5em;
   text-align: left;
 }
 
 // Last Modified and First Published
-.datebox {
-  textcolor(#222);
-  padding-left: 10px;
+.infobox {
+  margin-bottom: 0.5em;
+  margin-left: 0.5em;
   font-weight: bold;
   display: inline-block;
-  padding: 0 10px;
-  padding-top: 2px;
-  padding-bottom: 4px;
-  border-radius: 3px;
-  bgcolor(#fff);
   vertical-align: middle;
-  border: 1px solid #999;
-  margin: 0px 2px;
-  margin-bottom: 6px;
-  height: 2em;
   
-  .heading, .date {
+  .heading, .data {
     font-family: sans-serif;
     font-size: 0.8em;
     text-align: center;
@@ -74,15 +77,16 @@
 
   .heading {
     font-weight: normal;
-    textcolor(#444);
+    color: #444;
   }
 }
 
 // Character icon
 span.character_icon {
   vertical-align: middle;
-  margin: 0 2px;
-  padding: 3px;
+  margin: 0;
+  margin-right: 0.2em;
+  padding: 0.2em;
   bgcolor(#fff);
   border-radius: 3px;
   display: inline-block;
@@ -123,10 +127,39 @@ span.character_icon {
   box-shadow: 0px 1px 0px #e64938 inset;
 }
 
-// Categories
-#categories {
-  text-align: left;
+// Statuses
+.completed-status-complete, .completed-status-incomplete, .completed-status-hiatus, .completed-status-cancelled {
+  margin-bottom: 0.5em;
+  font-family: sans-serif;
+  font-size: 1em;
+  font-weight: normal;
+  padding: 0.3em 0.6em;
+  text-shadow: -1px -1px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 4px;
+  display: inline-block;
+  text-align: center;
+  textcolor(#fff);
+  vertical-align: middle;
 }
+
+.completed-status-complete {
+  bgcolor(#63bd40);
+}
+
+.completed-status-incomplete {
+  bgcolor(#F7A616);
+}
+
+.completed-status-hiatus {
+  bgcolor(#bd7b40);
+}
+
+.completed-status-cancelled {
+  bgcolor(#bc3131);
+}
+
+// Categories
 .story_category {
   display: inline-block;
   padding: 0.5em;
@@ -135,7 +168,7 @@ span.character_icon {
   bgcolor(#eee);
   textcolor(#fff);
   border-radius: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 0.3em;
   font-family: sans-serif;
 }
 
