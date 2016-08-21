@@ -38,10 +38,13 @@ const bundleExtensionConfig = {
     modules: [
       path.resolve('./src'),
       'node_modules'
-    ]
+    ],
+    alias: {
+      fs: require.resolve('./src/false.js')
+    }
   },
 
-  externals: ['request', 'fs', 'tidy-html5', 'image-size'],
+  externals: ['request', 'tidy-html5', 'image-size'],
 
   plugins: [],
   devtool: 'source-map',
