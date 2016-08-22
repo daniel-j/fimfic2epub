@@ -33,7 +33,7 @@ export function cleanMarkup (html) {
 
     // Fix links pointing to pages on fimfiction
     // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
-    let matchLink = /(<a .?href=")(.+?)(".+?>.+?<\/a>)/g
+    let matchLink = /(<a .?href=")(.+?)(".+?>)/g
     html = html.replace(matchLink, (match, head, url, tail) => {
       if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
         if (url.substring(0, 1) === '/') {
