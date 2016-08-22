@@ -1,0 +1,13 @@
+
+#epubDialogContainer .drop-down-pop-up-container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1001;
+}
+#epubDialogContainer .drop-down-pop-up-container .drop-down-pop-up {
+	width: 500px;
+}
+#epubDialogContainer .drop-down-pop-up-container .drop-down-pop-up h1 {
+	cursor: move;
+}

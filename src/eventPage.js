@@ -18,9 +18,18 @@ if (typeof safari !== 'undefined') {
   let onMessage = chrome.extension.onMessage ? chrome.extension.onMessage : chrome.runtime.onMessage
 
   onMessage.addListener(function (request, sender, sendResponse) {
-    fetch(request, (blob, type) => {
-      sendResponse(URL.createObjectURL(blob), type)
-    }, 'blob')
-    return true
+    if (typeof request === 'string') {
+      fetch(request, (blob, type) => {
+        sendResponse(URL.createObjectURL(blob), type)
+      }, 'blob')
+      // required for async
+      return true
+    } else if (request.showPageAction) {
+      chrome.pageAction.show(sender.tab.id)
+    }
+  })
+
+  chrome.pageAction.onClicked.addListener(function (tab) {
+    chrome.tabs.sendMessage(tab.id, 'pageAction')
   })
 }
