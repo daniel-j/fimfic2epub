@@ -31,6 +31,21 @@ export function cleanMarkup (html) {
 
     html = fixDoubleSpacing(html)
 
+    // Fix links pointing to pages on fimfiction
+    // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
+    let matchLink = /(<a .?href=")(.+?)(".+?>.+?<\/a>)/g
+    html = html.replace(matchLink, (match, head, url, tail) => {
+      if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
+        if (url.substring(0, 1) === '/') {
+          url = 'http://www.fimfiction.net' + url
+        } else {
+          // do something else
+        }
+      }
+
+      return head + url + tail
+    })
+
     let cache = new Map()
     let completeCount = 0
 
@@ -106,7 +121,7 @@ export function fixDoubleSpacing (html) {
 }
 
 export function fixParagraphIndent (html) {
-  // from FimFictionConverter by Nyerguds// from FimFictionConverter by Nyerguds
+  // from FimFictionConverter by Nyerguds
   let fixIndent = 2
   if (fixIndent > 0) {
     // only trigger indenting when finding as many whitespace characters in a row as indicated by the FixIndent setting.
