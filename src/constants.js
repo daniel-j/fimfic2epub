@@ -22,12 +22,6 @@ export let tidyOptions = {
   'show-body-only': 'auto'
 }
 
-export let mimeMap = {
-  'image/jpeg': 'Images/*.jpg',
-  'image/png': 'Images/*.png',
-  'image/gif': 'Images/*.gif'
-}
-
 export let containerXml = `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>

@@ -6,6 +6,7 @@ import { XmlEntities } from 'html-entities'
 import sanitize from 'sanitize-filename'
 import URL from 'url'
 import isNode from 'detect-node'
+import fileType from 'file-type'
 
 import { styleCss, coverstyleCss, titlestyleCss } from './styles'
 
@@ -13,7 +14,7 @@ import { cleanMarkup } from './cleanMarkup'
 import fetchRemote from './fetchRemote'
 import * as template from './templates'
 
-import { mimeMap, containerXml } from './constants'
+import { containerXml } from './constants'
 
 const entities = new XmlEntities()
 
@@ -326,10 +327,13 @@ module.exports = class FimFic2Epub {
 
       fetchRemote(url, (data, type) => {
         r.dest = null
-        r.type = type
-        let dest = mimeMap[type]
-
-        if (dest) {
+        let info = fileType(isNode ? data : new Uint8Array(data))
+        if (info) {
+          type = info.mime
+          r.type = type
+          let isImage = type.indexOf('image/') === 0
+          let folder = isImage ? 'Images' : 'Misc'
+          let dest = folder + '/*.' + info.ext
           r.dest = dest.replace('*', r.filename)
           this.zip.file('OEBPS/' + r.dest, data)
           if (isNode && r.filename === 'cover') {
