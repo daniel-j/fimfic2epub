@@ -80,67 +80,58 @@ module.exports = class FimFic2Epub {
     this.storyId = FimFic2Epub.getStoryId(storyId)
 
     this.hasDownloaded = false
-    this.isDownloading = false
-    this.zip = null
+    this.downloadPromise = null
+
+    this.storyInfo = null
+    this.titlePage = null
     this.chapterContent = []
     this.remoteResources = new Map()
-    this.storyInfo = null
-    this.isDownloading = false
+
     this.cachedFile = null
     this.hasCoverImage = false
     this.coverImageDimensions = {width: 0, height: 0}
     this.includeTitlePage = true
     this.categories = []
     this.tags = []
+
+    this.zip = new JSZip()
   }
 
   download () {
-    return new Promise((resolve, reject) => {
-      if (this.isDownloading) {
-        reject('Already downloading')
-        return
-      }
-      if (this.hasDownloaded) {
-        resolve()
-        return
-      }
-      this.build().then(resolve).catch(reject)
-    })
-  }
+    if (this.downloadPromise) {
+      return this.downloadPromise
+    }
 
-  build () {
-    return new Promise((resolve, reject) => {
-      this.isDownloading = true
+    console.log('Fetching story metadata...')
 
-      this.zip = new JSZip()
-      this.zip.file('mimetype', 'application/epub+zip')
-      this.zip.file('META-INF/container.xml', containerXml)
-
-      console.log('Fetching story metadata...')
-
-      FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
+    let p = FimFic2Epub.fetchStoryInfo(this.storyId)
+      .then((storyInfo) => {
         this.storyInfo = storyInfo
         this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
 
         this.filename = FimFic2Epub.getFilename(this.storyInfo)
+      })
+      .then(this.fetchTitlePage.bind(this))
+      .then(() => {
+        this.downloadPromise = null
+      })
 
-        this.zip.file('OEBPS/Styles/style.css', styleCss)
-        this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
-        if (this.includeTitlePage) {
-          this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
-        }
-
-        this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
-
-        this.fetchTitlePage(resolve, reject)
-      }).catch(reject)
-    })
+    this.downloadPromise = p
+    return p
   }
 
-  fetchTitlePage (resolve, reject) {
+  build () {
+    return this.extractTitlePageInfo(this.titlePage)
+      .then(this.checkCoverImage.bind(this))
+  }
+
+  fetchTitlePage () {
     console.log('Fetching index page...')
-    fetchRemote(this.storyInfo.url, (raw, type) => {
-      this.extractTitlePageInfo(raw).then(() => this.checkCoverImage(resolve, reject))
+    return new Promise((resolve, reject) => {
+      fetchRemote(this.storyInfo.url, (raw, type) => {
+        this.titlePage = raw
+        resolve(raw)
+      })
     })
   }
 
@@ -219,44 +210,47 @@ module.exports = class FimFic2Epub {
     })
   }
 
-  checkCoverImage (resolve, reject) {
-    this.hasCoverImage = !!this.storyInfo.full_image
+  checkCoverImage () {
+    return new Promise((resolve, reject) => {
+      this.hasCoverImage = !!this.storyInfo.full_image
 
-    if (this.hasCoverImage) {
-      this.remoteResources.set(this.storyInfo.full_image, {filename: 'cover', where: ['cover']})
+      if (this.hasCoverImage) {
+        this.remoteResources.set(this.storyInfo.full_image, {filename: 'cover', where: ['cover']})
 
-      if (!isNode) {
-        let coverImage = new Image()
-        coverImage.src = this.storyInfo.full_image
+        if (!isNode) {
+          let coverImage = new Image()
+          coverImage.src = this.storyInfo.full_image
 
-        coverImage.addEventListener('load', () => {
-          this.coverImageDimensions.width = coverImage.width
-          this.coverImageDimensions.height = coverImage.height
+          coverImage.addEventListener('load', () => {
+            this.coverImageDimensions.width = coverImage.width
+            this.coverImageDimensions.height = coverImage.height
+            this.processStory(resolve, reject)
+          }, false)
+          coverImage.addEventListener('error', () => {
+            console.warn('Unable to fetch cover image, skipping...')
+            this.hasCoverImage = false
+            this.processStory(resolve, reject)
+          })
+        } else {
           this.processStory(resolve, reject)
-        }, false)
-        coverImage.addEventListener('error', () => {
-          console.warn('Unable to fetch cover image, skipping...')
-          this.hasCoverImage = false
-          this.processStory(resolve, reject)
-        })
+        }
       } else {
         this.processStory(resolve, reject)
       }
-    } else {
-      this.processStory(resolve, reject)
-    }
+    })
   }
 
   processStory (resolve, reject) {
     console.log('Fetching chapters...')
 
-    this.fetchChapters(() => {
-      this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
-
+    this.fetchChapters().then(() => {
       console.log('Fetching remote files...')
 
       this.fetchRemoteFiles(() => {
         console.log('Finishing build...')
+
+        this.zip.file('mimetype', 'application/epub+zip')
+        this.zip.file('META-INF/container.xml', containerXml)
 
         let coverFilename = ''
         this.remoteResources.forEach((r, url) => {
@@ -287,6 +281,8 @@ module.exports = class FimFic2Epub {
 
         this.chapterContent.length = 0
 
+        this.zip.file('OEBPS/content.opf', template.createOpf(this))
+
         if (this.hasCoverImage) {
           this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(coverFilename, this.coverImageDimensions.width, this.coverImageDimensions.height))
         } else {
@@ -297,9 +293,15 @@ module.exports = class FimFic2Epub {
           this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
         }
 
-        this.zip.file('OEBPS/content.opf', template.createOpf(this))
+        this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
+        this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
 
-        this.isDownloading = false
+        this.zip.file('OEBPS/Styles/style.css', styleCss)
+        this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
+        if (this.includeTitlePage) {
+          this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
+        }
+
         this.hasDownloaded = true
         resolve()
       })
@@ -353,44 +355,46 @@ module.exports = class FimFic2Epub {
     recursive()
   }
 
-  fetchChapters (cb) {
-    let chapters = this.storyInfo.chapters
-    let chapterCount = this.storyInfo.chapters.length
-    let currentChapter = 0
-    let completeCount = 0
+  fetchChapters () {
+    return new Promise((resolve, reject) => {
+      let chapters = this.storyInfo.chapters
+      let chapterCount = this.storyInfo.chapters.length
+      let currentChapter = 0
+      let completeCount = 0
 
-    if (chapterCount === 0) {
-      cb()
-      return
-    }
-
-    let recursive = () => {
-      let index = currentChapter++
-      let ch = chapters[index]
-      if (!ch) {
+      if (chapterCount === 0) {
+        resolve()
         return
       }
-      console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
-      let url = ch.link.replace('http', 'https')
-      fetchRemote(url, (html) => {
-        template.createChapter(ch, html, (html) => {
-          this.findRemoteResources('ch_' + zeroFill(3, index + 1), index, html)
-          this.chapterContent[index] = html
-          completeCount++
-          if (completeCount < chapterCount) {
-            recursive()
-          } else {
-            cb()
-          }
-        })
-      })
-    }
 
-    // concurrent downloads!
-    recursive()
-    recursive()
-    recursive()
-    recursive()
+      let recursive = () => {
+        let index = currentChapter++
+        let ch = chapters[index]
+        if (!ch) {
+          return
+        }
+        console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
+        let url = ch.link.replace('http', 'https')
+        fetchRemote(url, (html) => {
+          template.createChapter(ch, html, (html) => {
+            this.findRemoteResources('ch_' + zeroFill(3, index + 1), index, html)
+            this.chapterContent[index] = html
+            completeCount++
+            if (completeCount < chapterCount) {
+              recursive()
+            } else {
+              resolve()
+            }
+          })
+        })
+      }
+
+      // concurrent downloads!
+      recursive()
+      recursive()
+      recursive()
+      recursive()
+    })
   }
 
   findRemoteResources (prefix, where, html) {

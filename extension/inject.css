@@ -1,6 +1,6 @@
 
 #epubDialogContainer .drop-down-pop-up-container {
-	position: fixed;
+	position: absolute;
 	top: 0;
 	left: 0;
 	z-index: 1001;
@@ -10,4 +10,12 @@
 }
 #epubDialogContainer .drop-down-pop-up-container .drop-down-pop-up h1 {
 	cursor: move;
+}
+
+#epubDialogContainer table.properties {
+
+}
+
+#epubDialogContainer table.properties td.label {
+	white-space: nowrap;
 }

@@ -36,22 +36,20 @@ let checkbox = {
 let dialog = {
   controller (args) {
     this.dragging = m.prop(false)
-    this.xpos = m.prop(100)
-    this.ypos = m.prop(100)
+    this.xpos = m.prop(0)
+    this.ypos = m.prop(0)
     this.el = m.prop(null)
+    this.progress = m.prop(0)
     this.ondown = (e) => {
-      let el = this.el().firstChild
-      let rect = el.getBoundingClientRect()
-      let offset = {x: e.pageX - rect.left, y: e.pageY - rect.top}
+      let rect = this.el().firstChild.getBoundingClientRect()
+      let offset = {x: e.pageX - rect.left - document.body.scrollLeft, y: e.pageY - rect.top - document.body.scrollTop}
       this.dragging(true)
       let onmove = (e) => {
         e.preventDefault()
         if (this.dragging()) {
-          let rect = el.getBoundingClientRect()
-          this.xpos(Math.max(0, Math.min(e.pageX - offset.x, window.innerWidth - rect.width)))
-          this.ypos(Math.max(0, Math.min(e.pageY - offset.y, window.innerHeight - rect.height)))
-          // console.log(e.pageX, e.pageY)
-          m.redraw()
+          this.xpos(Math.max(0, e.pageX - offset.x))
+          this.ypos(Math.max(0, e.pageY - offset.y))
+          this.move()
         }
       }
       let onup = () => {
@@ -62,12 +60,48 @@ let dialog = {
       window.addEventListener('mousemove', onmove, false)
       window.addEventListener('mouseup', onup, false)
     }
+    this.onOpen = function (el, first) {
+      if (!first) {
+        this.el(el)
+        let rect = this.el().firstChild.getBoundingClientRect()
+        this.xpos((window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft)
+        this.ypos((window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop)
+        this.move()
+      }
+    }
+    this.move = () => {
+      this.el().style.left = this.xpos() + 'px'
+      this.el().style.top = this.ypos() + 'px'
+    }
+    this.createEpub = (e) => {
+      e.target.disabled = true
+      ffc.download()
+        .then(ffc.build.bind(ffc))
+        .then(ffc.getFile.bind(ffc)).then((file) => {
+          console.log('Saving file...')
+          if (typeof safari !== 'undefined') {
+            blobToDataURL(file, (dataurl) => {
+              document.location.href = dataurl
+              alert('Add .epub to the filename of the downloaded file')
+            })
+          } else {
+            saveAs(file, ffc.filename)
+          }
+        })
+    }
   },
   view (ctrl, args, extras) {
-    return m('.drop-down-pop-up-container', {config: ctrl.el, style: {left: ctrl.xpos() + 'px', top: ctrl.ypos() + 'px'}}, m('.drop-down-pop-up', [
-      m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export EPUB', m('a.close_button', {onclick: closeDialog})),
+    return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', [
+      m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
       m('.drop-down-pop-up-content', [
-        m(checkbox, {name: 'toggle-chapter-headings'}, 'Toggle chapter headings')
+        m('table.properties', [
+          m('tr', m('td.label', 'Cover image'), m('td', 'some config')),
+          m('tr', m('td.label', 'Chapter headings'), m('td', m(checkbox, {name: 'toggle-chapter-headings'})))
+        ]),
+        m('.drop-down-pop-up-footer', [
+          m('button.styled_button', {onclick: ctrl.createEpub}, 'Create EPUB'),
+          ctrl.progress() > 0 ? m('.rating_container', m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: ctrl.progress() * 100 + '%'}}))))) : null
+        ])
       ])
     ]))
   }
@@ -85,20 +119,6 @@ function clickButton () {
   if (!ffc) ffc = new FimFic2Epub(STORY_ID)
 
   openDialog()
-
-  return
-
-  ffc.download().then(ffc.getFile.bind(ffc)).then((file) => {
-    console.log('Saving file...')
-    if (typeof safari !== 'undefined') {
-      blobToDataURL(file, (dataurl) => {
-        document.location.href = dataurl
-        alert('Add .epub to the filename of the downloaded file')
-      })
-    } else {
-      saveAs(file, ffc.filename)
-    }
-  })
 }
 
 if (epubButton) {
