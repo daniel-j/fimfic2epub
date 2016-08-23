@@ -79,35 +79,16 @@ class FimFic2Epub extends Emitter {
     })
   }
 
-  static parseChapterPage (html) {
-    let trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
-
-    let authorNotesPos = html.indexOf('<div class="authors-note"')
-    let authorNotes = ''
-    if (authorNotesPos !== -1) {
-      authorNotesPos = authorNotesPos + html.substring(authorNotesPos).indexOf('<b>Author\'s Note:</b>')
-      authorNotes = html.substring(authorNotesPos + 22)
-      authorNotes = authorNotes.substring(0, authorNotes.indexOf('\t\n\t</div>'))
-      authorNotes = authorNotes.trim()
-      authorNotes = authorNotes.replace(trimWhitespace, '')
-    }
-
-    let chapterPos = html.indexOf('<div id="chapter_container">')
-    let chapter = html.substring(chapterPos + 29)
-
-    let pos = chapter.indexOf('\t</div>\t\t\n\t')
-
-    chapter = chapter.substring(0, pos).trim()
-
-    // remove leading and trailing <br /> tags and whitespace
-    chapter = chapter.replace(trimWhitespace, '')
-    return {content: chapter, notes: authorNotes, notesFirst: authorNotesPos < chapterPos}
-  }
-
   constructor (storyId) {
     super()
 
     this.storyId = FimFic2Epub.getStoryId(storyId)
+
+    this.options = {
+      addCommentsLink: true,
+      includeAuthorNotes: true,
+      addChapterHeadings: true
+    }
 
     this.fetchPromise = null
 
@@ -149,13 +130,21 @@ class FimFic2Epub extends Emitter {
       this.storyInfo = storyInfo
       this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
       this.filename = FimFic2Epub.getFilename(this.storyInfo)
-      this.progress(0, 0.3)
     })
     .then(this.fetchTitlePage.bind(this))
     .then(() => cleanMarkup(this.description)).then((html) => {
       this.storyInfo.description = html
       this.findRemoteResources('description', 'description', html)
     })
+  }
+
+  setTitle (title) {
+    this.storyInfo.title = title.trim()
+    this.filename = FimFic2Epub.getFilename(this.storyInfo)
+  }
+  setAuthorName (name) {
+    this.storyInfo.author.name = name.trim()
+    this.filename = FimFic2Epub.getFilename(this.storyInfo)
   }
 
   fetch () {
@@ -329,13 +318,11 @@ class FimFic2Epub extends Emitter {
   }
 
   fetchTitlePage () {
-    this.progress(0, 0.3, 'Fetching title page...')
     let url = this.storyInfo.url.replace('http://www.fimfiction.net', '')
     return fetch(url).then(this.extractTitlePageInfo.bind(this))
   }
 
   extractTitlePageInfo (html) {
-    this.progress(0, 0.6)
     let descPos = html.indexOf('<div class="description" id="description')
     descPos = descPos + html.substring(descPos).indexOf('">') + 2
     html = html.substring(descPos)
@@ -405,6 +392,31 @@ class FimFic2Epub extends Emitter {
     this.tags = tags
   }
 
+  parseChapterPage (html) {
+    let trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
+
+    let authorNotesPos = html.indexOf('<div class="authors-note"')
+    let authorNotes = ''
+    if (this.options.includeAuthorNotes && authorNotesPos !== -1) {
+      authorNotesPos = authorNotesPos + html.substring(authorNotesPos).indexOf('<b>Author\'s Note:</b>')
+      authorNotes = html.substring(authorNotesPos + 22)
+      authorNotes = authorNotes.substring(0, authorNotes.indexOf('\t\n\t</div>'))
+      authorNotes = authorNotes.trim()
+      authorNotes = authorNotes.replace(trimWhitespace, '')
+    }
+
+    let chapterPos = html.indexOf('<div id="chapter_container">')
+    let chapter = html.substring(chapterPos + 29)
+
+    let pos = chapter.indexOf('\t</div>\t\t\n\t')
+
+    chapter = chapter.substring(0, pos).trim()
+
+    // remove leading and trailing <br /> tags and whitespace
+    chapter = chapter.replace(trimWhitespace, '')
+    return {content: chapter, notes: authorNotes, notesFirst: authorNotesPos < chapterPos}
+  }
+
   fetchChapters () {
     this.progress(1, 0, 'Fetching chapters...')
     return new Promise((resolve, reject) => {
@@ -427,8 +439,8 @@ class FimFic2Epub extends Emitter {
         // console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
         let url = ch.link.replace('http://www.fimfiction.net', '')
         fetch(url).then((html) => {
-          html = FimFic2Epub.parseChapterPage(html)
-          template.createChapter(ch, html).then((html) => {
+          html = this.parseChapterPage(html)
+          template.createChapter(ch, html, this).then((html) => {
             this.findRemoteResources('ch_' + zeroFill(3, index + 1), index, html)
             this.chapters[index] = html
             completeCount++

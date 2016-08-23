@@ -56,7 +56,13 @@ let dialog = {
     this.coverFile = m.prop(null)
     this.coverUrl = m.prop('')
     this.checkboxCoverUrl = m.prop(false)
+
+    this.title = m.prop('')
+    this.author = m.prop('')
     this.subjects = m.prop(ffc.subjects)
+    this.addCommentsLink = m.prop(ffc.options.addCommentsLink)
+    this.includeAuthorNotes = m.prop(ffc.options.includeAuthorNotes)
+    this.addChapterHeadings = m.prop(ffc.options.addChapterHeadings)
 
     this.setCoverFile = (e) => {
       this.coverFile(e.target.files ? e.target.files[0] : null)
@@ -69,9 +75,7 @@ let dialog = {
       let onmove = (e) => {
         e.preventDefault()
         if (this.dragging()) {
-          this.xpos(Math.max(0, e.pageX - offset.x))
-          this.ypos(Math.max(0, e.pageY - offset.y))
-          this.move()
+          this.move(e.pageX - offset.x, e.pageY - offset.y)
         }
       }
       let onup = () => {
@@ -89,20 +93,25 @@ let dialog = {
         this.isLoading(true)
         ffc.fetchMetadata().then(() => {
           this.isLoading(false)
+          this.title(ffc.storyInfo.title)
+          this.author(ffc.storyInfo.author.name)
           m.redraw(true)
           this.center()
         })
       }
     }
-    this.move = () => {
+    this.move = (xpos, ypos) => {
+      this.xpos(Math.max(0, xpos))
+      this.ypos(Math.max(0, ypos))
       this.el().style.left = this.xpos() + 'px'
       this.el().style.top = this.ypos() + 'px'
     }
     this.center = () => {
       let rect = this.el().firstChild.getBoundingClientRect()
-      this.xpos((window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft)
-      this.ypos((window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop)
-      this.move()
+      this.move(
+        (window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft,
+        (window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop
+      )
     }
 
     this.createEpub = (e) => {
@@ -117,6 +126,11 @@ let dialog = {
       } else if (this.coverFile()) {
         chain = chain.then(blobToArrayBuffer.bind(null, this.coverFile())).then(ffc.setCoverImage.bind(ffc))
       }
+      ffc.setTitle(this.title())
+      ffc.setAuthorName(this.author())
+      ffc.options.addCommentsLink = this.addCommentsLink()
+      ffc.options.includeAuthorNotes = this.includeAuthorNotes()
+      ffc.options.addChapterHeadings = this.addChapterHeadings()
       m.redraw()
 
       chain
@@ -141,15 +155,26 @@ let dialog = {
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
       ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('.drop-down-pop-up-content', [
         m('table.properties', [
-          m('tr', m('td.label', 'Custom cover image'), m('td',
-            ctrl.checkboxCoverUrl() ? m('input', {type: 'url', placeholder: 'Image URL', onchange: m.withAttr('value', ctrl.coverUrl)}) : m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile})
-          ), m('td', m(checkbox, {checked: ctrl.checkboxCoverUrl(), onchange: m.withAttr('checked', ctrl.checkboxCoverUrl)}, 'Use image URL'))),
-          m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata'))),
+          m('tr', m('td.section_header', {colspan: 3}, m('b', 'General settings'))),
+          m('tr', m('td.label', 'Title'), m('td', {colspan: 2}, m('input', {type: 'text', value: ctrl.title(), onchange: m.withAttr('value', ctrl.title)}))),
+          m('tr', m('td.label', 'Author'), m('td', {colspan: 2}, m('input', {type: 'text', value: ctrl.author(), onchange: m.withAttr('value', ctrl.author)}))),
+          m('tr', m('td.label', 'Custom cover image'),
+            m('td',
+              ctrl.checkboxCoverUrl() ? m('input', {type: 'url', placeholder: 'Image URL', onchange: m.withAttr('value', ctrl.coverUrl)}) : m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile})
+            ),
+            m('td', {style: 'width: 1px'}, m(checkbox, {checked: ctrl.checkboxCoverUrl(), onchange: m.withAttr('checked', ctrl.checkboxCoverUrl)}, 'Use image URL'))
+          ),
+          m('tr', m('td.label', ''), m('td', {colspan: 2},
+            m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
+            m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments after chapters'),
+            m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes')
+          )),
+
+          m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
           m('tr', m('td.label', 'Categories'), m('td', {colspan: 2},
             m('textarea', {rows: 5}, ctrl.subjects().join('\n')),
-            m(checkbox, {checked: false}, 'Join categories into one (for iBooks)')
+            m(checkbox, {checked: false}, 'Join categories into one (iBooks only)')
           ))
-          // m('tr', m('td.label', 'Chapter headings'), m('td', m(checkbox, {checked: true})))
         ]),
         m('.drop-down-pop-up-footer', [
           m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1}, 'Create EPUB'),
@@ -166,23 +191,32 @@ let dialog = {
   }
 }
 
+let dialogOpen = false
 function openDialog (args, extras) {
+  if (dialogOpen) {
+    return
+  }
+  dialogOpen = true
   m.mount(dialogContainer, m(dialog, args, extras))
 }
 function closeDialog () {
+  dialogOpen = false
   m.mount(dialogContainer, null)
 }
 
 function clickButton () {
   if (!STORY_ID) return
-  if (!ffc) ffc = new FimFic2Epub(STORY_ID)
-  ffc.on('progress', (percent, status) => {
-    ffcProgress(percent)
-    if (status) {
-      ffcStatus(status)
-    }
-    m.redraw()
-  })
+  if (!ffc) {
+    ffc = new FimFic2Epub(STORY_ID)
+    ffc.on('progress', (percent, status) => {
+      console.log(Math.round(percent * 100), status)
+      ffcProgress(percent)
+      if (status) {
+        ffcStatus(status)
+      }
+      m.redraw()
+    })
+  }
 
   openDialog()
 }

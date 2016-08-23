@@ -24,7 +24,7 @@ function prettyDate (d) {
   return d.getDate() + nth(d) + ' ' + months[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear()
 }
 
-export function createChapter (ch, chapter) {
+export function createChapter (ch, chapter, ffc) {
   return Promise.all([
     cleanMarkup(chapter.content),
     cleanMarkup(chapter.notes)
@@ -53,14 +53,14 @@ export function createChapter (ch, chapter) {
           m('title', ch.title)
         ]),
         m('body', [
-          m('.chapter-title', [
+          ffc.options.addChapterHeadings ? m('.chapter-title', [
             m('h1', ch.title),
             m('hr')
-          ]),
+          ]) : null,
           content,
-          m('p.double', {style: 'text-align: center; clear: both;'},
+          ffc.options.addCommentsLink ? m('p.double', {style: 'text-align: center; clear: both;'},
             m('a.chaptercomments', {href: ch.link + '#comment_list'}, 'Read chapter comments online')
-          )
+          ) : null
         ])
       ])
     ))
