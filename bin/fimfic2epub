@@ -14,7 +14,8 @@ if (outputStdout) {
   console.log('Outputting to stdout')
 }
 
-ffc.download()
+ffc.fetch()
+.then(ffc.build.bind(ffc))
 .then(() => {
   let filename = process.argv[3] || ffc.filename
   let stream

@@ -6,9 +6,17 @@ import m from 'mithril'
 import { saveAs } from 'file-saver'
 
 function blobToDataURL (blob, callback) {
-  let a = new FileReader()
-  a.onloadend = function (e) { callback(a.result) }
-  a.readAsDataURL(blob)
+  let fr = new FileReader()
+  fr.onloadend = function (e) { callback(fr.result) }
+  fr.readAsDataURL(blob)
+}
+
+function blobToArrayBuffer (blob) {
+  return new Promise((resolve, reject) => {
+    let fr = new FileReader()
+    fr.onloadend = function (e) { resolve(fr.result) }
+    fr.readAsArrayBuffer(blob)
+  })
 }
 
 const isChromeExt = typeof chrome !== 'undefined'
@@ -33,13 +41,21 @@ let checkbox = {
   }
 }
 
+let ffcProgress = m.prop(-1)
+let ffcStatus = m.prop('')
+
 let dialog = {
   controller (args) {
     this.dragging = m.prop(false)
     this.xpos = m.prop(0)
     this.ypos = m.prop(0)
     this.el = m.prop(null)
-    this.progress = m.prop(0)
+    this.coverFile = m.prop(null)
+
+    this.setCoverFile = (e) => {
+      this.coverFile(e.target.files ? e.target.files[0] : null)
+    }
+
     this.ondown = (e) => {
       let rect = this.el().firstChild.getBoundingClientRect()
       let offset = {x: e.pageX - rect.left - document.body.scrollLeft, y: e.pageY - rect.top - document.body.scrollTop}
@@ -74,8 +90,17 @@ let dialog = {
       this.el().style.top = this.ypos() + 'px'
     }
     this.createEpub = (e) => {
+      ffcProgress(0)
+      ffcStatus('')
       e.target.disabled = true
-      ffc.fetch()
+      let chain = Promise.resolve()
+      if (this.coverFile()) {
+        chain = blobToArrayBuffer(this.coverFile()).then(ffc.setCoverImage.bind(ffc))
+      }
+      m.redraw()
+
+      chain
+        .then(ffc.fetch.bind(ffc))
         .then(ffc.build.bind(ffc))
         .then(ffc.getFile.bind(ffc)).then((file) => {
           console.log('Saving file...')
@@ -90,17 +115,32 @@ let dialog = {
         })
     }
   },
+
   view (ctrl, args, extras) {
     return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', [
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
       m('.drop-down-pop-up-content', [
         m('table.properties', [
-          m('tr', m('td.label', 'Cover image'), m('td', 'some config')),
-          m('tr', m('td.label', 'Chapter headings'), m('td', m(checkbox, {name: 'toggle-chapter-headings'})))
+          m('tr', m('td.label', 'Custom cover image'), m('td',
+            // m(checkbox, {name: '', checked: true}, ' Custom cover'),
+            // m('input', {type: 'url', placeholder: 'Image URL'}),
+            // '- or -',
+            m('form', [
+              m('input', {type: 'file', onchange: ctrl.setCoverFile}),
+              m('button', {type: 'reset'}, 'Reset')
+            ])
+          ))
+          // m('tr', m('td.label', 'Chapter headings'), m('td', m(checkbox, {checked: true})))
         ]),
         m('.drop-down-pop-up-footer', [
-          m('button.styled_button', {onclick: ctrl.createEpub}, 'Create EPUB'),
-          ctrl.progress() > 0 ? m('.rating_container', m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: ctrl.progress() * 100 + '%'}}))))) : null
+          m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1}, 'Create EPUB'),
+          ffcProgress() >= 0 ? m('.rating_container',
+            m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: ffcProgress() * 100 + '%'}})))),
+            ' ',
+            ffcProgress() < 1 ? m('i.fa.fa-spin.fa-spinner') : null,
+            ' ',
+            ffcStatus()
+          ) : null
         ])
       ])
     ]))
@@ -117,6 +157,13 @@ function closeDialog () {
 function clickButton () {
   if (!STORY_ID) return
   if (!ffc) ffc = new FimFic2Epub(STORY_ID)
+  ffc.on('progress', (percent, status) => {
+    ffcProgress(percent)
+    if (status) {
+      ffcStatus(status)
+    }
+    m.redraw()
+  })
 
   openDialog()
 }

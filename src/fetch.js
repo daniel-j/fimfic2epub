@@ -19,7 +19,7 @@ function fetchNode (url, responseType) {
         reject(error)
         return
       }
-      let type = response.headers['content-type']
+      // let type = response.headers['content-type']
       resolve(body)
     })
   })
@@ -37,7 +37,6 @@ export default function fetch (url, responseType) {
     let x = new XMLHttpRequest()
     x.open('get', url, true)
     if (responseType) {
-      console.log(responseType)
       x.responseType = responseType
     }
     x.onload = function () {

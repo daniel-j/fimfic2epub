@@ -21,6 +21,7 @@
   ],
   "dependencies": {
     "detect-node": "^2.0.3",
+    "es6-event-emitter": "^1.5.1",
     "escape-string-regexp": "^1.0.5",
     "file-type": "^3.8.0",
     "html-entities": "^1.2.0",

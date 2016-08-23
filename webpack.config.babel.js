@@ -44,7 +44,7 @@ const bundleExtensionConfig = {
     }
   },
 
-  externals: ['request', 'tidy-html5', 'image-size'],
+  externals: ['request', 'tidy-html5'],
 
   plugins: [],
   devtool: 'source-map',

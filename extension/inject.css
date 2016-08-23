@@ -19,3 +19,23 @@
 #epubDialogContainer table.properties td.label {
 	white-space: nowrap;
 }
+
+#epubDialogContainer div.rating_container {
+	padding-top: 4px;
+}
+
+#epubDialogContainer div.rating_container div.bar_container {
+	width: 150px;
+}
+
+#epubDialogContainer div.rating_container div.bar_dislike {
+	background-color: transparent;
+}
+
+#epubDialogContainer div.rating_container div.bar {
+	transition: none;
+	-webkit-transition: none;
+	-moz-transition: none;
+	-ms-transition: none;
+	-o-transition: none;
+}
