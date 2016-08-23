@@ -126,7 +126,7 @@ let dialog = {
             // m('input', {type: 'url', placeholder: 'Image URL'}),
             // '- or -',
             m('form', [
-              m('input', {type: 'file', onchange: ctrl.setCoverFile}),
+              m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile}),
               m('button', {type: 'reset'}, 'Reset')
             ])
           ))
