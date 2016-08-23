@@ -21,7 +21,7 @@ import { containerXml } from './constants'
 
 const entities = new XmlEntities()
 
-module.exports = class FimFic2Epub extends Emitter {
+class FimFic2Epub extends Emitter {
 
   static getStoryId (id) {
     if (isNaN(id)) {
@@ -113,8 +113,10 @@ module.exports = class FimFic2Epub extends Emitter {
 
     this.storyInfo = null
     this.description = ''
+    this.subjects = []
     this.chapters = []
     this.remoteResources = new Map()
+    this.coverUrl = ''
     this.coverImage = null
     this.coverFilename = ''
     this.coverType = ''
@@ -138,63 +140,54 @@ module.exports = class FimFic2Epub extends Emitter {
     this.coverImageDimensions = sizeOf(new Buffer(buffer))
   }
 
+  fetchMetadata () {
+    this.storyInfo = null
+    this.description = ''
+    this.subjects.length = 0
+
+    return FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
+      this.storyInfo = storyInfo
+      this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
+      this.filename = FimFic2Epub.getFilename(this.storyInfo)
+      this.progress(0, 0.3)
+    })
+    .then(this.fetchTitlePage.bind(this))
+    .then(() => cleanMarkup(this.description)).then((html) => {
+      this.storyInfo.description = html
+      this.findRemoteResources('description', 'description', html)
+    })
+  }
+
   fetch () {
     if (this.fetchPromise) {
       return this.fetchPromise
     }
 
-    this.storyInfo = null
-    this.description = ''
     this.chapters.length = 0
     this.remoteResources.clear()
 
-    this.progress(0, 0, 'Fetching metadata...')
+    this.progress(0, 0, 'Fetching...')
 
-    let p =
-      FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
-        this.storyInfo = storyInfo
-        this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
-        this.filename = FimFic2Epub.getFilename(this.storyInfo)
-        this.progress(0, 0.3)
-      })
-      .then(this.fetchTitlePage.bind(this))
-      .then(() => cleanMarkup(this.description)).then((html) => {
-        this.storyInfo.description = html
-        this.findRemoteResources('description', 'description', html)
-      })
+    this.fetchPromise = Promise.resolve()
+    if (!this.storyInfo) {
+      this.fetchPromise = this.fetchPromise.then(this.fetchMetadata.bind(this))
+    }
+    this.fetchPromise = this.fetchPromise
       .then(this.fetchCoverImage.bind(this))
       .then(this.fetchChapters.bind(this))
-
-      // .then(this.processChapters.bind(this))
       .then(this.fetchRemoteFiles.bind(this))
       .then(() => {
         this.fetchPromise = null
       })
 
-    this.fetchPromise = p
-    return p
+    return this.fetchPromise
   }
 
   build () {
     this.cachedFile = null
     this.zip = null
 
-    this.remoteResources.forEach((r, url) => {
-      let dest = '../' + r.dest
-      if (r.dest && r.originalUrl && r.where) {
-        let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
-        for (var i = 0; i < r.where.length; i++) {
-          let w = r.where[i]
-          if (typeof w === 'number') {
-            this.chapters[w] = this.chapters[w].replace(ourl, dest)
-          } else if (w === 'description') {
-            this.storyInfo.description = this.storyInfo.description.replace(ourl, dest)
-          } else if (w === 'tags') {
-            this.tags.byImage[r.originalUrl].image = dest
-          }
-        }
-      }
-    })
+    this.replaceRemoteResources()
 
     this.zip = new JSZip()
 
@@ -226,8 +219,6 @@ module.exports = class FimFic2Epub extends Emitter {
     this.remoteResources.forEach((r) => {
       this.zip.file('OEBPS/' + r.dest, r.data)
     })
-
-    this.progress(6, 0, 'Complete!')
   }
 
   // for node, resolve a Buffer, in browser resolve a Blob
@@ -238,6 +229,7 @@ module.exports = class FimFic2Epub extends Emitter {
     if (this.cachedFile) {
       return Promise.resolve(this.cachedFile)
     }
+    this.progress(6, 0, 'Compressing...')
 
     return this.zip
       .generateAsync({
@@ -247,6 +239,7 @@ module.exports = class FimFic2Epub extends Emitter {
         compressionOptions: {level: 9}
       })
       .then((file) => {
+        this.progress(6, 0.3, 'Complete!')
         this.cachedFile = file
         return file
       })
@@ -269,7 +262,7 @@ module.exports = class FimFic2Epub extends Emitter {
 
   // Internal/private methods
   progress (part, percent, status) {
-    let parts = 6
+    let parts = 6.3
     let partsize = 1 / parts
     percent = (part / parts) + percent * partsize
     this.trigger('progress', percent, status)
@@ -305,7 +298,7 @@ module.exports = class FimFic2Epub extends Emitter {
       return this.coverImage
     }
     this.coverImage = null
-    let url = this.storyInfo.full_image
+    let url = this.coverUrl || this.storyInfo.full_image
     if (!url) {
       return null
     }
@@ -357,13 +350,16 @@ module.exports = class FimFic2Epub extends Emitter {
     html = html.substring(endCatsPos + 6)
 
     let categories = []
+    this.subjects.push('Fimfiction')
     let matchCategory = /<a href="(.*?)" class="(.*?)">(.*?)<\/a>/g
     for (let c; (c = matchCategory.exec(catsHtml));) {
-      categories.push({
+      let cat = {
         url: 'http://www.fimfiction.net' + c[1],
         className: c[2],
         name: entities.decode(c[3])
-      })
+      }
+      categories.push(cat)
+      this.subjects.push(cat.name)
     }
     this.categories = categories
 
@@ -500,4 +496,25 @@ module.exports = class FimFic2Epub extends Emitter {
       recursive()
     })
   }
+
+  replaceRemoteResources () {
+    this.remoteResources.forEach((r, url) => {
+      let dest = '../' + r.dest
+      if (r.dest && r.originalUrl && r.where) {
+        let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
+        for (var i = 0; i < r.where.length; i++) {
+          let w = r.where[i]
+          if (typeof w === 'number') {
+            this.chapters[w] = this.chapters[w].replace(ourl, dest)
+          } else if (w === 'description') {
+            this.storyInfo.description = this.storyInfo.description.replace(ourl, dest)
+          } else if (w === 'tags') {
+            this.tags.byImage[r.originalUrl].image = dest
+          }
+        }
+      }
+    })
+  }
 }
+
+module.exports = FimFic2Epub

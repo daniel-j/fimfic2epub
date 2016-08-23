@@ -5,10 +5,12 @@ import FimFic2Epub from './FimFic2Epub'
 import m from 'mithril'
 import { saveAs } from 'file-saver'
 
-function blobToDataURL (blob, callback) {
-  let fr = new FileReader()
-  fr.onloadend = function (e) { callback(fr.result) }
-  fr.readAsDataURL(blob)
+function blobToDataURL (blob) {
+  return new Promise((resolve, reject) => {
+    let fr = new FileReader()
+    fr.onloadend = function (e) { resolve(fr.result) }
+    fr.readAsDataURL(blob)
+  })
 }
 
 function blobToArrayBuffer (blob) {
@@ -33,9 +35,9 @@ document.body.appendChild(dialogContainer)
 
 let checkbox = {
   view: function (ctrl, args, text) {
-    return m('label.toggleable-switch', [
-      m('input', {type: 'checkbox', name: args.name, checked: args.checked}),
-      m('a'),
+    return m('label.toggleable-switch', {style: 'white-space: nowrap;'}, [
+      m('input', {type: 'checkbox', name: args.name, checked: args.checked, onchange: args.onchange}),
+      m('a', {style: 'margin-right: 10px'}),
       text
     ])
   }
@@ -46,11 +48,15 @@ let ffcStatus = m.prop('')
 
 let dialog = {
   controller (args) {
+    this.isLoading = m.prop(true)
     this.dragging = m.prop(false)
     this.xpos = m.prop(0)
     this.ypos = m.prop(0)
     this.el = m.prop(null)
     this.coverFile = m.prop(null)
+    this.coverUrl = m.prop('')
+    this.checkboxCoverUrl = m.prop(false)
+    this.subjects = m.prop(ffc.subjects)
 
     this.setCoverFile = (e) => {
       this.coverFile(e.target.files ? e.target.files[0] : null)
@@ -76,26 +82,40 @@ let dialog = {
       window.addEventListener('mousemove', onmove, false)
       window.addEventListener('mouseup', onup, false)
     }
-    this.onOpen = function (el, first) {
-      if (!first) {
+    this.onOpen = function (el, isInitialized) {
+      if (!isInitialized) {
         this.el(el)
-        let rect = this.el().firstChild.getBoundingClientRect()
-        this.xpos((window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft)
-        this.ypos((window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop)
-        this.move()
+        this.center()
+        this.isLoading(true)
+        ffc.fetchMetadata().then(() => {
+          this.isLoading(false)
+          m.redraw(true)
+          this.center()
+        })
       }
     }
     this.move = () => {
       this.el().style.left = this.xpos() + 'px'
       this.el().style.top = this.ypos() + 'px'
     }
+    this.center = () => {
+      let rect = this.el().firstChild.getBoundingClientRect()
+      this.xpos((window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft)
+      this.ypos((window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop)
+      this.move()
+    }
+
     this.createEpub = (e) => {
       ffcProgress(0)
       ffcStatus('')
       e.target.disabled = true
       let chain = Promise.resolve()
-      if (this.coverFile()) {
-        chain = blobToArrayBuffer(this.coverFile()).then(ffc.setCoverImage.bind(ffc))
+      ffc.coverUrl = ''
+      ffc.coverImage = null
+      if (this.checkboxCoverUrl()) {
+        ffc.coverUrl = this.coverUrl()
+      } else if (this.coverFile()) {
+        chain = chain.then(blobToArrayBuffer.bind(null, this.coverFile())).then(ffc.setCoverImage.bind(ffc))
       }
       m.redraw()
 
@@ -105,7 +125,7 @@ let dialog = {
         .then(ffc.getFile.bind(ffc)).then((file) => {
           console.log('Saving file...')
           if (typeof safari !== 'undefined') {
-            blobToDataURL(file, (dataurl) => {
+            blobToDataURL(file).then((dataurl) => {
               document.location.href = dataurl
               alert('Add .epub to the filename of the downloaded file')
             })
@@ -119,28 +139,27 @@ let dialog = {
   view (ctrl, args, extras) {
     return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', [
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
-      m('.drop-down-pop-up-content', [
+      ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('.drop-down-pop-up-content', [
         m('table.properties', [
           m('tr', m('td.label', 'Custom cover image'), m('td',
-            // m(checkbox, {name: '', checked: true}, ' Custom cover'),
-            // m('input', {type: 'url', placeholder: 'Image URL'}),
-            // '- or -',
-            m('form', [
-              m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile}),
-              m('button', {type: 'reset'}, 'Reset')
-            ])
+            ctrl.checkboxCoverUrl() ? m('input', {type: 'url', placeholder: 'Image URL', onchange: m.withAttr('value', ctrl.coverUrl)}) : m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile})
+          ), m('td', m(checkbox, {checked: ctrl.checkboxCoverUrl(), onchange: m.withAttr('checked', ctrl.checkboxCoverUrl)}, 'Use image URL'))),
+          m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata'))),
+          m('tr', m('td.label', 'Categories'), m('td', {colspan: 2},
+            m('textarea', {rows: 5}, ctrl.subjects().join('\n')),
+            m(checkbox, {checked: false}, 'Join categories into one (for iBooks)')
           ))
           // m('tr', m('td.label', 'Chapter headings'), m('td', m(checkbox, {checked: true})))
         ]),
         m('.drop-down-pop-up-footer', [
           m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1}, 'Create EPUB'),
-          ffcProgress() >= 0 ? m('.rating_container',
-            m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: ffcProgress() * 100 + '%'}})))),
+          m('.rating_container',
+            m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: Math.max(0, ffcProgress()) * 100 + '%'}})))),
             ' ',
-            ffcProgress() < 1 ? m('i.fa.fa-spin.fa-spinner') : null,
+            ffcProgress() >= 0 && ffcProgress() < 1 ? m('i.fa.fa-spin.fa-spinner') : null,
             ' ',
             ffcStatus()
-          ) : null
+          )
         ])
       ])
     ]))
