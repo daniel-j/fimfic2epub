@@ -75,7 +75,7 @@ let dialog = {
     }
     this.createEpub = (e) => {
       e.target.disabled = true
-      ffc.download()
+      ffc.fetch()
         .then(ffc.build.bind(ffc))
         .then(ffc.getFile.bind(ffc)).then((file) => {
           console.log('Saving file...')

@@ -39,33 +39,34 @@ if (typeof safari !== 'undefined') {
   safari.self.addEventListener('message', safariHandler, false)
 }
 
-function fetchBackground (url, cb, responseType) {
-  if (typeof chrome !== 'undefined' && chrome.runtime.sendMessage) {
-    chrome.runtime.sendMessage(url, function (objurl) {
-      fetch(objurl, cb, responseType)
-      URL.revokeObjectURL(objurl)
-    })
-  } else if (typeof safari !== 'undefined') {
-    safariQueue[url] = {cb: cb, responseType: responseType}
-    safari.self.tab.dispatchMessage('remote', url)
-  } else {
-    cb(null)
-  }
+function fetchBackground (url, responseType) {
+  return new Promise((resolve, reject) => {
+    if (typeof chrome !== 'undefined' && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage(url, function (objurl) {
+        resolve(fetch(objurl, responseType))
+        URL.revokeObjectURL(objurl)
+      })
+    } else if (typeof safari !== 'undefined') {
+      safariQueue[url] = {cb: resolve, responseType: responseType}
+      safari.self.tab.dispatchMessage('remote', url)
+    } else {
+      resolve(null)
+    }
+  })
 }
 
-export default function fetchRemote (url, cb, responseType) {
+export default function fetchRemote (url, responseType) {
   if (url.indexOf('//') === 0) {
     url = 'http:' + url
   }
   if (!isNode && document.location.protocol === 'https:' && url.indexOf('http:') === 0) {
-    fetchBackground(url, cb, responseType)
-    return
+    return fetchBackground(url, responseType)
   }
-  fetch(url, (data, type) => {
+  return fetch(url, responseType).then((data) => {
     if (!data) {
-      fetchBackground(url, cb, responseType)
+      return fetchBackground(url, responseType)
     } else {
-      cb(data, type)
+      return Promise.resolve(data)
     }
-  }, responseType)
+  })
 }

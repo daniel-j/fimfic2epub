@@ -50,7 +50,7 @@ export function cleanMarkup (html) {
     let completeCount = 0
 
     function getYoutubeInfo (ids) {
-      fetch('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey, (raw, type) => {
+      fetch('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey).then((raw) => {
         let data
         try {
           data = JSON.parse(raw).items

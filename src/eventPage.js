@@ -5,12 +5,11 @@ import fetch from './fetch'
 if (typeof safari !== 'undefined') {
   safari.application.addEventListener('message', function (ev) {
     let url = ev.message
-    fetch(url, (buffer, type) => {
-      console.log('Fetched ' + url + ' (' + type + ')')
+    fetch(url).then((buffer) => {
+      console.log('Fetched ' + url)
       ev.target.page.dispatchMessage('remote', {
         input: url,
-        output: buffer,
-        type: type
+        output: buffer
       })
     }, 'arraybuffer')
   }, false)
@@ -19,9 +18,9 @@ if (typeof safari !== 'undefined') {
 
   onMessage.addListener(function (request, sender, sendResponse) {
     if (typeof request === 'string') {
-      fetch(request, (blob, type) => {
-        sendResponse(URL.createObjectURL(blob), type)
-      }, 'blob')
+      fetch(request, 'blob').then((blob) => {
+        sendResponse(URL.createObjectURL(blob))
+      })
       // required for async
       return true
     } else if (request.showPageAction) {
