@@ -510,7 +510,9 @@ class FimFic2Epub extends Emitter {
     html = html.substring(endCatsPos + 6)
 
     let categories = []
+    this.subjects.length = 0
     this.subjects.push('Fimfiction')
+    this.subjects.push(this.storyInfo.content_rating_text)
     let matchCategory = /<a href="(.*?)" class="(.*?)">(.*?)<\/a>/g
     for (let c; (c = matchCategory.exec(catsHtml));) {
       let cat = {

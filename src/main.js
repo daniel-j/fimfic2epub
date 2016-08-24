@@ -209,7 +209,7 @@ let dialog = {
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
           m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Categories'), m('td', {colspan: 2},
             m('textarea', {rows: 2, config: autosize, onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
-            m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories into one, separated by commas')
+            m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories and separate with commas (for iBooks only)')
           ))
         ]),
         m('.drop-down-pop-up-footer', [
