@@ -4,8 +4,6 @@ import render from './lib/mithril-node-render'
 import { pd as pretty } from 'pretty-data'
 import zeroFill from 'zero-fill'
 
-import htmlWordCount from './html-wordcount'
-import { cleanMarkup } from './cleanMarkup'
 import { NS } from './constants'
 
 function nth (d) {
@@ -25,24 +23,19 @@ function prettyDate (d) {
 }
 
 export function createChapter (ch, chapter, ffc) {
-  return Promise.all([
-    cleanMarkup(chapter.content),
-    cleanMarkup(chapter.notes)
-  ]).then((values) => {
-    let [chapterContent, authorNotes] = values
+  return new Promise((resolve, reject) => {
+    let {content, notes} = chapter
 
-    ch.realWordCount = htmlWordCount(chapterContent)
-
-    let content = [
-      m.trust(chapterContent),
-      authorNotes ? m('div#author_notes', {className: chapter.notesFirst ? 'top' : 'bottom'}, [
+    let sections = [
+      m.trust(content),
+      ffc.options.includeAuthorNotes && notes ? m('div#author_notes', {className: chapter.notesFirst ? 'top' : 'bottom'}, [
         m('p', m('b', 'Author\'s Note:')),
-        m.trust(authorNotes)]) : null
+        m.trust(notes)]) : null
     ]
 
     // if author notes are a the beginning of the chapter
-    if (authorNotes && chapter.notesFirst) {
-      content.reverse()
+    if (notes && chapter.notesFirst) {
+      sections.reverse()
     }
 
     let chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
@@ -57,7 +50,7 @@ export function createChapter (ch, chapter, ffc) {
             m('h1', ch.title),
             m('hr')
           ]) : null,
-          content,
+          sections,
           ffc.options.addCommentsLink ? m('p.double', {style: 'text-align: center; clear: both;'},
             m('a.chaptercomments', {href: ch.link + '#comment_list'}, 'Read chapter comments online')
           ) : null
@@ -65,7 +58,7 @@ export function createChapter (ch, chapter, ffc) {
       ])
     ))
 
-    return Promise.resolve(chapterPage)
+    resolve(chapterPage)
   })
 }
 
@@ -90,13 +83,41 @@ function sortSpineItems (items) {
 
 export function createOpf (ffc) {
   let remotes = []
+  let remoteCounter = 0
   ffc.remoteResources.forEach((r, url) => {
+    remoteCounter++
+    if (!ffc.options.includeExternal) {
+      // hack-ish, but what can I do?
+      // turns out only video and audio can be remote resources.. :I
+      /*
+      if (url.indexOf('//') === 0) {
+        url = 'http:' + url
+      }
+      if (url.indexOf('/') === 0) {
+        url = 'http://www.fimfiction.net' + url
+      }
+      let mime = null
+      if (url.toLowerCase().lastIndexOf('.png')) {
+        mime = 'image/png'
+      } else if (url.toLowerCase().lastIndexOf('.jpg')) {
+        mime = 'image/jpeg'
+      }
+      if (mime) {
+        remotes.push(m('item', {id: 'remote_' + zeroFill(3, remoteCounter), href: url, 'media-type': mime}))
+      }
+      */
+      return
+    }
     if (!r.dest) {
       return
     }
-    let attrs = {id: r.filename, href: r.dest, 'media-type': r.type}
-    remotes.push(m('item', attrs))
+    remotes.push(m('item', {id: r.filename, href: r.dest, 'media-type': r.type}))
   })
+
+  let subjects = ffc.subjects
+  if (ffc.options.joinSubjects) {
+    subjects = [subjects.join(', ')]
+  }
 
   let contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(render(
     m('package', {xmlns: NS.OPF, version: '3.0', 'unique-identifier': 'BookId'}, [
@@ -111,10 +132,9 @@ export function createOpf (ffc) {
         m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
         ffc.coverImage ? m('meta', {name: 'cover', content: 'cover'}) : null,
-        m('meta', {property: 'dcterms:modified'}, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', '')),
-        m('dc:subject', 'Fimfiction')
-      ].concat(ffc.categories.map((tag) =>
-        m('dc:subject', tag.name)
+        m('meta', {property: 'dcterms:modified'}, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', ''))
+      ].concat(subjects.map((s) =>
+        m('dc:subject', s)
       ), m('meta', {name: 'fimfic2epub version', content: FIMFIC2EPUB_VERSION}))),
 
       m('manifest', [
@@ -127,10 +147,10 @@ export function createOpf (ffc) {
         m('item', {id: 'titlestyle', href: 'Styles/titlestyle.css', 'media-type': 'text/css'}),
 
         m('item', {id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.coverImage ? 'svg' : undefined}),
-        m('item', {id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml'})
+        m('item', {id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasRemoteResources.titlePage ? 'remote-resources' : null})
 
       ].concat(ffc.storyInfo.chapters.map((ch, num) =>
-        m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml'})
+        m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ch.remote ? 'remote-resources' : null})
       ), remotes)),
 
       m('spine', {toc: 'ncx'}, sortSpineItems([

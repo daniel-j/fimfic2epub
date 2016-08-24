@@ -14,7 +14,13 @@ if (outputStdout) {
   console.log('Outputting to stdout')
 }
 
-ffc.fetch()
+ffc.on('progress', (percent, status) => {
+  if (status) {
+    console.log('fimfic2epub: ' + status)
+  }
+})
+
+ffc.fetchAll()
 .then(ffc.build.bind(ffc))
 .then(() => {
   let filename = process.argv[3] || ffc.filename

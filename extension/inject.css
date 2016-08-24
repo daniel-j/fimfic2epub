@@ -4,9 +4,11 @@
 	top: 0;
 	left: 0;
 	z-index: 1001;
+	padding: 0;
+	margin: 0;
 }
 #epubDialogContainer .drop-down-pop-up-container .drop-down-pop-up {
-	width: 600px;
+	width: 650px;
 }
 #epubDialogContainer .drop-down-pop-up-container .drop-down-pop-up h1 {
 	cursor: move;
@@ -17,8 +19,8 @@
 }
 
 #epubDialogContainer table.properties textarea {
-	line-height: 1em;
-	font-size: 1em;
+	line-height: 1.2em;
+	font-size: 0.95em;
 	resize: vertical;
 }
 
@@ -32,11 +34,12 @@
 }
 
 #epubDialogContainer div.rating_container {
-	padding-top: 4px;
+	padding-top: 10px;
 }
 
 #epubDialogContainer div.rating_container div.bar_container {
 	width: 150px;
+	margin-right: 4px;
 }
 
 #epubDialogContainer div.rating_container div.bar_dislike {

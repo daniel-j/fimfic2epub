@@ -13,6 +13,7 @@ import Emitter from 'es6-event-emitter'
 import { styleCss, coverstyleCss, titlestyleCss } from './styles'
 
 import { cleanMarkup } from './cleanMarkup'
+import htmlWordCount from './html-wordcount'
 import fetch from './fetch'
 import fetchRemote from './fetchRemote'
 import * as template from './templates'
@@ -87,21 +88,37 @@ class FimFic2Epub extends Emitter {
     this.options = {
       addCommentsLink: true,
       includeAuthorNotes: true,
-      addChapterHeadings: true
+      addChapterHeadings: true,
+      includeExternal: true,
+
+      joinSubjects: false
     }
 
-    this.fetchPromise = null
+    // promise cache
+    this.pcache = {
+      metadata: null,
+      chapters: null,
+      remoteResources: null,
+      coverImage: null,
+      fetchAll: null
+    }
 
     this.storyInfo = null
     this.description = ''
     this.subjects = []
     this.chapters = []
+    this.chaptersHtml = []
+    this.remoteResourcesCached = false
     this.remoteResources = new Map()
     this.coverUrl = ''
     this.coverImage = null
     this.coverFilename = ''
     this.coverType = ''
     this.coverImageDimensions = {width: 0, height: 0}
+
+    this.hasRemoteResources = {
+      titlePage: false
+    }
 
     this.cachedFile = null
     this.categories = []
@@ -110,103 +127,236 @@ class FimFic2Epub extends Emitter {
     this.zip = null
   }
 
-  setCoverImage (buffer) {
-    let info = fileType(isNode ? buffer : new Uint8Array(buffer))
-    if (!info || info.mime.indexOf('image/') !== 0) {
-      throw new Error('Invalid image')
+  fetchAll () {
+    if (this.pcache.fetchAll) {
+      return this.pcache.fetchAll
     }
-    this.coverImage = buffer
-    this.coverFilename = 'Images/cover.' + info.ext
-    this.coverType = info.mime
-    this.coverImageDimensions = sizeOf(new Buffer(buffer))
-  }
-
-  fetchMetadata () {
-    this.storyInfo = null
-    this.description = ''
-    this.subjects.length = 0
-
-    return FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
-      this.storyInfo = storyInfo
-      this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
-      this.filename = FimFic2Epub.getFilename(this.storyInfo)
-    })
-    .then(this.fetchTitlePage.bind(this))
-    .then(() => cleanMarkup(this.description)).then((html) => {
-      this.storyInfo.description = html
-      this.findRemoteResources('description', 'description', html)
-    })
-  }
-
-  setTitle (title) {
-    this.storyInfo.title = title.trim()
-    this.filename = FimFic2Epub.getFilename(this.storyInfo)
-  }
-  setAuthorName (name) {
-    this.storyInfo.author.name = name.trim()
-    this.filename = FimFic2Epub.getFilename(this.storyInfo)
-  }
-
-  fetch () {
-    if (this.fetchPromise) {
-      return this.fetchPromise
-    }
-
-    this.chapters.length = 0
-    this.remoteResources.clear()
 
     this.progress(0, 0, 'Fetching...')
 
-    this.fetchPromise = Promise.resolve()
-    if (!this.storyInfo) {
-      this.fetchPromise = this.fetchPromise.then(this.fetchMetadata.bind(this))
-    }
-    this.fetchPromise = this.fetchPromise
-      .then(this.fetchCoverImage.bind(this))
+    this.pcache.fetchAll = this.fetchMetadata()
       .then(this.fetchChapters.bind(this))
+      .then(this.fetchCoverImage.bind(this))
       .then(this.fetchRemoteFiles.bind(this))
       .then(() => {
-        this.fetchPromise = null
+        this.progress(0, 0.95)
+        this.pcache.fetchAll = null
       })
 
-    return this.fetchPromise
+    return this.pcache.fetchAll
+  }
+
+  fetchMetadata () {
+    if (this.pcache.metadata) {
+      return this.pcache.metadata
+    }
+    if (this.storyInfo) {
+      return Promise.resolve()
+    }
+    this.storyInfo = null
+    this.description = ''
+    this.subjects = []
+
+    this.progress(0, 0, 'Fetching metadata...')
+
+    this.pcache.metadata = FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
+      this.storyInfo = storyInfo
+      this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
+      this.filename = FimFic2Epub.getFilename(this.storyInfo)
+      this.progress(0, 0.5)
+    })
+    .then(this.fetchTitlePage.bind(this))
+    .then(() => {
+      this.progress(0, 1)
+    })
+    .then(() => cleanMarkup(this.description)).then((html) => {
+      this.storyInfo.description = html
+      this.findRemoteResources('description', 'description', html)
+    }).then(() => {
+      this.pcache.metadata = null
+    })
+    return this.pcache.metadata
+  }
+
+  fetchChapters () {
+    if (this.pcache.chapters) {
+      return this.pcache.chapters
+    }
+    // chapters have already been fetched
+    if (this.chapters.length !== 0) {
+      return Promise.resolve()
+    }
+    this.chapters.length = 0
+    this.chaptersHtml.length = 0
+
+    this.progress(0, 0, 'Fetching chapters...')
+    this.pcache.chapters = new Promise((resolve, reject) => {
+      let chapters = this.storyInfo.chapters
+      let chapterCount = this.storyInfo.chapters.length
+      let currentChapter = 0
+      let completeCount = 0
+
+      if (chapterCount === 0) {
+        resolve()
+        return
+      }
+
+      let recursive = () => {
+        let index = currentChapter++
+        let ch = chapters[index]
+        if (!ch) {
+          return
+        }
+        // console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
+        let url = ch.link.replace('http://www.fimfiction.net', '')
+        fetch(url).then((html) => {
+          let chapter = this.parseChapterPage(html)
+          Promise.all([
+            cleanMarkup(chapter.content),
+            cleanMarkup(chapter.notes)
+          ]).then((values) => {
+            chapter.content = values[0]
+            chapter.notes = values[1]
+            ch.realWordCount = htmlWordCount(chapter.content)
+            this.chapters[index] = chapter
+
+            completeCount++
+            this.progress(0, completeCount / chapterCount, 'Fetched chapter ' + (completeCount) + ' / ' + chapters.length)
+            if (completeCount < chapterCount) {
+              recursive()
+            } else {
+              resolve()
+            }
+          })
+        })
+      }
+
+      // concurrent downloads!
+      recursive()
+      recursive()
+      recursive()
+      recursive()
+    }).then(() => {
+      this.pcache.chapters = null
+    })
+    return this.pcache.chapters
+  }
+
+  fetchRemoteFiles () {
+    if (!this.options.includeExternal) {
+      return Promise.resolve()
+    }
+    if (this.pcache.remoteResources) {
+      return this.pcache.remoteResources
+    }
+    if (this.remoteResourcesCached) {
+      return Promise.resolve()
+    }
+
+    this.progress(0, 0, 'Fetching remote files...')
+    this.pcache.remoteResources = new Promise((resolve, reject) => {
+      let iter = this.remoteResources.entries()
+      let count = 0
+      let completeCount = 0
+
+      let recursive = () => {
+        let r = iter.next().value
+        if (!r) {
+          if (completeCount === this.remoteResources.size) {
+            resolve()
+          }
+          return
+        }
+        let url = r[0]
+        r = r[1]
+
+        count++
+
+        fetchRemote(url, 'arraybuffer').then((data) => {
+          r.dest = null
+          let info = fileType(isNode ? data : new Uint8Array(data))
+          if (info) {
+            let type = info.mime
+            r.type = type
+            let isImage = type.indexOf('image/') === 0
+            let folder = isImage ? 'Images' : 'Misc'
+            let dest = folder + '/*.' + info.ext
+            r.dest = dest.replace('*', r.filename)
+            r.data = data
+          }
+          completeCount++
+          this.progress(0, completeCount / this.remoteResources.size, 'Fetched remote file ' + completeCount + ' / ' + this.remoteResources.size)
+          recursive()
+        })
+      }
+
+      // concurrent downloads!
+      recursive()
+      recursive()
+      recursive()
+      recursive()
+    }).then(() => {
+      this.remoteResourcesCached = true
+      this.pcache.remoteResources = null
+    })
+    return this.pcache.remoteResources
+  }
+
+  buildChapters () {
+    let chain = Promise.resolve()
+    this.chaptersHtml.length = 0
+
+    for (let i = 0; i < this.chapters.length; i++) {
+      let ch = this.storyInfo.chapters[i]
+      let chapter = this.chapters[i]
+      chain = chain.then(template.createChapter.bind(null, ch, chapter, this)).then((html) => {
+        this.findRemoteResources('ch_' + zeroFill(3, i + 1), i, html)
+        this.chaptersHtml[i] = html
+      })
+    }
+
+    return chain
   }
 
   build () {
     this.cachedFile = null
     this.zip = null
 
-    this.replaceRemoteResources()
+    return this.buildChapters().then(() => {
+      this.replaceRemoteResources()
 
-    this.zip = new JSZip()
+      this.zip = new JSZip()
 
-    this.zip.file('mimetype', 'application/epub+zip')
-    this.zip.file('META-INF/container.xml', containerXml)
+      this.zip.file('mimetype', 'application/epub+zip')
+      this.zip.file('META-INF/container.xml', containerXml)
 
-    this.zip.file('OEBPS/content.opf', template.createOpf(this))
+      this.zip.file('OEBPS/content.opf', template.createOpf(this))
 
-    if (this.coverImage) {
-      this.zip.file('OEBPS/' + this.coverFilename, this.coverImage)
-    }
-    this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
-    this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
+      if (this.coverImage) {
+        this.zip.file('OEBPS/' + this.coverFilename, this.coverImage)
+      }
+      this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
+      this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
 
-    this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
-    this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
+      this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
+      this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
 
-    this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
-    this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
+      this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
+      this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
 
-    for (let i = 0; i < this.chapters.length; i++) {
-      let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
-      let html = this.chapters[i]
-      this.zip.file(filename, html)
-    }
+      for (let i = 0; i < this.chapters.length; i++) {
+        let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
+        let html = this.chaptersHtml[i]
+        this.zip.file(filename, html)
+      }
 
-    this.zip.file('OEBPS/Styles/style.css', styleCss)
+      this.zip.file('OEBPS/Styles/style.css', styleCss)
 
-    this.remoteResources.forEach((r) => {
-      this.zip.file('OEBPS/' + r.dest, r.data)
+      this.remoteResources.forEach((r) => {
+        if (r.dest) {
+          this.zip.file('OEBPS/' + r.dest, r.data)
+        }
+      })
     })
   }
 
@@ -218,7 +368,7 @@ class FimFic2Epub extends Emitter {
     if (this.cachedFile) {
       return Promise.resolve(this.cachedFile)
     }
-    this.progress(6, 0, 'Compressing...')
+    this.progress(0, 0.95, 'Compressing...')
 
     return this.zip
       .generateAsync({
@@ -228,7 +378,7 @@ class FimFic2Epub extends Emitter {
         compressionOptions: {level: 9}
       })
       .then((file) => {
-        this.progress(6, 0.3, 'Complete!')
+        this.progress(0, 1, 'Complete!')
         this.cachedFile = file
         return file
       })
@@ -249,11 +399,30 @@ class FimFic2Epub extends Emitter {
       })
   }
 
+  setTitle (title) {
+    this.storyInfo.title = title.trim()
+    this.filename = FimFic2Epub.getFilename(this.storyInfo)
+  }
+  setAuthorName (name) {
+    this.storyInfo.author.name = name.trim()
+    this.filename = FimFic2Epub.getFilename(this.storyInfo)
+  }
+  setCoverImage (buffer) {
+    let info = fileType(isNode ? buffer : new Uint8Array(buffer))
+    if (!info || info.mime.indexOf('image/') !== 0) {
+      throw new Error('Invalid image')
+    }
+    this.coverImage = buffer
+    this.coverFilename = 'Images/cover.' + info.ext
+    this.coverType = info.mime
+    this.coverImageDimensions = sizeOf(new Buffer(buffer))
+  }
+
   // Internal/private methods
   progress (part, percent, status) {
-    let parts = 6.3
-    let partsize = 1 / parts
-    percent = (part / parts) + percent * partsize
+    // let parts = 6.3
+    // let partsize = 1 / parts
+    // percent = (part / parts) + percent * partsize
     this.trigger('progress', percent, status)
   }
 
@@ -283,19 +452,21 @@ class FimFic2Epub extends Emitter {
   }
 
   fetchCoverImage () {
+    if (this.pcache.coverImage) {
+      return this.pcache.coverImage
+    }
     if (this.coverImage) {
-      return this.coverImage
+      return Promise.resolve(this.coverImage)
     }
     this.coverImage = null
     let url = this.coverUrl || this.storyInfo.full_image
     if (!url) {
-      return null
+      return Promise.resolve(null)
     }
 
-    this.progress(0, 0.6, 'Fetching cover image...')
+    this.progress(0, 0, 'Fetching cover image...')
 
-    return fetchRemote(url, 'arraybuffer').then((data) => {
-      this.progress(0, 1)
+    this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then((data) => {
       let info = fileType(isNode ? data : new Uint8Array(data))
       if (info) {
         let type = info.mime
@@ -314,7 +485,10 @@ class FimFic2Epub extends Emitter {
       } else {
         return null
       }
+    }).then(() => {
+      this.pcache.coverImage = null
     })
+    return this.pcache.coverImage
   }
 
   fetchTitlePage () {
@@ -397,7 +571,7 @@ class FimFic2Epub extends Emitter {
 
     let authorNotesPos = html.indexOf('<div class="authors-note"')
     let authorNotes = ''
-    if (this.options.includeAuthorNotes && authorNotesPos !== -1) {
+    if (authorNotesPos !== -1) {
       authorNotesPos = authorNotesPos + html.substring(authorNotesPos).indexOf('<b>Author\'s Note:</b>')
       authorNotes = html.substring(authorNotesPos + 22)
       authorNotes = authorNotes.substring(0, authorNotes.indexOf('\t\n\t</div>'))
@@ -417,115 +591,45 @@ class FimFic2Epub extends Emitter {
     return {content: chapter, notes: authorNotes, notesFirst: authorNotesPos < chapterPos}
   }
 
-  fetchChapters () {
-    this.progress(1, 0, 'Fetching chapters...')
-    return new Promise((resolve, reject) => {
-      let chapters = this.storyInfo.chapters
-      let chapterCount = this.storyInfo.chapters.length
-      let currentChapter = 0
-      let completeCount = 0
-
-      if (chapterCount === 0) {
-        resolve()
-        return
-      }
-
-      let recursive = () => {
-        let index = currentChapter++
-        let ch = chapters[index]
-        if (!ch) {
-          return
-        }
-        // console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
-        let url = ch.link.replace('http://www.fimfiction.net', '')
-        fetch(url).then((html) => {
-          html = this.parseChapterPage(html)
-          template.createChapter(ch, html, this).then((html) => {
-            this.findRemoteResources('ch_' + zeroFill(3, index + 1), index, html)
-            this.chapters[index] = html
-            completeCount++
-            this.progress(1, (completeCount / chapterCount) * 4)
-            if (completeCount < chapterCount) {
-              recursive()
-            } else {
-              resolve()
-            }
-          })
-        })
-      }
-
-      // concurrent downloads!
-      recursive()
-      recursive()
-      recursive()
-      recursive()
-    })
-  }
-
-  fetchRemoteFiles () {
-    this.progress(5, 0, 'Fetching remote files...')
-    return new Promise((resolve, reject) => {
-      let iter = this.remoteResources.entries()
-      let count = 0
-      let completeCount = 0
-
-      let recursive = () => {
-        let r = iter.next().value
-        if (!r) {
-          if (completeCount === this.remoteResources.size) {
-            resolve()
-          }
-          return
-        }
-        let url = r[0]
-        r = r[1]
-
-        // console.log('Fetching remote file ' + (count + 1) + ' of ' + this.remoteResources.size + ': ' + r.filename, url)
-        count++
-
-        fetchRemote(url, 'arraybuffer').then((data) => {
-          r.dest = null
-          let info = fileType(isNode ? data : new Uint8Array(data))
-          if (info) {
-            let type = info.mime
-            r.type = type
-            let isImage = type.indexOf('image/') === 0
-            let folder = isImage ? 'Images' : 'Misc'
-            let dest = folder + '/*.' + info.ext
-            r.dest = dest.replace('*', r.filename)
-            r.data = data
-          }
-          completeCount++
-          this.progress(5, completeCount / this.remoteResources.size)
-          recursive()
-        })
-      }
-
-      // concurrent downloads!
-      recursive()
-      recursive()
-      recursive()
-      recursive()
-    })
-  }
-
   replaceRemoteResources () {
-    this.remoteResources.forEach((r, url) => {
-      let dest = '../' + r.dest
-      if (r.dest && r.originalUrl && r.where) {
-        let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
-        for (var i = 0; i < r.where.length; i++) {
-          let w = r.where[i]
-          if (typeof w === 'number') {
-            this.chapters[w] = this.chapters[w].replace(ourl, dest)
-          } else if (w === 'description') {
-            this.storyInfo.description = this.storyInfo.description.replace(ourl, dest)
-          } else if (w === 'tags') {
-            this.tags.byImage[r.originalUrl].image = dest
+    if (!this.options.includeExternal) {
+      this.remoteResources.forEach((r, url) => {
+        if (r.originalUrl && r.where) {
+          let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
+          for (var i = 0; i < r.where.length; i++) {
+            let w = r.where[i]
+            if (typeof w === 'number') {
+              if (ourl.test(this.chapters[w])) {
+                this.storyInfo.chapters[w].remote = true
+              }
+            } else if (w === 'description') {
+              if (ourl.test(this.storyInfo.description)) {
+                this.hasRemoteResources.titlePage = true
+              }
+            } else if (w === 'tags') {
+              this.hasRemoteResources.titlePage = true
+            }
           }
         }
-      }
-    })
+      })
+    } else {
+      this.remoteResources.forEach((r, url) => {
+        let dest = '../' + r.dest
+        if (r.dest && r.originalUrl && r.where) {
+          let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
+          for (var i = 0; i < r.where.length; i++) {
+            let w = r.where[i]
+            if (typeof w === 'number') {
+              this.chaptersHtml[w] = this.chaptersHtml[w].replace(ourl, dest)
+            } else if (w === 'description') {
+              this.storyInfo.description = this.storyInfo.description.replace(ourl, dest)
+            } else if (w === 'tags') {
+              this.tags.byImage[r.originalUrl].image = dest
+            }
+          }
+        }
+      })
+    }
   }
 }
 

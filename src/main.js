@@ -44,12 +44,14 @@ let checkbox = {
   }
 }
 
-let ffcProgress = m.prop(-1)
+let ffcProgress = m.prop(0)
 let ffcStatus = m.prop('')
 
 let dialog = {
   controller (args) {
     const ctrl = this
+
+    ffcProgress(0)
 
     this.isLoading = m.prop(true)
     this.dragging = m.prop(false)
@@ -62,10 +64,33 @@ let dialog = {
 
     this.title = m.prop('')
     this.author = m.prop('')
-    this.subjects = m.prop(ffc.subjects)
+    this.subjects = m.prop([])
     this.addCommentsLink = m.prop(ffc.options.addCommentsLink)
     this.includeAuthorNotes = m.prop(ffc.options.includeAuthorNotes)
     this.addChapterHeadings = m.prop(ffc.options.addChapterHeadings)
+    this.includeExternal = m.prop(ffc.options.includeExternal)
+    this.joinSubjects = m.prop(ffc.options.joinSubjects)
+
+    this.onOpen = function (el, isInitialized) {
+      if (!isInitialized) {
+        this.el(el)
+        this.center()
+        this.isLoading(true)
+        ffc.fetchMetadata().then(() => {
+          this.isLoading(false)
+          ffcProgress(-1)
+          this.title(ffc.storyInfo.title)
+          this.author(ffc.storyInfo.author.name)
+          this.subjects(ffc.subjects.slice(0))
+          m.redraw(true)
+          this.center()
+          ffc.fetchChapters().then(() => {
+            ffcProgress(-1)
+            m.redraw()
+          })
+        })
+      }
+    }
 
     this.setCoverFile = (e) => {
       this.coverFile(e.target.files ? e.target.files[0] : null)
@@ -73,7 +98,13 @@ let dialog = {
 
     this.setSubjects = function () {
       // 'this' is the textarea
-      ctrl.subjects(this.value.split('\n').map((s) => s.trim()).filter((s) => !!s))
+      let set = new Set()
+      ctrl.subjects(this.value.split('\n').map((s) => s.trim()).filter((s) => {
+        if (!s) return false
+        if (set.has(s)) return false
+        set.add(s)
+        return true
+      }))
       this.value = ctrl.subjects().join('\n')
       autosize.update(this)
     }
@@ -96,31 +127,21 @@ let dialog = {
       window.addEventListener('mousemove', onmove, false)
       window.addEventListener('mouseup', onup, false)
     }
-    this.onOpen = function (el, isInitialized) {
-      if (!isInitialized) {
-        this.el(el)
-        this.center()
-        this.isLoading(true)
-        ffc.fetchMetadata().then(() => {
-          this.isLoading(false)
-          this.title(ffc.storyInfo.title)
-          this.author(ffc.storyInfo.author.name)
-          m.redraw(true)
-          this.center()
-        })
-      }
-    }
+
     this.move = (xpos, ypos) => {
-      this.xpos(Math.max(0, xpos))
-      this.ypos(Math.max(0, ypos))
+      let bc = document.querySelector('.body_container')
+      let rect = this.el().firstChild.getBoundingClientRect()
+      this.xpos(Math.max(0, Math.min(xpos, bc.offsetWidth - rect.width)))
+      this.ypos(Math.max(0, Math.min(ypos, bc.offsetHeight - rect.height)))
       this.el().style.left = this.xpos() + 'px'
       this.el().style.top = this.ypos() + 'px'
     }
     this.center = () => {
+      if (this.dragging()) return
       let rect = this.el().firstChild.getBoundingClientRect()
       this.move(
-        (window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft,
-        (window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop
+        Math.max(document.body.scrollLeft, (window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft),
+        Math.max(document.body.scrollTop, (window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop)
       )
     }
 
@@ -141,10 +162,13 @@ let dialog = {
       ffc.options.addCommentsLink = this.addCommentsLink()
       ffc.options.includeAuthorNotes = this.includeAuthorNotes()
       ffc.options.addChapterHeadings = this.addChapterHeadings()
+      ffc.options.includeExternal = this.includeExternal()
+      ffc.subjects = this.subjects()
+      ffc.options.joinSubjects = this.joinSubjects()
       m.redraw()
 
       chain
-        .then(ffc.fetch.bind(ffc))
+        .then(ffc.fetchAll.bind(ffc))
         .then(ffc.build.bind(ffc))
         .then(ffc.getFile.bind(ffc)).then((file) => {
           console.log('Saving file...')
@@ -163,8 +187,8 @@ let dialog = {
   view (ctrl, args, extras) {
     return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', [
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
-      ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('.drop-down-pop-up-content', [
-        m('table.properties', [
+      m('.drop-down-pop-up-content', [
+        ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('table.properties', [
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'General settings'))),
           m('tr', m('td.label', 'Title'), m('td', {colspan: 2}, m('input', {type: 'text', value: ctrl.title(), onchange: m.withAttr('value', ctrl.title)}))),
           m('tr', m('td.label', 'Author'), m('td', {colspan: 2}, m('input', {type: 'text', value: ctrl.author(), onchange: m.withAttr('value', ctrl.author)}))),
@@ -176,25 +200,27 @@ let dialog = {
           ),
           m('tr', m('td.label', ''), m('td', {colspan: 2},
             m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
-            m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add links to online comments'),
-            m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes')
+            m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
+            m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),
+            m(checkbox, {checked: ctrl.includeExternal(), onchange: m.withAttr('checked', ctrl.includeExternal)}, 'Download & include remote content (embed images)'),
+            m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; color: #777;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.')
           )),
 
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
-          m('tr', m('td.label', 'Categories'), m('td', {colspan: 2},
+          m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Categories'), m('td', {colspan: 2},
             m('textarea', {rows: 2, config: autosize, onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
-            m(checkbox, {checked: false}, 'Join categories into one (iBooks only)')
+            m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories into one, separated by commas')
           ))
         ]),
         m('.drop-down-pop-up-footer', [
-          m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1}, 'Create EPUB'),
-          m('.rating_container',
+          m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1, style: 'float: right'}, 'Download EPUB'),
+          ffcProgress() >= 0 ? m('.rating_container',
             m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: Math.max(0, ffcProgress()) * 100 + '%'}})))),
             ' ',
-            ffcProgress() >= 0 && ffcProgress() < 1 ? m('i.fa.fa-spin.fa-spinner') : null,
-            ' ',
+            ffcProgress() >= 0 && ffcProgress() < 1 ? [ m('i.fa.fa-spin.fa-spinner'), m.trust('&nbsp;&nbsp;') ] : null,
             ffcStatus()
-          )
+          ) : null,
+          m('div', {style: 'clear: both'})
         ])
       ])
     ]))
@@ -219,7 +245,6 @@ function clickButton () {
   if (!ffc) {
     ffc = new FimFic2Epub(STORY_ID)
     ffc.on('progress', (percent, status) => {
-      console.log(Math.round(percent * 100), status)
       ffcProgress(percent)
       if (status) {
         ffcStatus(status)
