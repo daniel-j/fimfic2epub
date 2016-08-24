@@ -4,6 +4,7 @@
 import FimFic2Epub from './FimFic2Epub'
 import m from 'mithril'
 import { saveAs } from 'file-saver'
+import autosize from 'autosize'
 
 function blobToDataURL (blob) {
   return new Promise((resolve, reject) => {
@@ -48,6 +49,8 @@ let ffcStatus = m.prop('')
 
 let dialog = {
   controller (args) {
+    const ctrl = this
+
     this.isLoading = m.prop(true)
     this.dragging = m.prop(false)
     this.xpos = m.prop(0)
@@ -66,6 +69,13 @@ let dialog = {
 
     this.setCoverFile = (e) => {
       this.coverFile(e.target.files ? e.target.files[0] : null)
+    }
+
+    this.setSubjects = function () {
+      // 'this' is the textarea
+      ctrl.subjects(this.value.split('\n').map((s) => s.trim()).filter((s) => !!s))
+      this.value = ctrl.subjects().join('\n')
+      autosize.update(this)
     }
 
     this.ondown = (e) => {
@@ -166,13 +176,13 @@ let dialog = {
           ),
           m('tr', m('td.label', ''), m('td', {colspan: 2},
             m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
-            m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments after chapters'),
+            m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add links to online comments'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes')
           )),
 
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
           m('tr', m('td.label', 'Categories'), m('td', {colspan: 2},
-            m('textarea', {rows: 5}, ctrl.subjects().join('\n')),
+            m('textarea', {rows: 2, config: autosize, onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
             m(checkbox, {checked: false}, 'Join categories into one (iBooks only)')
           ))
         ]),
