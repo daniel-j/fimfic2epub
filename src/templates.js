@@ -128,7 +128,7 @@ export function createOpf (ffc) {
         m('meta', {refines: '#cre', property: 'role', scheme: 'marc:relators'}, 'aut'),
         m('dc:date', new Date((ffc.storyInfo.publishDate || ffc.storyInfo.date_modified) * 1000).toISOString().substring(0, 10)),
         m('dc:publisher', 'Fimfiction'),
-        m('dc:description', ffc.storyInfo.description),
+        m('dc:description', ffc.storyInfo.short_description || ffc.storyInfo.description),
         m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
         ffc.coverImage ? m('meta', {name: 'cover', content: 'cover'}) : null,
