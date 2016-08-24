@@ -137,6 +137,7 @@ class FimFic2Epub extends Emitter {
     this.pcache.fetchAll = this.fetchMetadata()
       .then(this.fetchChapters.bind(this))
       .then(this.fetchCoverImage.bind(this))
+      .then(this.buildChapters.bind(this))
       .then(this.fetchRemoteFiles.bind(this))
       .then(() => {
         this.progress(0, 0.95)
@@ -322,41 +323,39 @@ class FimFic2Epub extends Emitter {
     this.cachedFile = null
     this.zip = null
 
-    return this.buildChapters().then(() => {
-      this.replaceRemoteResources()
+    this.replaceRemoteResources()
 
-      this.zip = new JSZip()
+    this.zip = new JSZip()
 
-      this.zip.file('mimetype', 'application/epub+zip')
-      this.zip.file('META-INF/container.xml', containerXml)
+    this.zip.file('mimetype', 'application/epub+zip')
+    this.zip.file('META-INF/container.xml', containerXml)
 
-      this.zip.file('OEBPS/content.opf', template.createOpf(this))
+    this.zip.file('OEBPS/content.opf', template.createOpf(this))
 
-      if (this.coverImage) {
-        this.zip.file('OEBPS/' + this.coverFilename, this.coverImage)
+    if (this.coverImage) {
+      this.zip.file('OEBPS/' + this.coverFilename, this.coverImage)
+    }
+    this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
+    this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
+
+    this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
+    this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
+
+    this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
+    this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
+
+    for (let i = 0; i < this.chapters.length; i++) {
+      let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
+      let html = this.chaptersHtml[i]
+      this.zip.file(filename, html)
+    }
+
+    this.zip.file('OEBPS/Styles/style.css', styleCss)
+
+    this.remoteResources.forEach((r) => {
+      if (r.dest) {
+        this.zip.file('OEBPS/' + r.dest, r.data)
       }
-      this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
-      this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
-
-      this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
-      this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
-
-      this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
-      this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
-
-      for (let i = 0; i < this.chapters.length; i++) {
-        let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
-        let html = this.chaptersHtml[i]
-        this.zip.file(filename, html)
-      }
-
-      this.zip.file('OEBPS/Styles/style.css', styleCss)
-
-      this.remoteResources.forEach((r) => {
-        if (r.dest) {
-          this.zip.file('OEBPS/' + r.dest, r.data)
-        }
-      })
     })
   }
 
