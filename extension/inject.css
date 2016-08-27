@@ -1,4 +1,29 @@
 
+.fimfic2epub-logo {
+	float: right;
+	margin-top: 5px;
+	margin-right: 5px;
+	height: 26px;
+	width: 26px;
+	cursor: pointer;
+	transition: all .05s ease-out;
+	-webkit-user-select: none;
+	user-select: none;
+}
+.fimfic2epub-logo:hover {
+	opacity: 0.8;
+	margin-top: 4px;
+	margin-right: 4px;
+	width: 28px;
+	height: 28px;
+}
+.fimfic2epub-logo:active {
+	margin-top: 6px;
+	margin-right: 6px;
+	height: 24px;
+	width: 24px;
+}
+
 #epubDialogContainer .drop-down-pop-up-container {
 	position: absolute;
 	top: 0;

@@ -24,11 +24,54 @@ function blobToArrayBuffer (blob) {
 
 const isChromeExt = typeof chrome !== 'undefined'
 
-const STORY_ID = document.location.pathname.match(/^\/story\/(\d*)/)[1]
+let pageStoryId
+try {
+  pageStoryId = document.location.pathname.match(/^\/story\/(\d*)/)[1]
+} catch (e) {}
+
+let logoUrl = chrome.extension.getURL('fimfic2epub-logo.png')
 
 let ffc
 
-const epubButton = document.querySelector('.story_container ul.chapters li.bottom a[title="Download Story (.epub)"]')
+let stories = document.querySelectorAll('.story_container .story_content_box')
+
+stories.forEach((story) => {
+  let id = story.id.substring(6)
+  let epubButton = story.querySelector('ul.chapters li.bottom a[title="Download Story (.epub)"]')
+  if (!epubButton) return
+  epubButton.addEventListener('click', function (e) {
+    e.preventDefault()
+    openStory(id)
+  }, false)
+  let logo = new Image()
+  logo.className = 'fimfic2epub-logo'
+  logo.title = 'Download EPUB with fimfic2epub'
+  logo.src = logoUrl
+  story.querySelector('.title').appendChild(logo)
+  logo.addEventListener('click', function (e) {
+    e.preventDefault()
+    openStory(id)
+  })
+})
+
+let cards = document.querySelectorAll('.story-card-container')
+cards.forEach((card) => {
+  let id
+  let classes = card.className.split(' ')
+  for (let i = 0; i < classes.length && !id; i++) {
+    let c = classes[i]
+    id = c.substring(21)
+  }
+  if (!id) return
+  let flip = card.querySelector('a.card-flip')
+  let epubButton = card.querySelector('a[title="Download .ePub"]')
+  if (!epubButton) return
+  epubButton.addEventListener('click', function (e) {
+    e.preventDefault()
+    openStory(id)
+    flip.click()
+  }, false)
+})
 
 const dialogContainer = document.createElement('div')
 dialogContainer.id = 'epubDialogContainer'
@@ -240,34 +283,35 @@ function closeDialog () {
   m.mount(dialogContainer, null)
 }
 
-function clickButton () {
-  if (!STORY_ID) return
+function openStory (id) {
   if (!ffc) {
-    ffc = new FimFic2Epub(STORY_ID)
-    ffc.on('progress', (percent, status) => {
-      ffcProgress(percent)
-      if (status) {
-        ffcStatus(status)
-      }
-      m.redraw()
-    })
+    ffc = new FimFic2Epub(id)
+    ffc.on('progress', onProgress)
+  } else if (ffc.storyId !== id) {
+    ffc.off('progress', onProgress)
+    closeDialog()
+    ffc = new FimFic2Epub(id)
+    ffc.on('progress', onProgress)
+  } else {
+
   }
 
   openDialog()
 }
 
-if (epubButton) {
-  if (isChromeExt) {
-    chrome.runtime.sendMessage({showPageAction: true})
-    chrome.runtime.onMessage.addListener(function (request) {
-      if (request === 'pageAction') {
-        clickButton()
-      }
-    })
+function onProgress (percent, status) {
+  ffcProgress(percent)
+  if (status) {
+    ffcStatus(status)
   }
+  m.redraw()
+}
 
-  epubButton.addEventListener('click', function (e) {
-    e.preventDefault()
-    clickButton()
-  }, false)
+if (pageStoryId && isChromeExt) {
+  chrome.runtime.sendMessage({showPageAction: true})
+  chrome.runtime.onMessage.addListener(function (request) {
+    if (request === 'pageAction') {
+      openStory(pageStoryId)
+    }
+  })
 }

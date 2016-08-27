@@ -17,7 +17,7 @@
 
 	"content_scripts": [
 		{
-			"matches": ["https://www.fimfiction.net/story/*", "http://www.fimfiction.net/story/*"],
+			"matches": ["https://www.fimfiction.net/*", "http://www.fimfiction.net/*"],
 			"js": ["fimfic2epub.js"],
 			"css": ["inject.css"]
 		}
@@ -26,6 +26,10 @@
 	"page_action": {
 		"default_icon": "fimfic2epub-logo.png"
 	},
+
+	"web_accessible_resources": [
+		"fimfic2epub-logo.png"
+	],
 
 	"permissions": [
 		"http://*/*",
