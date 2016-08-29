@@ -1,4 +1,22 @@
 
+/* checkbox fixes */
+.toggleable-switch {
+	white-space: nowrap;
+}
+.toggleable-switch > a, .toggleable-switch > span {
+	transition: background 0.2s, opacity 0.2s !important;
+}
+.toggleable-switch input:disabled+a, .toggleable-switch input:disabled~span {
+	opacity: 0.6;
+}
+.toggleable-switch input:disabled+a, .toggleable-switch input:checked:disabled+a {
+	background: #BBB;
+}
+.toggleable-switch input:disabled+a:before, .toggleable-switch input:checked:disabled+a:before {
+	color: #666;
+}
+
+/* the logo button */
 .fimfic2epub-logo {
 	float: right;
 	margin-top: 5px;
@@ -24,6 +42,7 @@
 	width: 24px;
 }
 
+/* dialog popup */
 #epubDialogContainer .drop-down-pop-up-container {
 	position: absolute;
 	top: 0;

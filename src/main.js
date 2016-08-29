@@ -79,10 +79,12 @@ document.body.appendChild(dialogContainer)
 
 let checkbox = {
   view: function (ctrl, args, text) {
-    return m('label.toggleable-switch', {style: 'white-space: nowrap;'}, [
-      m('input', {type: 'checkbox', name: args.name, checked: args.checked, onchange: args.onchange}),
-      m('a', {style: 'margin-right: 10px'}),
-      text
+    return m('label.toggleable-switch', [
+      m('input', Object.assign({
+        type: 'checkbox'
+      }, args)),
+      m('a'),
+      text ? m('span', text) : null
     ])
   }
 }
@@ -107,9 +109,11 @@ let dialog = {
 
     this.title = m.prop('')
     this.author = m.prop('')
+    this.description = m.prop('')
     this.subjects = m.prop([])
     this.addCommentsLink = m.prop(ffc.options.addCommentsLink)
     this.includeAuthorNotes = m.prop(ffc.options.includeAuthorNotes)
+    this.useAuthorNotesIndex = m.prop(ffc.options.useAuthorNotesIndex)
     this.addChapterHeadings = m.prop(ffc.options.addChapterHeadings)
     this.includeExternal = m.prop(ffc.options.includeExternal)
     this.joinSubjects = m.prop(ffc.options.joinSubjects)
@@ -124,6 +128,7 @@ let dialog = {
           ffcProgress(-1)
           this.title(ffc.storyInfo.title)
           this.author(ffc.storyInfo.author.name)
+          this.description(ffc.storyInfo.short_description)
           this.subjects(ffc.subjects.slice(0))
           m.redraw(true)
           this.center()
@@ -149,6 +154,12 @@ let dialog = {
         return true
       }))
       this.value = ctrl.subjects().join('\n')
+      autosize.update(this)
+    }
+
+    this.setDescription = function () {
+      ctrl.description(this.value.trim())
+      this.value = ctrl.description()
       autosize.update(this)
     }
 
@@ -202,8 +213,10 @@ let dialog = {
       }
       ffc.setTitle(this.title())
       ffc.setAuthorName(this.author())
+      ffc.storyInfo.short_description = this.description()
       ffc.options.addCommentsLink = this.addCommentsLink()
       ffc.options.includeAuthorNotes = this.includeAuthorNotes()
+      ffc.options.useAuthorNotesIndex = this.useAuthorNotesIndex()
       ffc.options.addChapterHeadings = this.addChapterHeadings()
       ffc.options.includeExternal = this.includeExternal()
       ffc.subjects = this.subjects()
@@ -214,7 +227,6 @@ let dialog = {
         .then(ffc.fetchAll.bind(ffc))
         .then(ffc.build.bind(ffc))
         .then(ffc.getFile.bind(ffc)).then((file) => {
-          console.log('Saving file...')
           if (typeof safari !== 'undefined') {
             blobToDataURL(file).then((dataurl) => {
               document.location.href = dataurl
@@ -245,11 +257,13 @@ let dialog = {
             m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),
+            m(checkbox, {checked: ctrl.useAuthorNotesIndex(), onchange: m.withAttr('checked', ctrl.useAuthorNotesIndex), disabled: !ctrl.includeAuthorNotes()}, 'Put all notes at the end of the ebook'),
             m(checkbox, {checked: ctrl.includeExternal(), onchange: m.withAttr('checked', ctrl.includeExternal)}, 'Download & include remote content (embed images)'),
             m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; color: #777;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.')
           )),
 
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
+          m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Description'), m('td', {colspan: 2}, m('textarea', {config: autosize, onchange: ctrl.setDescription}, ctrl.description()))),
           m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Categories'), m('td', {colspan: 2},
             m('textarea', {rows: 2, config: autosize, onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
             m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories and separate with commas (for iBooks only)')
