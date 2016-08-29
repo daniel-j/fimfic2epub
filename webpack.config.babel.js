@@ -18,7 +18,10 @@ const bundleExtensionConfig = {
   module: {
     loaders: [
       {
-        test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
+        test: /\.js$/,
+        loader: 'babel',
+        exclude: /node_modules/,
+        query: {
           sourceMaps: true,
           presets: ['es2015']
         }
@@ -66,7 +69,10 @@ const bundleNpmModuleConfig = {
   module: {
     loaders: [
       {
-        test: /\.js$/, loader: 'babel', exclude: /node_modules/, query: {
+        test: /\.js$/,
+        loader: 'babel',
+        exclude: /node_modules/,
+        query: {
           sourceMaps: !inProduction,
           presets: ['es2015']
         }
@@ -89,7 +95,7 @@ const bundleNpmModuleConfig = {
     ]
   },
 
-  externals: [nodeExternals(), 'exports?tidy_html5!tidy-html5'],
+  externals: [nodeExternals({whitelist: ['es6-event-emitter', /^babel-runtime/]}), 'exports?tidy_html5!tidy-html5'],
 
   plugins: [],
   devtool: 'source-map',

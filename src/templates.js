@@ -83,9 +83,9 @@ function sortSpineItems (items) {
 
 export function createOpf (ffc) {
   let remotes = []
-  let remoteCounter = 0
+  // let remoteCounter = 0
   ffc.remoteResources.forEach((r, url) => {
-    remoteCounter++
+    // remoteCounter++
     if (!ffc.options.includeExternal) {
       // hack-ish, but what can I do?
       // turns out only video and audio can be remote resources.. :I

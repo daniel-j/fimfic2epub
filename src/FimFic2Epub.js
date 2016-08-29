@@ -257,7 +257,6 @@ class FimFic2Epub extends Emitter {
     this.progress(0, 0, 'Fetching remote files...')
     this.pcache.remoteResources = new Promise((resolve, reject) => {
       let iter = this.remoteResources.entries()
-      let count = 0
       let completeCount = 0
 
       let recursive = () => {
@@ -270,8 +269,6 @@ class FimFic2Epub extends Emitter {
         }
         let url = r[0]
         r = r[1]
-
-        count++
 
         fetchRemote(url, 'arraybuffer').then((data) => {
           r.dest = null
