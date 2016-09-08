@@ -40,6 +40,10 @@ ffc.fetchAll()
   })
 })
 .catch((err) => {
-  console.log('Error: ' + (err || 'Unknown error'))
+  if (err && err.stack) {
+    console.error(err.stack)
+  } else {
+    console.error('Error: ' + (err || 'Unknown error'))
+  }
   process.exit(1)
 })

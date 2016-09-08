@@ -88,6 +88,7 @@ class FimFic2Epub extends Emitter {
     this.options = {
       addCommentsLink: true,
       includeAuthorNotes: true,
+      useAuthorNotesIndex: false,
       addChapterHeadings: true,
       includeExternal: true,
 
@@ -108,6 +109,9 @@ class FimFic2Epub extends Emitter {
     this.subjects = []
     this.chapters = []
     this.chaptersHtml = []
+    this.notesHtml = []
+    this.hasAuthorNotes = false
+    this.chaptersWithNotes = []
     this.remoteResourcesCached = false
     this.remoteResources = new Map()
     this.coverUrl = ''
@@ -189,6 +193,8 @@ class FimFic2Epub extends Emitter {
     }
     this.chapters.length = 0
     this.chaptersHtml.length = 0
+    this.hasAuthorNotes = false
+    this.chaptersWithNotes.length = 0
 
     this.progress(0, 0, 'Fetching chapters...')
     this.pcache.chapters = new Promise((resolve, reject) => {
@@ -218,6 +224,10 @@ class FimFic2Epub extends Emitter {
           ]).then((values) => {
             chapter.content = values[0]
             chapter.notes = values[1]
+            if (chapter.notes) {
+              this.hasAuthorNotes = true
+              this.chaptersWithNotes.push(index)
+            }
             ch.realWordCount = htmlWordCount(chapter.content)
             this.chapters[index] = chapter
 
@@ -226,6 +236,7 @@ class FimFic2Epub extends Emitter {
             if (completeCount < chapterCount) {
               recursive()
             } else {
+              this.chaptersWithNotes.sort((a, b) => a - b)
               resolve()
             }
           })
@@ -257,7 +268,6 @@ class FimFic2Epub extends Emitter {
     this.progress(0, 0, 'Fetching remote files...')
     this.pcache.remoteResources = new Promise((resolve, reject) => {
       let iter = this.remoteResources.entries()
-      let count = 0
       let completeCount = 0
 
       let recursive = () => {
@@ -270,8 +280,6 @@ class FimFic2Epub extends Emitter {
         }
         let url = r[0]
         r = r[1]
-
-        count++
 
         fetchRemote(url, 'arraybuffer').then((data) => {
           r.dest = null
@@ -306,14 +314,31 @@ class FimFic2Epub extends Emitter {
   buildChapters () {
     let chain = Promise.resolve()
     this.chaptersHtml.length = 0
+    this.notesHtml.length = 0
 
     for (let i = 0; i < this.chapters.length; i++) {
       let ch = this.storyInfo.chapters[i]
       let chapter = this.chapters[i]
-      chain = chain.then(template.createChapter.bind(null, ch, chapter, this)).then((html) => {
-        this.findRemoteResources('ch_' + zeroFill(3, i + 1), i, html)
+      chain = chain.then(template.createChapter.bind(null, {
+        title: this.options.addChapterHeadings ? ch.title : null,
+        link: this.options.addCommentsLink ? ch.link : null,
+        linkNotes: this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes ? 'note_' + zeroFill(3, i + 1) + '.xhtml' : null,
+        content: chapter.content,
+        notes: !this.options.useAuthorNotesIndex ? chapter.notes : '',
+        notesFirst: chapter.notesFirst
+      })).then((html) => {
+        this.findRemoteResources('ch_' + zeroFill(3, i + 1), {chapter: i}, html)
         this.chaptersHtml[i] = html
       })
+      if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes) {
+        chain = chain.then(template.createChapter.bind(null, {
+          title: 'Author\'s Note: ' + ch.title,
+          content: chapter.notes
+        })).then((html) => {
+          this.findRemoteResources('note_' + zeroFill(3, i + 1), {note: i}, html)
+          this.notesHtml[i] = html
+        })
+      }
     }
 
     return chain
@@ -341,13 +366,24 @@ class FimFic2Epub extends Emitter {
     this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
     this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
 
-    this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this))
+    this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this, 0))
     this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
 
     for (let i = 0; i < this.chapters.length; i++) {
       let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
       let html = this.chaptersHtml[i]
       this.zip.file(filename, html)
+    }
+
+    if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && this.hasAuthorNotes) {
+      this.zip.file('OEBPS/Text/notesnav.xhtml', template.createNav(this, 1))
+
+      for (let i = 0; i < this.chapters.length; i++) {
+        if (!this.chapters[i].notes) continue
+        let filename = 'OEBPS/Text/note_' + zeroFill(3, i + 1) + '.xhtml'
+        let html = this.notesHtml[i]
+        this.zip.file(filename, html)
+      }
     }
 
     this.zip.file('OEBPS/Styles/style.css', styleCss)
@@ -620,8 +656,10 @@ class FimFic2Epub extends Emitter {
           let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
           for (var i = 0; i < r.where.length; i++) {
             let w = r.where[i]
-            if (typeof w === 'number') {
-              this.chaptersHtml[w] = this.chaptersHtml[w].replace(ourl, dest)
+            if (typeof w === 'object' && w.chapter !== undefined && this.chaptersHtml[w.chapter]) {
+              this.chaptersHtml[w.chapter] = this.chaptersHtml[w.chapter].replace(ourl, dest)
+            } else if (typeof w === 'object' && w.note !== undefined && this.notesHtml[w.note]) {
+              this.notesHtml[w.note] = this.notesHtml[w.note].replace(ourl, dest)
             } else if (w === 'description') {
               this.storyInfo.description = this.storyInfo.description.replace(ourl, dest)
             } else if (w === 'tags') {

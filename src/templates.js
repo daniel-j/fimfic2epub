@@ -22,19 +22,19 @@ function prettyDate (d) {
   return d.getDate() + nth(d) + ' ' + months[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear()
 }
 
-export function createChapter (ch, chapter, ffc) {
+export function createChapter (ch) {
   return new Promise((resolve, reject) => {
-    let {content, notes} = chapter
+    let {content, notes, notesFirst, title, link, linkNotes} = ch
 
     let sections = [
-      m.trust(content),
-      ffc.options.includeAuthorNotes && notes ? m('div#author_notes', {className: chapter.notesFirst ? 'top' : 'bottom'}, [
+      m.trust(content || ''),
+      notes ? m('div#author_notes', {className: notesFirst ? 'top' : 'bottom'}, [
         m('p', m('b', 'Author\'s Note:')),
         m.trust(notes)]) : null
     ]
 
     // if author notes are a the beginning of the chapter
-    if (notes && chapter.notesFirst) {
+    if (notes && notesFirst) {
       sections.reverse()
     }
 
@@ -43,17 +43,18 @@ export function createChapter (ch, chapter, ffc) {
         m('head', [
           m('meta', {charset: 'utf-8'}),
           m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
-          m('title', ch.title)
+          m('title', title)
         ]),
         m('body', [
-          ffc.options.addChapterHeadings ? m('.chapter-title', [
-            m('h1', ch.title),
+          title ? m('.chapter-title', [
+            m('h1', title),
             m('hr')
           ]) : null,
           sections,
-          ffc.options.addCommentsLink ? m('p.double', {style: 'text-align: center; clear: both;'},
-            m('a.chaptercomments', {href: ch.link + '#comment_list'}, 'Read chapter comments online')
-          ) : null
+          m('p.double', {style: 'text-align: center; clear: both;'},
+            link ? m('a.chaptercomments', {href: link + '#comment_list'}, 'Read chapter comments online') : null,
+            linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null
+          )
         ])
       ])
     ))
@@ -83,9 +84,9 @@ function sortSpineItems (items) {
 
 export function createOpf (ffc) {
   let remotes = []
-  let remoteCounter = 0
+  // let remoteCounter = 0
   ffc.remoteResources.forEach((r, url) => {
-    remoteCounter++
+    // remoteCounter++
     if (!ffc.options.includeExternal) {
       // hack-ish, but what can I do?
       // turns out only video and audio can be remote resources.. :I
@@ -114,6 +115,23 @@ export function createOpf (ffc) {
     remotes.push(m('item', {id: r.filename, href: r.dest, 'media-type': r.type}))
   })
 
+  let manifestChapters = ffc.storyInfo.chapters.map((ch, num) =>
+    m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ch.remote ? 'remote-resources' : null})
+  )
+  let spineChapters = ffc.storyInfo.chapters.map((ch, num) =>
+    m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
+  )
+  let manifestNotes = []
+  let spineNotes = []
+  if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
+    spineNotes.push(m('itemref', {idref: 'notesnav'}))
+    ffc.chaptersWithNotes.forEach((num) => {
+      let id = 'note_' + zeroFill(3, num + 1)
+      manifestNotes.push(m('item', {id: id, href: 'Text/' + id + '.xhtml', 'media-type': 'application/xhtml+xml'}))
+      spineNotes.push(m('itemref', {idref: id}))
+    })
+  }
+
   let subjects = ffc.subjects
   if (ffc.options.joinSubjects) {
     subjects = [subjects.join(', ')]
@@ -128,7 +146,7 @@ export function createOpf (ffc) {
         m('meta', {refines: '#cre', property: 'role', scheme: 'marc:relators'}, 'aut'),
         m('dc:date', new Date((ffc.storyInfo.publishDate || ffc.storyInfo.date_modified) * 1000).toISOString().substring(0, 10)),
         m('dc:publisher', 'Fimfiction'),
-        m('dc:description', ffc.storyInfo.short_description || ffc.storyInfo.description),
+        m('dc:description', ffc.storyInfo.short_description),
         m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
         ffc.coverImage ? m('meta', {name: 'cover', content: 'cover'}) : null,
@@ -141,6 +159,7 @@ export function createOpf (ffc) {
         ffc.coverImage ? m('item', {id: 'cover', href: ffc.coverFilename, 'media-type': ffc.coverType, properties: 'cover-image'}) : null,
         m('item', {id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml'}),
         m('item', {id: 'nav', 'href': 'Text/nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav'}),
+        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex ? m('item', {id: 'notesnav', 'href': 'Text/notesnav.xhtml', 'media-type': 'application/xhtml+xml'}) : null,
 
         m('item', {id: 'style', href: 'Styles/style.css', 'media-type': 'text/css'}),
         m('item', {id: 'coverstyle', href: 'Styles/coverstyle.css', 'media-type': 'text/css'}),
@@ -149,18 +168,16 @@ export function createOpf (ffc) {
         m('item', {id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.coverImage ? 'svg' : undefined}),
         m('item', {id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasRemoteResources.titlePage ? 'remote-resources' : null})
 
-      ].concat(ffc.storyInfo.chapters.map((ch, num) =>
-        m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ch.remote ? 'remote-resources' : null})
-      ), remotes)),
+      ].concat(manifestChapters, manifestNotes, remotes)),
 
       m('spine', {toc: 'ncx'}, sortSpineItems([
         m('itemref', {idref: 'coverpage'}),
         m('itemref', {idref: 'titlepage'}),
-        m('itemref', {idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 ? 'no' : undefined})
-      ].concat(ffc.storyInfo.chapters.map((ch, num) =>
-        m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
-      )))),
-
+        m('itemref', {idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 && !(ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? 'no' : undefined})
+      ].concat(
+        spineChapters,
+        spineNotes
+      ))),
       m('guide', [
         m('reference', {type: 'cover', title: 'Cover', href: 'Text/cover.xhtml'}),
         m('reference', {type: 'toc', title: 'Contents', href: 'Text/nav.xhtml'})
@@ -174,7 +191,7 @@ export function createOpf (ffc) {
 function navPoints (list) {
   let arr = []
   for (let i = 0; i < list.length; i++) {
-    list[i]
+    if (!list[i]) continue
     arr.push(m('navPoint', {id: 'navPoint-' + (i + 1), playOrder: i + 1}, [
       m('navLabel', m('text', list[i][0])),
       m('content', {src: list[i][1]})
@@ -182,7 +199,6 @@ function navPoints (list) {
   }
   return arr
 }
-
 export function createNcx (ffc) {
   let tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(render(
     m('ncx', {version: '2005-1', xmlns: NS.DAISY}, [
@@ -197,33 +213,50 @@ export function createNcx (ffc) {
         ['Cover', 'Text/cover.xhtml']
       ].concat(ffc.storyInfo.chapters.map((ch, num) =>
         [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
-      ))))
+      ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'Text/notesnav.xhtml']] : null)))
     ])
   ))
   // console.log(tocNcx)
   return tocNcx
 }
 
-export function createNav (ffc) {
+export function createNav (ffc, mode = 0) {
+  let title, list
+  switch (mode) {
+    case 0:
+      title = 'Contents'
+      list = [m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover'))]
+        .concat(ffc.storyInfo.chapters.map((ch, num) =>
+          m('li', [
+            m('a.leftalign', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
+            // m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000)), m('span', {style: 'display: none'}, ' · ')]),
+            // m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB')))
+          ])
+        ))
+      if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
+        list.push(m('li', m('a.leftalign', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
+      }
+      break
+    case 1:
+      title = 'Author\'s Notes'
+      list = ffc.chaptersWithNotes.map((num) => {
+        let ch = ffc.storyInfo.chapters[num]
+        return m('li', m('a.leftalign', {href: 'note_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
+      })
+      break
+  }
+
   let navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
-        m('title', 'Contents')
+        m('title', title)
       ]),
       m('body#navpage', [
-        m('nav#toc', {'epub:type': 'toc'}, [
-          m('h3', 'Contents'),
-          m('ol', [
-            m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover'))
-          ].concat(ffc.storyInfo.chapters.map((ch, num) =>
-            m('li', [
-              m('a.leftalign', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
-              // m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000)), m('span', {style: 'display: none'}, ' · ')]),
-              // m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB')))
-            ])
-          )))
+        m('nav#toc', mode === 0 ? {'epub:type': 'toc'} : null, [
+          m('h3', title),
+          m('ol', list)
         ])
       ])
     ])
