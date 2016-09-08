@@ -222,7 +222,7 @@ class FimFic2Epub extends Emitter {
             this.chapters[index] = chapter
 
             completeCount++
-            this.progress(0, completeCount / chapterCount, 'Fetched chapter ' + (completeCount) + ' / ' + chapters.length)
+            this.progress(0, completeCount / chapterCount, 'Fetched chapter ' + (completeCount) + ' / ' + chapterCount)
             if (completeCount < chapterCount) {
               recursive()
             } else {

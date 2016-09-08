@@ -67,17 +67,15 @@ export function cleanMarkup (html) {
 
     function getYoutubeInfo (ids) {
       fetch('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey).then((raw) => {
-        let data
+        let data = []
         try {
           data = JSON.parse(raw).items
-        } catch (e) {
-
-        }
+        } catch (e) { }
         data.forEach((video) => {
           cache.set(video.id, video.snippet)
           completeCount++
         })
-        if (completeCount === cache.size) {
+        if (completeCount === cache.size || data.length === 0) {
           html = html.replace(matchYoutube, replaceYoutube)
           continueParsing()
         }
@@ -96,6 +94,8 @@ export function cleanMarkup (html) {
         thumbnail = (data.thumbnails.standard || data.thumbnails.high || data.thumbnails.medium || data.thumbnails.default).url
         title = data.title
         caption = data.title + ' on YouTube'
+      } else {
+        return ''
       }
       return render(m('figure.youtube', [
         m('a', {href: youtubeUrl},
