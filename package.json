@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
   "repository": {
