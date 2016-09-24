@@ -3,6 +3,8 @@
 fimfic2epub
 ===========
 
+[![Join the chat at https://gitter.im/fimfic2epub/Lobby](https://badges.gitter.im/fimfic2epub/Lobby.svg)](https://gitter.im/fimfic2epub/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is a tool to generate better EPUB ebooks from [fimfiction](http://www.fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
 
 [Screenshot](http://i.imgbox.com/MalEBiuC.png) of Chrome extension
