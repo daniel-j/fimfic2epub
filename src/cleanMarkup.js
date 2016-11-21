@@ -9,7 +9,7 @@ import isNode from 'detect-node'
 
 let tidy
 if (!isNode) {
-  tidy = require('exports?tidy_html5!tidy-html5')
+  tidy = require('exports-loader?tidy_html5!tidy-html5')
 } else {
   tidy = require('tidy-html5').tidy_html5
 }

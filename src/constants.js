@@ -1,5 +1,5 @@
 
-export let NS = {
+export const NS = {
   OPF: 'http://www.idpf.org/2007/opf',
   OPS: 'http://www.idpf.org/2007/ops',
   DC: 'http://purl.org/dc/elements/1.1/',
@@ -9,7 +9,7 @@ export let NS = {
   XLINK: 'http://www.w3.org/1999/xlink'
 }
 
-export let tidyOptions = {
+export const tidyOptions = {
   'indent': 'auto',
   'numeric-entities': 'yes',
   'output-xhtml': 'yes',
@@ -22,11 +22,11 @@ export let tidyOptions = {
   'show-body-only': 'auto'
 }
 
-export let containerXml = `<?xml version="1.0" encoding="UTF-8"?>
+export const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
     <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
   </rootfiles>
 </container>
 `
-export let youtubeKey = 'AIzaSyCF1taix0lTr7-e_XBZazIXfAr8IvxTJhA'
+export const youtubeKey = 'AIzaSyCF1taix0lTr7-e_XBZazIXfAr8IvxTJhA'

@@ -33,21 +33,20 @@ webpackConfig.forEach((c) => {
       minimize: true,
       debug: false
     }))
-    c.plugins.push(new webpack.optimize.DedupePlugin())
-    if (c.uglify) {
-      c.plugins.push(new webpack.optimize.UglifyJsPlugin({
-        compress: {
-          warnings: false,
-          screw_ie8: true
-        },
-        comments: false,
-        mangle: {
-          screw_ie8: true
-        },
-        screw_ie8: true,
-        sourceMap: !!c.devtool
-      }))
-    }
+    /*
+    c.plugins.push(new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false,
+        screw_ie8: true
+      },
+      comments: false,
+      mangle: {
+        screw_ie8: true
+      },
+      screw_ie8: true,
+      sourceMap: !!c.devtool
+    }))
+    */
   }
   c.plugins.push(new webpack.DefinePlugin({
     FIMFIC2EPUB_VERSION: JSON.stringify(require('./package.json').version)

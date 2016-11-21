@@ -16,10 +16,10 @@ const bundleExtensionConfig = {
   },
 
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.js$/,
-        loader: 'babel',
+        use: 'babel-loader',
         exclude: /node_modules/,
         query: {
           sourceMaps: true,
@@ -28,7 +28,7 @@ const bundleExtensionConfig = {
       },
       {
         test: /\.styl$/,
-        loader: 'raw-loader!stylus-loader'
+        use: ['raw-loader', 'stylus-loader']
       }
     ],
     noParse: [
@@ -37,7 +37,7 @@ const bundleExtensionConfig = {
   },
 
   resolve: {
-    extensions: ['', '.js', '.json', '.styl'],
+    extensions: ['.js', '.json', '.styl'],
     modules: [
       path.resolve('./src'),
       'node_modules'
@@ -50,9 +50,7 @@ const bundleExtensionConfig = {
   externals: ['request', 'tidy-html5'],
 
   plugins: [],
-  devtool: 'source-map',
-  debug: true,
-  uglify: inProduction
+  devtool: 'source-map'
 }
 
 const bundleNpmModuleConfig = {
@@ -67,10 +65,10 @@ const bundleNpmModuleConfig = {
   target: 'node',
 
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.js$/,
-        loader: 'babel',
+        use: 'babel-loader',
         exclude: /node_modules/,
         query: {
           sourceMaps: !inProduction,
@@ -79,7 +77,7 @@ const bundleNpmModuleConfig = {
       },
       {
         test: /\.styl$/,
-        loader: 'raw-loader!stylus-loader'
+        use: ['raw-loader', 'stylus-loader']
       }
     ],
     noParse: [
@@ -88,7 +86,7 @@ const bundleNpmModuleConfig = {
   },
 
   resolve: {
-    extensions: ['', '.js', '.json', '.styl'],
+    extensions: ['.js', '.json', '.styl'],
     modules: [
       path.resolve('./src'),
       'node_modules'
@@ -98,9 +96,7 @@ const bundleNpmModuleConfig = {
   externals: [nodeExternals({whitelist: ['es6-event-emitter', /^babel-runtime/]}), 'exports?tidy_html5!tidy-html5'],
 
   plugins: [],
-  devtool: 'source-map',
-  debug: true,
-  uglify: inProduction
+  devtool: 'source-map'
 }
 
 export default [bundleExtensionConfig, bundleNpmModuleConfig]
