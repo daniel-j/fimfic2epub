@@ -34,18 +34,38 @@ export default function fetch (url, responseType) {
     return fetchNode(url, responseType)
   }
   return new Promise((resolve, reject) => {
-    let x = new XMLHttpRequest()
-    x.open('get', url, true)
-    if (responseType) {
-      x.responseType = responseType
+    if (typeof window.fetch === 'function') {
+      window.fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'default',
+        redirect: 'follow'
+      }).then((response) => {
+        if (responseType === 'blob') {
+          response.blob().then(resolve, reject)
+        } else if (responseType === 'arraybuffer') {
+          response.arrayBuffer().then(resolve, reject)
+        } else {
+          response.text().then(resolve, reject)
+        }
+      }).catch((err) => {
+        reject('Error fetching ' + url + ' (' + err + ')')
+      })
+    } else {
+      let x = new XMLHttpRequest()
+      x.open('get', url, true)
+      if (responseType) {
+        x.responseType = responseType
+      }
+      x.onload = function () {
+        // x.getResponseHeader('content-type')
+        resolve(x.response)
+      }
+      x.onerror = function () {
+        reject('Error fetching ' + url)
+      }
+      x.send()
     }
-    x.onload = function () {
-      // x.getResponseHeader('content-type')
-      resolve(x.response)
-    }
-    x.onerror = function () {
-      reject('Error fetching ' + url)
-    }
-    x.send()
   })
 }
