@@ -216,7 +216,7 @@ class FimFic2Epub extends Emitter {
         }
         // console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
         let url = ch.link.replace('http://www.fimfiction.net', '')
-        fetch(url).then((html) => {
+        fetch(url + '?view_mature=true').then((html) => {
           let chapter = this.parseChapterPage(html)
           Promise.all([
             cleanMarkup(chapter.content),
@@ -528,7 +528,7 @@ class FimFic2Epub extends Emitter {
 
   fetchTitlePage () {
     let url = this.storyInfo.url.replace('http://www.fimfiction.net', '')
-    return fetch(url).then(this.extractTitlePageInfo.bind(this))
+    return fetch(url + '?view_mature=true').then(this.extractTitlePageInfo.bind(this))
   }
 
   extractTitlePageInfo (html) {
