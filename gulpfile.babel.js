@@ -100,7 +100,7 @@ gulp.task('lint', () => {
   return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js', 'bin/fimfic2epub']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
-  return watch(['src/**/*.js'], watchOpts, function (file) {
+  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js', 'bin/fimfic2epub'], watchOpts, function (file) {
     gulp.src(file.path).pipe(lintPipe())
   })
 })

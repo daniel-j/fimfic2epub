@@ -32,7 +32,7 @@ const bundleExtensionConfig = {
       }
     ],
     noParse: [
-      /[\/\\]node_modules[\/\\]tidy-html5[\/\\]tidy\.js$/
+      /[/\\]node_modules[/\\]tidy-html5[/\\]tidy\.js$/
     ]
   },
 
@@ -81,7 +81,7 @@ const bundleNpmModuleConfig = {
       }
     ],
     noParse: [
-      /[\/\\]node_modules[\/\\]tidy-html5[\/\\]tidy\.js$/
+      /[/\\]node_modules[/\\]tidy-html5[/\\]tidy\.js$/
     ]
   },
 
