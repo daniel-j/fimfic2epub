@@ -19,7 +19,7 @@ const bundleExtensionConfig = {
     rules: [
       {
         test: /\.js$/,
-        use: 'babel-loader',
+        loader: 'babel-loader',
         exclude: /node_modules/,
         query: {
           sourceMaps: true,
@@ -68,7 +68,7 @@ const bundleNpmModuleConfig = {
     rules: [
       {
         test: /\.js$/,
-        use: 'babel-loader',
+        loader: 'babel-loader',
         exclude: /node_modules/,
         query: {
           sourceMaps: !inProduction,
