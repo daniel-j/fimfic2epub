@@ -8,5 +8,9 @@ export default function htmlWordCount (html) {
     ignoreHref: true
   })
 
-  return matchWords(text).length
+  let count = 0
+  try {
+    count = matchWords(text).length
+  } catch (err) {}
+  return count
 }
