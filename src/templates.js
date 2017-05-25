@@ -50,14 +50,16 @@ export function createChapter (ch) {
             m('h1', title),
             m('hr')
           ]) : null,
-          sections,
-          m('p.double', {style: 'text-align: center; clear: both;'},
+          '%%HTML_CONTENT%%',
+          (link || linkNotes) ? m('p.double', {style: 'text-align: center; clear: both;'},
             link ? m('a.chaptercomments', {href: link + '#comment_list'}, 'Read chapter comments online') : null,
             linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null
-          )
+          ) : null
         ])
       ])
     ))
+
+    chapterPage = chapterPage.replace('%%HTML_CONTENT%%', '\n' + render(sections) + '\n')
 
     resolve(chapterPage)
   })
@@ -339,7 +341,7 @@ export function createTitlePage (ffc) {
           'This story is a sequel to ',
           m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
         ]), m('hr')] : null,
-        m('#description', m.trust(ffc.storyInfo.description)),
+        m('#description', '%%HTML_CONTENT%%'),
         m('.bottom', [
           m('span', {className: 'completed-status-' + ffc.storyInfo.status.toLowerCase()}, ffc.storyInfo.status),
           ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
@@ -355,6 +357,7 @@ export function createTitlePage (ffc) {
       ])
     ])
   ))
+  titlePage = titlePage.replace('%%HTML_CONTENT%%', '\n' + ffc.storyInfo.description + '\n')
   // console.log(titlePage)
   return titlePage
 }

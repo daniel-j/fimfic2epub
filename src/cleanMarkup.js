@@ -20,12 +20,7 @@ export function cleanMarkup (html) {
   }
 
   return new Promise((resolve, reject) => {
-    // replace HTML non-breaking spaces with normal spaces
-    html = html.replace(/&nbsp;/g, ' ')
-
     html = fixParagraphIndent(html)
-
-    html = fixDoubleSpacing(html)
 
     // fix center tags
     html = html.replace(/<center>/g, '<p style="text-align: center;">')
@@ -107,6 +102,12 @@ export function cleanMarkup (html) {
 
     function continueParsing () {
       html = tidy(html, tidyOptions).trim()
+
+      // replace HTML non-breaking spaces with normal spaces
+      html = html.replace(/&nbsp;/g, ' ')
+      html = html.replace(/&#160;/g, ' ')
+
+      html = fixDoubleSpacing(html)
 
       resolve(html)
     }
