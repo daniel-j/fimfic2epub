@@ -145,7 +145,7 @@ gulp.task('pack:firefox', () => {
 gulp.task('pack:chrome', (done) => {
   execFile('./packchrome.sh', [], (error, stdout, stderr) => {
     // gutil.log('[pack:chrome]', stdout)
-    if (error || stderr) {
+    if (error) {
       done(new gutil.PluginError('pack:chrome', stderr, {showStack: false}))
       return
     }
