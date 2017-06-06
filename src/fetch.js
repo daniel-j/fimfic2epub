@@ -37,7 +37,7 @@ export default function fetch (url, responseType) {
       window.fetch(url, {
         method: 'GET',
         mode: 'cors',
-        credentials: 'omit',
+        credentials: 'include',
         cache: 'default',
         redirect: 'follow'
       }).then((response) => {

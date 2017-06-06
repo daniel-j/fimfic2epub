@@ -10,7 +10,7 @@ import fileType from 'file-type'
 import sizeOf from 'image-size'
 import Emitter from 'es6-event-emitter'
 
-import { styleCss, coverstyleCss, titlestyleCss } from './styles'
+import { styleCss, coverstyleCss, titlestyleCss, paragraphsCss } from './styles'
 
 import { cleanMarkup } from './cleanMarkup'
 import htmlWordCount from './html-wordcount'
@@ -91,7 +91,7 @@ class FimFic2Epub extends Emitter {
       useAuthorNotesIndex: false,
       addChapterHeadings: true,
       includeExternal: true,
-
+      paragraphStyle: 'spaced',
       joinSubjects: false
     }
 
@@ -386,7 +386,7 @@ class FimFic2Epub extends Emitter {
       }
     }
 
-    this.zip.file('OEBPS/Styles/style.css', styleCss)
+    this.zip.file('OEBPS/Styles/style.css', styleCss + '\n\n' + (paragraphsCss[this.options.paragraphStyle] || ''))
 
     this.remoteResources.forEach((r) => {
       if (r.dest) {
@@ -532,36 +532,49 @@ class FimFic2Epub extends Emitter {
   }
 
   extractTitlePageInfo (html) {
-    let descPos = html.indexOf('<div class="description" id="description')
-    descPos = descPos + html.substring(descPos).indexOf('">') + 2
-    html = html.substring(descPos)
-    let ma = html.match(/<a href="(.*?)" class="source">Source<\/a>/)
-    this.storyInfo.source_image = null
-    if (ma) {
-      this.storyInfo.source_image = ma[1]
-    }
-    let endCatsPos = html.indexOf('<hr />')
-    let startCatsPos = html.substring(0, endCatsPos).lastIndexOf('</div>')
-    let catsHtml = html.substring(startCatsPos, endCatsPos)
-    html = html.substring(endCatsPos + 6)
+    let startTagsPos = html.indexOf('<div class="story_content_box"')
+    startTagsPos += html.substring(startTagsPos).indexOf('<ul class="story-tags">') + 23
+    let tagsHtml = html.substring(startTagsPos)
+
+    let endTagsPos = tagsHtml.indexOf('</ul>')
+    tagsHtml = tagsHtml.substring(0, endTagsPos)
 
     let categories = []
+    let tags = []
+    tags.byImage = {}
     this.subjects.length = 0
     this.subjects.push('Fimfiction')
     this.subjects.push(this.storyInfo.content_rating_text)
-    let matchCategory = /<a href="(.*?)" class="(.*?)">(.*?)<\/a>/g
-    for (let c; (c = matchCategory.exec(catsHtml));) {
-      let cat = {
-        url: 'http://www.fimfiction.net' + c[1],
-        className: c[2],
-        name: entities.decode(c[3])
+    let matchCategory = /<a href="(.*?)" class="(.*?)".*? data-tag="(.*?)">(.*?)<\/a>/g
+    for (let c; (c = matchCategory.exec(tagsHtml));) {
+      if (c[2] === 'tag-genre') {
+        let cat = {
+          url: 'http://www.fimfiction.net' + c[1],
+          className: 'story_category story_category_' + c[3],
+          name: entities.decode(c[4])
+        }
+        categories.push(cat)
+        this.subjects.push(cat.name)
+      } else if (c[2] === 'tag-character') {
+        let t = {
+          url: 'http://www.fimfiction.net' + c[1],
+          // filename: 'tag-' + c[3],
+          name: entities.decode(c[4])
+          // image: 'https://static.fimfiction.net/images/characters/' + entities.decode(c[3]).replace(/-/g, '_') + '.png'
+        }
+        tags.push(t)
+        // tags.byImage[t.image] = t
+        // this.remoteResources.set(t.image, {filename: t.filename, originalUrl: t.image, where: ['tags']})
+      } else {
+        console.log(c)
       }
-      categories.push(cat)
-      this.subjects.push(cat.name)
     }
     this.categories = categories
 
-    ma = html.match(/This story is a sequel to <a href="([^"]*)">(.*?)<\/a>/)
+    html = html.substring(endTagsPos + 5)
+    html = html.substring(html.indexOf('<span class="description-text bbcode">') + 38)
+
+    let ma = html.match(/This story is a sequel to <a href="([^"]*)">(.*?)<\/a>/)
     if (ma) {
       this.storyInfo.prequel = {
         url: 'http://www.fimfiction.net' + ma[1],
@@ -569,7 +582,8 @@ class FimFic2Epub extends Emitter {
       }
       html = html.substring(html.indexOf('<hr />') + 6)
     }
-    let endDescPos = html.indexOf('</div>\n')
+
+    let endDescPos = html.indexOf('</span>\n')
     let description = html.substring(0, endDescPos).trim()
     this.description = description
 
@@ -586,8 +600,6 @@ class FimFic2Epub extends Emitter {
 
     html = html.substring(0, html.indexOf('<div class="button-group"'))
 
-    let tags = []
-    tags.byImage = {}
     let matchTag = /<a href="\/tag\/(.*?)" class="character_icon" title="(.*?)" style=".*?"><img src="(.*?)" class="character_icon" \/><\/a>/g
     for (let tag; (tag = matchTag.exec(html));) {
       let t = {
@@ -616,10 +628,10 @@ class FimFic2Epub extends Emitter {
       authorNotes = authorNotes.replace(trimWhitespace, '')
     }
 
-    let chapterPos = html.indexOf('<div id="chapter_container">')
-    let chapter = html.substring(chapterPos + 29)
+    let chapterPos = html.indexOf('<div class="bbcode">')
+    let chapter = html.substring(chapterPos + 20)
 
-    let pos = chapter.indexOf('\t</div>\t\t\n\t')
+    let pos = chapter.indexOf('\t\t</div>\n')
 
     chapter = chapter.substring(0, pos).trim()
 

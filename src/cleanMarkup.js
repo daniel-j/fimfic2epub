@@ -3,16 +3,7 @@ import m from 'mithril'
 import render from './lib/mithril-node-render'
 
 import fetch from './fetch'
-import { tidyOptions, youtubeKey } from './constants'
-
-import isNode from 'detect-node'
-
-let tidy
-if (!isNode) {
-  tidy = require('exports-loader?tidy_html5!tidy-html5')
-} else {
-  tidy = require('tidy-html5').tidy_html5
-}
+import { youtubeKey } from './constants'
 
 export function cleanMarkup (html) {
   if (!html) {
@@ -20,11 +11,23 @@ export function cleanMarkup (html) {
   }
 
   return new Promise((resolve, reject) => {
+    // replace HTML non-breaking spaces with normal spaces
+    html = html.replace(/&nbsp;/g, ' ')
+    html = html.replace(/&#160;/g, ' ')
+
     html = fixParagraphIndent(html)
 
+    html = fixDoubleSpacing(html)
+
     // fix center tags
-    html = html.replace(/<center>/g, '<p style="text-align: center;">')
-    html = html.replace(/<\/center>/g, '</p>')
+    // html = html.replace(/<center>/g, '<p style="text-align: center;">')
+    // html = html.replace(/<\/center>/g, '</p>')
+
+    html = html.replace(/<p>\s*/g, '<p>')
+    html = html.replace(/\s*<\/p>/g, '</p>')
+
+    html = html.replace(/<p><p>/g, '<p>')
+    html = html.replace(/<\/div><\/p>/g, '</div>')
 
     // fix floating blockquote tags
     html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
@@ -101,13 +104,7 @@ export function cleanMarkup (html) {
     }
 
     function continueParsing () {
-      html = tidy(html, tidyOptions).trim()
-
-      // replace HTML non-breaking spaces with normal spaces
-      html = html.replace(/&nbsp;/g, ' ')
-      html = html.replace(/&#160;/g, ' ')
-
-      html = fixDoubleSpacing(html)
+      // html = tidy(html, tidyOptions).trim()
 
       resolve(html)
     }

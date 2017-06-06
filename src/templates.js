@@ -351,7 +351,8 @@ export function createTitlePage (ffc) {
         // m('hr'),
         m('.characters', [
           ffc.tags.map((t) =>
-            m('span', {className: 'character_icon', title: t.name}, m('img', {src: t.image, className: 'character_icon'}))
+            // m('span', {className: 'character_icon', title: t.name}, m('img', {src: t.image, className: 'character_icon'}))
+            m('span.story_character', t.name)
           )
         ])
       ])

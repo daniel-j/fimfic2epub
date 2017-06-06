@@ -33,11 +33,11 @@ let logoUrl = chrome.extension.getURL('fimfic2epub-logo.png')
 
 let ffc
 
-let stories = document.querySelectorAll('.story_container .story_content_box')
+let stories = document.querySelectorAll('.story_container')
 
 stories.forEach((story) => {
-  let id = story.id.substring(6)
-  let epubButton = story.querySelector('ul.chapters li.bottom a[title="Download Story (.epub)"]')
+  let id = story.dataset.story
+  let epubButton = story.querySelector('.story-top-toolbar .button-group .drop-down ul li a[title="Download Story (.epub)"]')
   if (!epubButton) return
   epubButton.addEventListener('click', function (e) {
     e.preventDefault()
@@ -47,7 +47,7 @@ stories.forEach((story) => {
   logo.className = 'fimfic2epub-logo'
   logo.title = 'Download EPUB with fimfic2epub'
   logo.src = logoUrl
-  story.querySelector('.title').appendChild(logo)
+  story.querySelector('.story_content_box .title').appendChild(logo)
   logo.addEventListener('click', function (e) {
     e.preventDefault()
     openStory(id)
@@ -89,6 +89,15 @@ let checkbox = {
   }
 }
 
+function selectOptions (list, selected = '') {
+  return list.map((item) => {
+    return m('option', {
+      value: item[0],
+      selected: selected === item[0]
+    }, item[1])
+  })
+}
+
 let ffcProgress = m.prop(0)
 let ffcStatus = m.prop('')
 
@@ -117,6 +126,7 @@ let dialog = {
     this.addChapterHeadings = m.prop(ffc.options.addChapterHeadings)
     this.includeExternal = m.prop(ffc.options.includeExternal)
     this.joinSubjects = m.prop(ffc.options.joinSubjects)
+    this.paragraphStyle = m.prop(ffc.options.paragraphStyle)
 
     this.onOpen = function (el, isInitialized) {
       if (!isInitialized) {
@@ -219,6 +229,7 @@ let dialog = {
       ffc.options.useAuthorNotesIndex = this.useAuthorNotesIndex()
       ffc.options.addChapterHeadings = this.addChapterHeadings()
       ffc.options.includeExternal = this.includeExternal()
+      ffc.options.paragraphStyle = this.paragraphStyle()
       ffc.subjects = this.subjects()
       ffc.options.joinSubjects = this.joinSubjects()
       m.redraw()
@@ -240,7 +251,7 @@ let dialog = {
   },
 
   view (ctrl, args, extras) {
-    return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', [
+    return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', {style: {'min-width': '700px'}}, [
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
       m('.drop-down-pop-up-content', [
         ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('table.properties', [
@@ -253,6 +264,14 @@ let dialog = {
             ),
             m('td', {style: 'width: 1px'}, m(checkbox, {checked: ctrl.checkboxCoverUrl(), onchange: m.withAttr('checked', ctrl.checkboxCoverUrl)}, 'Use image URL'))
           ),
+          m('tr', m('td.label', 'Paragraph style'), m('td', {colspan: 2},
+            m('select', {onchange: m.withAttr('value', ctrl.paragraphStyle)}, selectOptions([
+              ['indented', 'Indent first line in all paragraphs except the first (Traditional Paperback)'],
+              ['spaced', 'Separate each paragraph with double space (Traditional Web)'],
+              ['both', 'Double space and indent all paragraphs except first (Fusion)'],
+              ['indentedall', 'Indent all paragraphs including the first (Modified Traditional)']
+            ], ctrl.paragraphStyle()))
+          )),
           m('tr', m('td.label', ''), m('td', {colspan: 2},
             m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),

@@ -30,9 +30,6 @@ const bundleExtensionConfig = {
         test: /\.styl$/,
         use: ['raw-loader', 'stylus-loader']
       }
-    ],
-    noParse: [
-      /[/\\]node_modules[/\\]tidy-html5[/\\]tidy\.js$/
     ]
   },
 
@@ -47,7 +44,7 @@ const bundleExtensionConfig = {
     }
   },
 
-  externals: ['request', 'tidy-html5'],
+  externals: ['request'],
 
   plugins: [],
   devtool: 'source-map'
@@ -79,9 +76,6 @@ const bundleNpmModuleConfig = {
         test: /\.styl$/,
         use: ['raw-loader', 'stylus-loader']
       }
-    ],
-    noParse: [
-      /[/\\]node_modules[/\\]tidy-html5[/\\]tidy\.js$/
     ]
   },
 
@@ -93,7 +87,7 @@ const bundleNpmModuleConfig = {
     ]
   },
 
-  externals: [nodeExternals({whitelist: ['es6-event-emitter', /^babel-runtime/]}), 'exports?tidy_html5!tidy-html5'],
+  externals: [nodeExternals({whitelist: ['es6-event-emitter', /^babel-runtime/]})],
 
   plugins: [],
   devtool: 'source-map'
