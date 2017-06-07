@@ -545,29 +545,40 @@ class FimFic2Epub extends Emitter {
     this.subjects.length = 0
     this.subjects.push('Fimfiction')
     this.subjects.push(this.storyInfo.content_rating_text)
-    let matchCategory = /<a href="(.*?)" class="(.*?)".*? data-tag="(.*?)">(.*?)<\/a>/g
-    for (let c; (c = matchCategory.exec(tagsHtml));) {
-      if (c[2] === 'tag-genre') {
-        let cat = {
-          url: 'http://www.fimfiction.net' + c[1],
-          className: 'story_category story_category_' + c[3],
-          name: entities.decode(c[4])
-        }
-        categories.push(cat)
-        this.subjects.push(cat.name)
-      } else if (c[2] === 'tag-character') {
-        let t = {
-          url: 'http://www.fimfiction.net' + c[1],
-          // filename: 'tag-' + c[3],
-          name: entities.decode(c[4])
-          // image: 'https://static.fimfiction.net/images/characters/' + entities.decode(c[3]).replace(/-/g, '_') + '.png'
-        }
-        tags.push(t)
-        // tags.byImage[t.image] = t
-        // this.remoteResources.set(t.image, {filename: t.filename, originalUrl: t.image, where: ['tags']})
-      } else {
-        console.log(c)
+    // sex, gore tags
+    let matchTag = /<a href="(.*?)" class="([^"]*?)">(.*?)<\/a>/g
+    for (let c; (c = matchTag.exec(tagsHtml));) {
+      let cat = {
+        url: 'http://www.fimfiction.net' + c[1],
+        className: 'story_category story_category_' + c[2].replace('tag-', ''),
+        name: entities.decode(c[3])
       }
+      categories.push(cat)
+      this.subjects.push(cat.name)
+    }
+    // genre tags
+    matchTag = /<a href="(.*?)" class="tag-genre" data-tag="(.*?)">(.*?)<\/a>/g
+    for (let c; (c = matchTag.exec(tagsHtml));) {
+      let cat = {
+        url: 'http://www.fimfiction.net' + c[1],
+        className: 'story_category story_category_' + c[2],
+        name: entities.decode(c[3])
+      }
+      categories.push(cat)
+      this.subjects.push(cat.name)
+    }
+    // character tags
+    matchTag = /<a href="(.*?)" class="tag-character" title=".*?" data-tag="(.*?)">(.*?)<\/a>/g
+    for (let c; (c = matchTag.exec(tagsHtml));) {
+      let t = {
+        url: 'http://www.fimfiction.net' + c[1],
+        // filename: 'tag-' + c[2],
+        name: entities.decode(c[3])
+        // image: 'https://static.fimfiction.net/images/characters/' + entities.decode(c[2]).replace(/-/g, '_') + '.png'
+      }
+      tags.push(t)
+      // tags.byImage[t.image] = t
+      // this.remoteResources.set(t.image, {filename: t.filename, originalUrl: t.image, where: ['tags']})
     }
     this.categories = categories
 
@@ -600,7 +611,7 @@ class FimFic2Epub extends Emitter {
 
     html = html.substring(0, html.indexOf('<div class="button-group"'))
 
-    let matchTag = /<a href="\/tag\/(.*?)" class="character_icon" title="(.*?)" style=".*?"><img src="(.*?)" class="character_icon" \/><\/a>/g
+    matchTag = /<a href="\/tag\/(.*?)" class="character_icon" title="(.*?)" style=".*?"><img src="(.*?)" class="character_icon" \/><\/a>/g
     for (let tag; (tag = matchTag.exec(html));) {
       let t = {
         url: 'http://www.fimfiction.net/tag/' + tag[1],
