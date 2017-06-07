@@ -1,9 +1,12 @@
 
 import m from 'mithril'
+import { XmlEntities } from 'html-entities'
 import render from './lib/mithril-node-render'
 
 import fetch from './fetch'
 import { youtubeKey } from './constants'
+
+const entities = new XmlEntities()
 
 export function cleanMarkup (html) {
   if (!html) {
@@ -35,13 +38,18 @@ export function cleanMarkup (html) {
     html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
     html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="right_insert">')
 
+    let imageEmbed = /<img data-src="(.*?)" class="user_image" src="(.*?)" data-lightbox\/>/g
+    html = html.replace(imageEmbed, (match, originalUrl, cdnUrl) => {
+      return render(m('img', {src: entities.decode(cdnUrl), alt: 'Image'}))
+    })
+
     // Fix links pointing to pages on fimfiction
     // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
     let matchLink = /(<a .?href=")(.+?)(".+?>)/g
     html = html.replace(matchLink, (match, head, url, tail) => {
       if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
         if (url.substring(0, 1) === '/') {
-          url = 'http://www.fimfiction.net' + url
+          url = 'http://www.fimfiction.net' + entities.decode(url)
         } else {
           // do something else
         }
@@ -64,7 +72,7 @@ export function cleanMarkup (html) {
     let matchSoundCloud = /<div data-controller="oembed" class="oembed" data-url="(.*?)" .+?<\/div>/g
     html = html.replace(matchSoundCloud, (match, url) => {
       return render(m('.soundcloud.leftalign', [
-        'SoundCloud song ', m('a', {href: url, rel: 'nofollow'}, url.replace('https://soundcloud.com', ''))
+        'SoundCloud song ', m('a', {href: entities.decode(url), rel: 'nofollow'}, url.replace('https://soundcloud.com', ''))
       ]))
     })
 
@@ -73,7 +81,7 @@ export function cleanMarkup (html) {
     html = html.replace(matchStoryEmbed, (match, id, storyLink, storyTitle, author) => {
       return render(m('.story', [
         'Story: ',
-        m('a', {href: 'http://fimfiction.net' + storyLink, rel: 'nofollow'}, storyTitle),
+        m('a', {href: 'http://fimfiction.net' + entities.decode(storyLink), rel: 'nofollow'}, storyTitle),
         ' by ' + author
       ]))
     })
