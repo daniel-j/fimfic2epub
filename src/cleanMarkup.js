@@ -68,6 +68,16 @@ export function cleanMarkup (html) {
       ]))
     })
 
+    // Story embed
+    let matchStoryEmbed = /<div style='[^']*?' class='bbcode__block'><div style="position:relative;" class="story-card-container".*?data-story-id="([^"]*?)"[\s\S]*?<a class="story_link" href="(.*?)" title=".*?">(.*?)<\/a>[\s\S]*?" class="story-card__author">(.*?)<\/a>[\s\S]*?<\/div><\/div>[\s\S]*?<\/div><\/div>/g
+    html = html.replace(matchStoryEmbed, (match, id, storyLink, storyTitle, author) => {
+      return render(m('.story', [
+        'Story: ',
+        m('a', {href: 'http://fimfiction.net' + storyLink, rel: 'nofollow'}, storyTitle),
+        ' by ' + author
+      ]))
+    })
+
     if (cache.size === 0) {
       continueParsing()
     } else {
