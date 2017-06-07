@@ -28,6 +28,9 @@ export default function fetch (url, responseType) {
   if (url.indexOf('//') === 0) {
     url = 'http:' + url
   }
+  if (url.indexOf('/') === 0) {
+    url = 'https://fimfiction.net' + url
+  }
 
   if (isNode) {
     return fetchNode(url, responseType)

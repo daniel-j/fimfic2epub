@@ -14,9 +14,9 @@ export function cleanMarkup (html) {
   }
 
   return new Promise((resolve, reject) => {
-    // replace HTML non-breaking spaces with normal spaces
-    html = html.replace(/&nbsp;/g, ' ')
-    html = html.replace(/&#160;/g, ' ')
+    // replace HTML entities with decimal entities
+    html = html.replace(/&nbsp;/g, '&#160;')
+    html = html.replace(/&emsp;/g, '&#8195;')
 
     // fix some tags
     html = html.replace(/<u>/g, '<span style="text-decoration: underline">')
@@ -27,10 +27,7 @@ export function cleanMarkup (html) {
     html = html.replace(/<p>\s*/g, '<p>')
     html = html.replace(/\s*<\/p>/g, '</p>')
 
-    html = html.replace(/<p><p>/g, '<p>')
-    html = html.replace(/<\/div><\/p>/g, '</div>')
-
-    html = fixParagraphIndent(html)
+    // html = fixParagraphIndent(html)
 
     html = fixDoubleSpacing(html)
 

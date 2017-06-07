@@ -98,6 +98,14 @@ function selectOptions (list, selected = '') {
   })
 }
 
+function redraw (arg) {
+  try {
+    m.redraw(arg)
+  } catch (err) {
+    console.log(err)
+  }
+}
+
 let ffcProgress = m.prop(0)
 let ffcStatus = m.prop('')
 
@@ -140,12 +148,14 @@ let dialog = {
           this.author(ffc.storyInfo.author.name)
           this.description(ffc.storyInfo.short_description)
           this.subjects(ffc.subjects.slice(0))
-          m.redraw(true)
+          redraw(true)
           this.center()
           ffc.fetchChapters().then(() => {
             ffcProgress(-1)
-            m.redraw()
+            redraw()
           })
+        }).catch((err) => {
+          throw err
         })
       }
     }
@@ -232,7 +242,7 @@ let dialog = {
       ffc.options.paragraphStyle = this.paragraphStyle()
       ffc.subjects = this.subjects()
       ffc.options.joinSubjects = this.joinSubjects()
-      m.redraw()
+      redraw()
 
       chain
         .then(ffc.fetchAll.bind(ffc))
@@ -337,7 +347,7 @@ function onProgress (percent, status) {
   if (status) {
     ffcStatus(status)
   }
-  m.redraw()
+  redraw()
 }
 
 if (pageStoryId && isChromeExt) {

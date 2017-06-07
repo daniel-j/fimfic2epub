@@ -454,11 +454,18 @@ class FimFic2Epub extends Emitter {
   }
 
   // Internal/private methods
-  progress (part, percent, status) {
+  progress (part, percent, status = '') {
     // let parts = 6.3
     // let partsize = 1 / parts
     // percent = (part / parts) + percent * partsize
-    this.trigger('progress', percent, status)
+    try {
+      this.trigger('progress', percent, status)
+    } catch (err) {
+      console.error(err)
+    }
+    if (status) {
+      console.log(status)
+    }
   }
 
   findRemoteResources (prefix, where, html) {
