@@ -642,7 +642,7 @@ class FimFic2Epub extends Emitter {
     let chapterPos = html.indexOf('<div class="bbcode">')
     let chapter = html.substring(chapterPos + 20)
 
-    let pos = chapter.indexOf('\t\t</div>\n')
+    let pos = chapter.indexOf('\t\t</div>\n\t</div>')
 
     chapter = chapter.substring(0, pos).trim()
 
