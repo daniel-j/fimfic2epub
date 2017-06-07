@@ -15,19 +15,21 @@ export function cleanMarkup (html) {
     html = html.replace(/&nbsp;/g, ' ')
     html = html.replace(/&#160;/g, ' ')
 
-    html = fixParagraphIndent(html)
-
-    html = fixDoubleSpacing(html)
-
-    // fix center tags
-    // html = html.replace(/<center>/g, '<p style="text-align: center;">')
-    // html = html.replace(/<\/center>/g, '</p>')
+    // fix some tags
+    html = html.replace(/<u>/g, '<span style="text-decoration: underline">')
+    html = html.replace(/<\/u>/g, '</span>')
+    html = html.replace(/<s>/g, '<span style="text-decoration: line-through">')
+    html = html.replace(/<\/s>/g, '</span>')
 
     html = html.replace(/<p>\s*/g, '<p>')
     html = html.replace(/\s*<\/p>/g, '</p>')
 
     html = html.replace(/<p><p>/g, '<p>')
     html = html.replace(/<\/div><\/p>/g, '</div>')
+
+    html = fixParagraphIndent(html)
+
+    html = fixDoubleSpacing(html)
 
     // fix floating blockquote tags
     html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
@@ -51,10 +53,12 @@ export function cleanMarkup (html) {
     let cache = new Map()
     let completeCount = 0
 
-    let matchYoutube = /<div class="youtube_container">(.+?)<\/div>/g
+    let matchYoutube = /<div class="embed-container" data-original-src="(.*?)" data-src="(.*?)" data-id="(.*?)" data-origin="(.*?)">(.+?)<\/div><\/div><\/div>/g
     for (let ma; (ma = matchYoutube.exec(html));) {
-      let youtubeId = ma[1].match(/src="https:\/\/www.youtube.com\/embed\/(.+?)"/)[1]
-      cache.set(youtubeId, null)
+      if (ma[4] === 'YouTube') {
+        let youtubeId = ma[3]
+        cache.set(youtubeId, null)
+      }
     }
 
     if (cache.size === 0) {
@@ -80,9 +84,8 @@ export function cleanMarkup (html) {
       })
     }
 
-    function replaceYoutube (match, contents) {
-      // console.log(match, contents)
-      let youtubeId = contents.match(/src="https:\/\/www.youtube.com\/embed\/(.+?)"/)[1]
+    function replaceYoutube (match, origSrc, src, id, origin) {
+      let youtubeId = id
       let thumbnail = 'http://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
       let youtubeUrl = 'https://youtube.com/watch?v=' + youtubeId
       let title = 'Youtube Video'
