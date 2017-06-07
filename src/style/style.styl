@@ -59,13 +59,53 @@ img {
   max-height: 100%;
 }
 
-hr {
+hr.old {
+  padding: 0;
   margin-top: 0.8em;
   margin-bottom: 0.8em;
   height: 0;
-  border: 0;
-  border-bottom: 1px solid #999;
+  border: none;
+  border-bottom: 1px solid #000;
+  border-color: currentColor;
+  opacity: 0.5;
+  width: 100%;
 }
+
+// Fimfiction's new horizontal ruler:
+hr {
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  text-align: center;
+  line-height: 0;
+
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-color: #999;
+  border-color: currentColor;
+  height: 4px;
+  background: transparent;
+  width: 90%;
+  margin: 2em auto;
+}
+
+// This looks bad on black background/dark themes
+/*hr:after {
+  color: #333;
+  display: inline-block;
+  position: relative;
+  top: -0.5em;
+  font-size: 1.0em;
+  padding: 0 0.5em;
+  background: white;
+  line-height: 1.0em
+
+  color: currentColor;
+  content: "\274A   \274A   \274A";
+  margin-top: 2px;
+}*/
 
 blockquote {
   margin: 10px 0px;

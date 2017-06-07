@@ -48,7 +48,7 @@ export function createChapter (ch) {
         m('body', [
           title ? m('.chapter-title', [
             m('h1', title),
-            m('hr')
+            m('hr.old')
           ]) : null,
           '%%HTML_CONTENT%%',
           (link || linkNotes) ? m('p.double', {style: 'text-align: center; clear: both;'},
