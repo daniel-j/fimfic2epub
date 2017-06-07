@@ -61,6 +61,13 @@ export function cleanMarkup (html) {
       }
     }
 
+    let matchSoundCloud = /<div data-controller="oembed" class="oembed" data-url="(.*?)" .+?<\/div>/g
+    html = html.replace(matchSoundCloud, (match, url) => {
+      return render(m('.soundcloud.leftalign', [
+        'SoundCloud song ', m('a', {href: url, rel: 'nofollow'}, url.replace('https://soundcloud.com', ''))
+      ]))
+    })
+
     if (cache.size === 0) {
       continueParsing()
     } else {
@@ -99,10 +106,10 @@ export function cleanMarkup (html) {
         return ''
       }
       return render(m('figure.youtube', [
-        m('a', {href: youtubeUrl},
+        m('a', {href: youtubeUrl, rel: 'nofollow'},
           m('img', {src: thumbnail, alt: title})
         ),
-        m('figcaption', m('a', {href: youtubeUrl}, caption))
+        m('figcaption', m('a', {href: youtubeUrl, rel: 'nofollow'}, caption))
       ]))
     }
 
