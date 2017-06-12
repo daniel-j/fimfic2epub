@@ -37,21 +37,22 @@ let stories = document.querySelectorAll('.story_container')
 
 stories.forEach((story) => {
   let id = story.dataset.story
-  let epubButton = story.querySelector('.story-top-toolbar .button-group .drop-down ul li a[title="Download Story (.epub)"]')
-  if (!epubButton) return
-  epubButton.addEventListener('click', function (e) {
+  function epubClick (e) {
     e.preventDefault()
     openStory(id)
-  }, false)
+  }
+
+  let epubButtons = story.querySelectorAll('.drop-down ul li a[title="Download Story (.epub)"]')
+  if (epubButtons.length === 0) return
+  for (let i = 0; i < epubButtons.length; i++) {
+    epubButtons[i].addEventListener('click', epubClick, false)
+  }
   let logo = new Image()
   logo.className = 'fimfic2epub-logo'
   logo.title = 'Download EPUB with fimfic2epub'
   logo.src = logoUrl
   story.querySelector('.story_content_box .title').appendChild(logo)
-  logo.addEventListener('click', function (e) {
-    e.preventDefault()
-    openStory(id)
-  })
+  logo.addEventListener('click', epubClick, false)
 })
 
 let cards = document.querySelectorAll('.story-card-container')
