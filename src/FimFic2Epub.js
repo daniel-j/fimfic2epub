@@ -251,62 +251,6 @@ class FimFic2Epub extends Emitter {
       this.pcache.chapters = null
     })
 
-    /*
-    this.pcache.chapters = new Promise((resolve, reject) => {
-      let chapters = this.storyInfo.chapters
-      let chapterCount = this.storyInfo.chapters.length
-      let currentChapter = 0
-      let completeCount = 0
-
-      if (chapterCount === 0) {
-        resolve()
-        return
-      }
-
-      let recursive = () => {
-        let index = currentChapter++
-        let ch = chapters[index]
-        if (!ch) {
-          return
-        }
-        // console.log('Fetching chapter ' + (index + 1) + ' of ' + chapters.length + ': ' + ch.title)
-        let url = ch.link.replace('http://www.fimfiction.net', '')
-        fetch(url + '?view_mature=true').then((html) => {
-          let chapter = this.parseChapterPage(html)
-          Promise.all([
-            cleanMarkup(chapter.content),
-            cleanMarkup(chapter.notes)
-          ]).then((values) => {
-            chapter.content = values[0]
-            chapter.notes = values[1]
-            if (chapter.notes) {
-              this.hasAuthorNotes = true
-              this.chaptersWithNotes.push(index)
-            }
-            ch.realWordCount = htmlWordCount(chapter.content)
-            this.chapters[index] = chapter
-
-            completeCount++
-            this.progress(0, completeCount / chapterCount, 'Fetched chapter ' + (completeCount) + ' / ' + chapterCount)
-            if (completeCount < chapterCount) {
-              recursive()
-            } else {
-              this.chaptersWithNotes.sort((a, b) => a - b)
-              resolve()
-            }
-          })
-        })
-      }
-
-      // concurrent downloads!
-      recursive()
-      recursive()
-      recursive()
-      recursive()
-    }).then(() => {
-      this.pcache.chapters = null
-    })
-    */
     return this.pcache.chapters
   }
 
