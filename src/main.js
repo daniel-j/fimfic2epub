@@ -301,7 +301,7 @@ let dialog = {
         m('.drop-down-pop-up-footer', [
           m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1, style: 'float: right'}, 'Download EPUB'),
           ffcProgress() >= 0 ? m('.rating_container',
-            m('.bars_container', m('.bar_container', m('.bar_dislike', m('.bar.bar_like', {style: {width: Math.max(0, ffcProgress()) * 100 + '%'}})))),
+            m('.rating-bar', {style: {background: 'rgba(0, 0, 0, 0.2)', 'margin-right': '5px'}}, m('.like-bar', {style: {width: Math.max(0, ffcProgress()) * 100 + '%'}})),
             ' ',
             ffcProgress() >= 0 && ffcProgress() < 1 ? [ m('i.fa.fa-spin.fa-spinner'), m.trust('&nbsp;&nbsp;') ] : null,
             ffcStatus()
