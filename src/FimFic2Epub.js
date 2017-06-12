@@ -7,6 +7,7 @@ import sanitize from 'sanitize-filename'
 import URL from 'url'
 import isNode from 'detect-node'
 import fileType from 'file-type'
+import isSvg from 'is-svg'
 import sizeOf from 'image-size'
 import Emitter from 'es6-event-emitter'
 
@@ -21,6 +22,8 @@ import * as template from './templates'
 import { containerXml } from './constants'
 
 const entities = new XmlEntities()
+
+const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 
 class FimFic2Epub extends Emitter {
 
@@ -197,6 +200,58 @@ class FimFic2Epub extends Emitter {
     this.chaptersWithNotes.length = 0
 
     this.progress(0, 0, 'Fetching chapters...')
+
+    let chapterCount = this.storyInfo.chapters.length
+    let url = 'https://www.fimfiction.net/story/download/' + this.storyInfo.id + '/html'
+
+    this.pcache.chapters = fetch(url).then((html) => {
+      // console.log(html)
+      let p = Promise.resolve()
+      let matchChapter = /<article class="chapter">[\s\S]*?<\/header>([\s\S]*?)<\/article>/g
+      for (let ma, i = 0; (ma = matchChapter.exec(html)); i++) {
+        let chapterContent = ma[1]
+        chapterContent = chapterContent.replace(/<footer>[\s\S]*?<\/footer>/g, '').trim()
+
+        let authorNotesPos = chapterContent.indexOf('<aside ')
+        let notesContent = ''
+        let notesFirst = authorNotesPos === 0
+        if (authorNotesPos !== -1) {
+          // console.log(chapterContent.length)
+          chapterContent = chapterContent.replace(/<aside class="authors-note">([\s\S]*?)<\/aside>/, (match, content, pos) => {
+            // console.log(pos + match.length)
+            content = content.replace(/<header><h1>.*?<\/h1><\/header>/, '')
+            notesContent = content.trim().replace(trimWhitespace, '')
+            return ''
+          })
+        }
+
+        chapterContent = chapterContent.trim().replace(trimWhitespace, '')
+        let chapter = {content: chapterContent, notes: notesContent, notesFirst}
+        p = p.then(cleanMarkup(chapter.content).then((content) => {
+          chapter.content = content
+        }))
+        if (notesContent) {
+          p = p.then(cleanMarkup(chapter.notes).then((notes) => {
+            chapter.notes = notes
+          }))
+        }
+        p = p.then(() => {
+          this.progress(0, (i + 1) / chapterCount, 'Processed chapter ' + (i + 1) + ' / ' + chapterCount)
+          if (chapter.notes) {
+            this.hasAuthorNotes = true
+            this.chaptersWithNotes.push(i)
+          }
+          this.chapters[i] = chapter
+          let ch = this.storyInfo.chapters[i]
+          ch.realWordCount = htmlWordCount(chapter.content)
+        })
+      }
+      return p
+    }).then(() => {
+      this.pcache.chapters = null
+    })
+
+    /*
     this.pcache.chapters = new Promise((resolve, reject) => {
       let chapters = this.storyInfo.chapters
       let chapterCount = this.storyInfo.chapters.length
@@ -251,6 +306,7 @@ class FimFic2Epub extends Emitter {
     }).then(() => {
       this.pcache.chapters = null
     })
+    */
     return this.pcache.chapters
   }
 
@@ -284,6 +340,15 @@ class FimFic2Epub extends Emitter {
         fetchRemote(url, 'arraybuffer').then((data) => {
           r.dest = null
           let info = fileType(isNode ? data : new Uint8Array(data))
+          if (!info) {
+            // file-type doesn't support SVG, extra check:
+            if (isSvg(Buffer.from(data).toString('utf8'))) {
+              info = {
+                mime: 'image/svg+xml',
+                ext: 'svg'
+              }
+            }
+          }
           if (info) {
             let type = info.mime
             r.type = type
@@ -649,7 +714,7 @@ class FimFic2Epub extends Emitter {
     let chapterPos = html.indexOf('<div class="bbcode">')
     let chapter = html.substring(chapterPos + 20)
 
-    let pos = chapter.indexOf('\t\t</div>\n\t</div>')
+    let pos = chapter.indexOf('\t\t</div>\n\t</div>\t\t\n\t\t\t\t\t</div>\n')
 
     chapter = chapter.substring(0, pos).trim()
 

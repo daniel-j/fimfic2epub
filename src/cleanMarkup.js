@@ -1,6 +1,7 @@
 
 import m from 'mithril'
 import { XmlEntities } from 'html-entities'
+import twemoji from 'twemoji'
 import render from './lib/mithril-node-render'
 
 import fetch from './fetch'
@@ -14,6 +15,8 @@ export function cleanMarkup (html) {
   }
 
   return new Promise((resolve, reject) => {
+    html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
+    html = html.replace(/(<img class="emoji" draggable="false" alt=".*?" src=".*?")>/g, '$1/>')
     // replace HTML entities with decimal entities
     html = html.replace(/&nbsp;/g, '&#160;')
     html = html.replace(/&emsp;/g, '&#8195;')
@@ -58,28 +61,16 @@ export function cleanMarkup (html) {
     let cache = new Map()
     let completeCount = 0
 
-    let matchYoutube = /<div class="embed-container" data-original-src="(.*?)" data-src="(.*?)" data-id="(.*?)" data-origin="(.*?)">(.+?)<\/div><\/div><\/div>/g
-    for (let ma; (ma = matchYoutube.exec(html));) {
-      if (ma[4] === 'YouTube') {
-        let youtubeId = ma[3]
-        cache.set(youtubeId, null)
-      }
+    let matchYouTube = /<p><a class="embed" href="https:\/\/www\.youtube\.com\/watch\?v=(.*?)">.*?<\/a><\/p>/g
+    for (let ma; (ma = matchYouTube.exec(html));) {
+      let youtubeId = ma[1]
+      cache.set(youtubeId, null)
     }
 
-    let matchSoundCloud = /<div data-controller="oembed" class="oembed" data-url="(.*?)" .+?<\/div>/g
+    let matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
     html = html.replace(matchSoundCloud, (match, url) => {
       return render(m('.soundcloud.leftalign', [
-        'SoundCloud song ', m('a', {href: entities.decode(url), rel: 'nofollow'}, url.replace('https://soundcloud.com', ''))
-      ]))
-    })
-
-    // Story embed
-    let matchStoryEmbed = /<div style='[^']*?' class='bbcode__block'><div style="position:relative;" class="story-card-container".*?data-story-id="([^"]*?)"[\s\S]*?<a class="story_link" href="(.*?)" title=".*?">(.*?)<\/a>[\s\S]*?" class="story-card__author">(.*?)<\/a>[\s\S]*?<\/div><\/div>[\s\S]*?<\/div><\/div>/g
-    html = html.replace(matchStoryEmbed, (match, id, storyLink, storyTitle, author) => {
-      return render(m('.story', [
-        'Story: ',
-        m('a', {href: 'http://fimfiction.net' + entities.decode(storyLink), rel: 'nofollow'}, storyTitle),
-        ' by ' + author
+        'SoundCloud: ', m('a', {href: entities.decode(url), rel: 'nofollow'}, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
       ]))
     })
 
@@ -100,13 +91,13 @@ export function cleanMarkup (html) {
           completeCount++
         })
         if (completeCount === cache.size || data.length === 0) {
-          html = html.replace(matchYoutube, replaceYoutube)
+          html = html.replace(matchYouTube, replaceYouTube)
           continueParsing()
         }
       })
     }
 
-    function replaceYoutube (match, origSrc, src, id, origin) {
+    function replaceYouTube (match, id) {
       let youtubeId = id
       let thumbnail = 'http://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
       let youtubeUrl = 'https://youtube.com/watch?v=' + youtubeId
