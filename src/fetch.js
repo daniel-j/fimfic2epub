@@ -11,7 +11,8 @@ function fetchNode (url, responseType) {
       url: url,
       encoding: responseType ? null : 'utf8',
       headers: {
-        referer: 'http://www.fimfiction.net/'
+        referer: 'http://www.fimfiction.net/',
+        Cookie: 'view_mature=true',
       }
     }, (error, response, body) => {
       if (error) {
