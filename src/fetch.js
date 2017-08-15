@@ -38,11 +38,14 @@ export default function fetch (url, responseType) {
   }
   return new Promise((resolve, reject) => {
     if (typeof window.fetch === 'function') {
+      const headers = new Headers()
+      headers.append("Cookie", "view_mature=true");
       window.fetch(url, {
         method: 'GET',
         mode: 'cors',
         credentials: 'include',
         cache: 'default',
+        headers: headers,
         redirect: 'follow'
       }).then((response) => {
         if (responseType === 'blob') {
@@ -62,7 +65,6 @@ export default function fetch (url, responseType) {
         x.responseType = responseType
       }
       x.onload = function () {
-        // x.getResponseHeader('content-type')
         resolve(x.response)
       }
       x.onerror = function () {
