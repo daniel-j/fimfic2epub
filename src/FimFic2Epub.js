@@ -544,7 +544,7 @@ class FimFic2Epub extends Emitter {
 
   fetchTitlePage () {
     let url = this.storyInfo.url.replace('http://www.fimfiction.net', '')
-    return fetch(url + '?view_mature=true').then(this.extractTitlePageInfo.bind(this))
+    return fetch(url).then(this.extractTitlePageInfo.bind(this))
   }
 
   extractTitlePageInfo (html) {

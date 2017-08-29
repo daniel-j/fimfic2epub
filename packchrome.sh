@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHROME=`command -v chrome || command -v chromium || command -v "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`
+CHROME=`command -v chrome || command -v chromium || command -v chromium-browser || command -v "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`
 
 rm -f extension.crx
 
