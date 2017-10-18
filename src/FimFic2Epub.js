@@ -54,11 +54,11 @@ class FimFic2Epub extends Emitter {
           data = JSON.parse(content)
         } catch (e) {}
         if (!data) {
-          reject('Unable to fetch story info')
+          reject(new Error('Unable to fetch story info'))
           return
         }
         if (data.error) {
-          reject(data.error)
+          reject(new Error(data.error))
           return
         }
         let story = data.story
@@ -407,7 +407,7 @@ class FimFic2Epub extends Emitter {
   // for node, resolve a Buffer, in browser resolve a Blob
   getFile () {
     if (!this.zip) {
-      return Promise.reject('Not downloaded.')
+      return Promise.reject(new Error('Not downloaded.'))
     }
     if (this.cachedFile) {
       return Promise.resolve(this.cachedFile)
@@ -459,7 +459,7 @@ class FimFic2Epub extends Emitter {
     this.coverImage = buffer
     this.coverFilename = 'Images/cover.' + info.ext
     this.coverType = info.mime
-    this.coverImageDimensions = sizeOf(new Buffer(buffer))
+    this.coverImageDimensions = sizeOf(Buffer.from(buffer))
   }
 
   // Internal/private methods
@@ -529,7 +529,7 @@ class FimFic2Epub extends Emitter {
         this.coverFilename = filename
         this.coverType = type
 
-        this.coverImageDimensions = sizeOf(new Buffer(data))
+        this.coverImageDimensions = sizeOf(Buffer.from(data))
         this.coverImage = data
         this.coverFilename = filename
         return this.coverImage

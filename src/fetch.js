@@ -12,7 +12,7 @@ function fetchNode (url, responseType) {
       encoding: responseType ? null : 'utf8',
       headers: {
         referer: 'http://www.fimfiction.net/',
-        Cookie: 'view_mature=true',
+        cookie: 'view_mature=true'
       }
     }, (error, response, body) => {
       if (error) {
@@ -39,7 +39,7 @@ export default function fetch (url, responseType) {
   return new Promise((resolve, reject) => {
     if (typeof window.fetch === 'function') {
       const headers = new Headers()
-      headers.append("Cookie", "view_mature=true");
+      headers.append('cookie', 'view_mature=true')
       window.fetch(url, {
         method: 'GET',
         mode: 'cors',
@@ -56,7 +56,7 @@ export default function fetch (url, responseType) {
           response.text().then(resolve, reject)
         }
       }).catch((err) => {
-        reject('Error fetching ' + url + ' (' + err + ')')
+        reject(new Error('Error fetching ' + url + ' (' + err + ')'))
       })
     } else {
       let x = new XMLHttpRequest()
@@ -68,7 +68,7 @@ export default function fetch (url, responseType) {
         resolve(x.response)
       }
       x.onerror = function () {
-        reject('Error fetching ' + url)
+        reject(new Error('Error fetching ' + url))
       }
       x.send()
     }
