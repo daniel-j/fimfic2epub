@@ -29,6 +29,7 @@ let watchOpts = {
 
 webpackConfig.forEach((c) => {
   if (inProduction) {
+    c.plugins.push(new webpack.optimize.ModuleConcatenationPlugin())
     c.plugins.push(new webpack.LoaderOptionsPlugin({
       minimize: true,
       debug: false

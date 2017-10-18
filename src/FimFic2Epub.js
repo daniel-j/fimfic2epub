@@ -26,7 +26,6 @@ const entities = new XmlEntities()
 const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 
 class FimFic2Epub extends Emitter {
-
   static getStoryId (id) {
     if (isNaN(id)) {
       let url = URL.parse(id, false, true)
@@ -370,10 +369,10 @@ class FimFic2Epub extends Emitter {
       this.zip.file('OEBPS/' + this.coverFilename, this.coverImage)
     }
     this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
-    this.zip.file('OEBPS/Styles/coverstyle.css', coverstyleCss)
+    this.zip.file('OEBPS/Styles/coverstyle.css', Buffer.from(coverstyleCss, 'utf8'))
 
     this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
-    this.zip.file('OEBPS/Styles/titlestyle.css', titlestyleCss)
+    this.zip.file('OEBPS/Styles/titlestyle.css', Buffer.from(titlestyleCss, 'utf8'))
 
     this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this, 0))
     this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
@@ -381,7 +380,7 @@ class FimFic2Epub extends Emitter {
     for (let i = 0; i < this.chapters.length; i++) {
       let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
       let html = this.chaptersHtml[i]
-      this.zip.file(filename, html)
+      this.zip.file(filename, Buffer.from(html, 'utf8'))
     }
 
     if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && this.hasAuthorNotes) {
@@ -391,11 +390,11 @@ class FimFic2Epub extends Emitter {
         if (!this.chapters[i].notes) continue
         let filename = 'OEBPS/Text/note_' + zeroFill(3, i + 1) + '.xhtml'
         let html = this.notesHtml[i]
-        this.zip.file(filename, html)
+        this.zip.file(filename, Buffer.from(html, 'utf8'))
       }
     }
 
-    this.zip.file('OEBPS/Styles/style.css', styleCss + '\n\n' + (paragraphsCss[this.options.paragraphStyle] || ''))
+    this.zip.file('OEBPS/Styles/style.css', Buffer.from(styleCss + '\n\n' + (paragraphsCss[this.options.paragraphStyle] || ''), 'utf8'))
 
     this.remoteResources.forEach((r) => {
       if (r.dest) {
@@ -412,7 +411,9 @@ class FimFic2Epub extends Emitter {
     if (this.cachedFile) {
       return Promise.resolve(this.cachedFile)
     }
-    this.progress(0, 0.95, 'Compressing...')
+    this.progress(0, 0, 'Compressing...')
+
+    let lastPercent = -1
 
     return this.zip
       .generateAsync({
@@ -420,6 +421,12 @@ class FimFic2Epub extends Emitter {
         mimeType: 'application/epub+zip',
         compression: 'DEFLATE',
         compressionOptions: {level: 9}
+      }, (metadata) => { // onUpdate
+        let currentPercent = Math.round(metadata.percent / 10) * 10
+        if (lastPercent !== currentPercent) {
+          lastPercent = currentPercent
+          this.progress(0, currentPercent / 100, 'Compressing...')
+        }
       })
       .then((file) => {
         this.progress(0, 1, 'Complete!')
@@ -429,7 +436,7 @@ class FimFic2Epub extends Emitter {
   }
 
   // example usage: .pipe(fs.createWriteStream(filename))
-  streamFile () {
+  streamFile (onUpdate) {
     if (!this.zip) {
       return null
     }
@@ -440,7 +447,7 @@ class FimFic2Epub extends Emitter {
         mimeType: 'application/epub+zip',
         compression: 'DEFLATE',
         compressionOptions: {level: 9}
-      })
+      }, onUpdate)
   }
 
   setTitle (title) {

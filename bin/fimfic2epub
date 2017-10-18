@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+// Fix for mithril
+const noop = () => {}
+global.window = {
+  document: { createDocumentFragment: noop },
+  history: { pushState: noop }
+}
+
 const FimFic2Epub = require('../fimfic2epub')
 const fs = require('fs')
 
@@ -31,7 +38,7 @@ ffc.fetchAll()
   } else {
     stream = fs.createWriteStream(filename)
   }
-  ffc.streamFile()
+  ffc.streamFile(null)
   .pipe(stream)
   .on('finish', () => {
     if (!outputStdout) {

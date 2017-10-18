@@ -3,6 +3,7 @@
 
 import FimFic2Epub from './FimFic2Epub'
 import m from 'mithril'
+import prop from 'mithril/stream'
 import { saveAs } from 'file-saver'
 import autosize from 'autosize'
 
@@ -79,13 +80,13 @@ dialogContainer.id = 'epubDialogContainer'
 document.body.appendChild(dialogContainer)
 
 let checkbox = {
-  view: function (ctrl, args, text) {
+  view: function ({attrs, children}) {
     return m('label.toggleable-switch', [
       m('input', Object.assign({
         type: 'checkbox'
-      }, args)),
+      }, attrs)),
       m('a'),
-      text ? m('span', text) : null
+      children ? m('span', children) : null
     ])
   }
 }
@@ -107,58 +108,56 @@ function redraw (arg) {
   }
 }
 
-let ffcProgress = m.prop(0)
-let ffcStatus = m.prop('')
+let ffcProgress = prop(0)
+let ffcStatus = prop('')
 
 let dialog = {
-  controller (args) {
+  oninit () {
     const ctrl = this
 
     ffcProgress(0)
 
-    this.isLoading = m.prop(true)
-    this.dragging = m.prop(false)
-    this.xpos = m.prop(0)
-    this.ypos = m.prop(0)
-    this.el = m.prop(null)
-    this.coverFile = m.prop(null)
-    this.coverUrl = m.prop('')
-    this.checkboxCoverUrl = m.prop(false)
+    this.isLoading = prop(true)
+    this.dragging = prop(false)
+    this.xpos = prop(0)
+    this.ypos = prop(0)
+    this.el = prop(null)
+    this.coverFile = prop(null)
+    this.coverUrl = prop('')
+    this.checkboxCoverUrl = prop(false)
 
-    this.title = m.prop('')
-    this.author = m.prop('')
-    this.description = m.prop('')
-    this.subjects = m.prop([])
-    this.addCommentsLink = m.prop(ffc.options.addCommentsLink)
-    this.includeAuthorNotes = m.prop(ffc.options.includeAuthorNotes)
-    this.useAuthorNotesIndex = m.prop(ffc.options.useAuthorNotesIndex)
-    this.addChapterHeadings = m.prop(ffc.options.addChapterHeadings)
-    this.includeExternal = m.prop(ffc.options.includeExternal)
-    this.joinSubjects = m.prop(ffc.options.joinSubjects)
-    this.paragraphStyle = m.prop(ffc.options.paragraphStyle)
+    this.title = prop('')
+    this.author = prop('')
+    this.description = prop('')
+    this.subjects = prop([])
+    this.addCommentsLink = prop(ffc.options.addCommentsLink)
+    this.includeAuthorNotes = prop(ffc.options.includeAuthorNotes)
+    this.useAuthorNotesIndex = prop(ffc.options.useAuthorNotesIndex)
+    this.addChapterHeadings = prop(ffc.options.addChapterHeadings)
+    this.includeExternal = prop(ffc.options.includeExternal)
+    this.joinSubjects = prop(ffc.options.joinSubjects)
+    this.paragraphStyle = prop(ffc.options.paragraphStyle)
 
-    this.onOpen = function (el, isInitialized) {
-      if (!isInitialized) {
-        this.el(el)
+    this.onOpen = function (vnode) {
+      this.el(vnode.dom)
+      this.center()
+      this.isLoading(true)
+      ffc.fetchMetadata().then(() => {
+        this.isLoading(false)
+        ffcProgress(-1)
+        this.title(ffc.storyInfo.title)
+        this.author(ffc.storyInfo.author.name)
+        this.description(ffc.storyInfo.short_description)
+        this.subjects(ffc.subjects.slice(0))
+        redraw(true)
         this.center()
-        this.isLoading(true)
-        ffc.fetchMetadata().then(() => {
-          this.isLoading(false)
+        ffc.fetchChapters().then(() => {
           ffcProgress(-1)
-          this.title(ffc.storyInfo.title)
-          this.author(ffc.storyInfo.author.name)
-          this.description(ffc.storyInfo.short_description)
-          this.subjects(ffc.subjects.slice(0))
-          redraw(true)
-          this.center()
-          ffc.fetchChapters().then(() => {
-            ffcProgress(-1)
-            redraw()
-          })
-        }).catch((err) => {
-          throw err
+          redraw()
         })
-      }
+      }).catch((err) => {
+        throw err
+      })
     }
 
     this.setCoverFile = (e) => {
@@ -186,7 +185,7 @@ let dialog = {
 
     this.ondown = (e) => {
       let rect = this.el().firstChild.getBoundingClientRect()
-      let offset = {x: e.pageX - rect.left - document.body.scrollLeft, y: e.pageY - rect.top - document.body.scrollTop}
+      let offset = {x: e.pageX - rect.left - document.documentElement.scrollLeft, y: e.pageY - rect.top - document.documentElement.scrollTop}
       this.dragging(true)
       let onmove = (e) => {
         e.preventDefault()
@@ -215,8 +214,8 @@ let dialog = {
       if (this.dragging()) return
       let rect = this.el().firstChild.getBoundingClientRect()
       this.move(
-        Math.max(document.body.scrollLeft, (window.innerWidth / 2) - (rect.width / 2) + document.body.scrollLeft),
-        Math.max(document.body.scrollTop, (window.innerHeight / 2) - (rect.height / 2) + document.body.scrollTop)
+        Math.max(document.documentElement.scrollLeft, (window.innerWidth / 2) - (rect.width / 2) + document.documentElement.scrollLeft),
+        Math.max(document.documentElement.scrollTop, (window.innerHeight / 2) - (rect.height / 2) + document.documentElement.scrollTop)
       )
     }
 
@@ -261,8 +260,9 @@ let dialog = {
     }
   },
 
-  view (ctrl, args, extras) {
-    return m('.drop-down-pop-up-container', {config: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', {style: {'min-width': '700px'}}, [
+  view (vnode) {
+    let ctrl = vnode.state
+    return m('.drop-down-pop-up-container', {oncreate: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', {style: {'min-width': '700px'}}, [
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
       m('.drop-down-pop-up-content', [
         ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('table.properties', [
@@ -293,9 +293,9 @@ let dialog = {
           )),
 
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
-          m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Description'), m('td', {colspan: 2}, m('textarea', {config: autosize, onchange: ctrl.setDescription}, ctrl.description()))),
+          m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Description'), m('td', {colspan: 2}, m('textarea', {oncreate: ({dom}) => autosize(dom), onchange: ctrl.setDescription}, ctrl.description()))),
           m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Categories'), m('td', {colspan: 2},
-            m('textarea', {rows: 2, config: autosize, onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
+            m('textarea', {rows: 2, oncreate: ({dom}) => autosize(dom), onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
             m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories and separate with commas (for iBooks only)')
           ))
         ]),
@@ -315,12 +315,12 @@ let dialog = {
 }
 
 let dialogOpen = false
-function openDialog (args, extras) {
+function openDialog () {
   if (dialogOpen) {
     return
   }
   dialogOpen = true
-  m.mount(dialogContainer, m(dialog, args, extras))
+  m.mount(dialogContainer, dialog)
 }
 function closeDialog () {
   dialogOpen = false

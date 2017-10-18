@@ -1,6 +1,6 @@
 
 import m from 'mithril'
-import render from './lib/mithril-node-render'
+import render from 'mithril-node-render'
 import { pd as pretty } from 'pretty-data'
 import zeroFill from 'zero-fill'
 
@@ -23,22 +23,22 @@ function prettyDate (d) {
 }
 
 export function createChapter (ch) {
-  return new Promise((resolve, reject) => {
-    let {content, notes, notesFirst, title, link, linkNotes} = ch
+  let {content, notes, notesFirst, title, link, linkNotes} = ch
 
-    let sections = [
-      m.trust(content || ''),
-      notes ? m('div#author_notes', {className: notesFirst ? 'top' : 'bottom'}, [
-        m('p', m('b', 'Author\'s Note:')),
-        m.trust(notes)]) : null
-    ]
+  let sections = [
+    m.trust(content || ''),
+    notes ? m('div#author_notes', {className: notesFirst ? 'top' : 'bottom'}, [
+      m('p', m('b', 'Author\'s Note:')),
+      m.trust(notes)]) : null
+  ]
 
-    // if author notes are a the beginning of the chapter
-    if (notes && notesFirst) {
-      sections.reverse()
-    }
+  // if author notes are a the beginning of the chapter
+  if (notes && notesFirst) {
+    sections.reverse()
+  }
 
-    let chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
+  return Promise.all([
+    render(
       m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
         m('head', [
           m('meta', {charset: 'utf-8'}),
@@ -57,11 +57,12 @@ export function createChapter (ch) {
           ) : null
         ])
       ])
-    ))
-
-    chapterPage = chapterPage.replace('%%HTML_CONTENT%%', '\n' + render(sections) + '\n')
-
-    resolve(chapterPage)
+    , {strict: true}),
+    render(sections)
+  ]).then(([chapterPage, sectionsData]) => {
+    chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(chapterPage)
+    chapterPage = chapterPage.replace('%%HTML_CONTENT%%', '\n' + sectionsData + '\n')
+    return chapterPage
   })
 }
 
@@ -139,7 +140,7 @@ export function createOpf (ffc) {
     subjects = [subjects.join(', ')]
   }
 
-  let contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(render(
+  return render(
     m('package', {xmlns: NS.OPF, version: '3.0', 'unique-identifier': 'BookId'}, [
       m('metadata', {'xmlns:dc': NS.DC, 'xmlns:opf': NS.OPF}, [
         m('dc:identifier#BookId', ffc.storyInfo.uuid),
@@ -185,9 +186,10 @@ export function createOpf (ffc) {
         m('reference', {type: 'toc', title: 'Contents', href: 'Text/nav.xhtml'})
       ])
     ])
-  ))
-  // console.log(contentOpf)
-  return contentOpf
+  , {strict: true}).then((contentOpf) => {
+    contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(contentOpf)
+    return Buffer.from(contentOpf, 'utf8')
+  })
 }
 
 function navPoints (list) {
@@ -202,7 +204,7 @@ function navPoints (list) {
   return arr
 }
 export function createNcx (ffc) {
-  let tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(render(
+  return render(
     m('ncx', {version: '2005-1', xmlns: NS.DAISY}, [
       m('head', [
         m('meta', {content: ffc.storyInfo.uuid, name: 'dtb:uid'}),
@@ -217,9 +219,10 @@ export function createNcx (ffc) {
         [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
       ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'Text/notesnav.xhtml']] : null)))
     ])
-  ))
-  // console.log(tocNcx)
-  return tocNcx
+  , {strict: true}).then((tocNcx) => {
+    tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(tocNcx)
+    return Buffer.from(tocNcx, 'utf8')
+  })
 }
 
 export function createNav (ffc, mode = 0) {
@@ -248,7 +251,7 @@ export function createNav (ffc, mode = 0) {
       break
   }
 
-  let navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
+  return render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
@@ -262,9 +265,10 @@ export function createNav (ffc, mode = 0) {
         ])
       ])
     ])
-  ))
-  // console.log(navDocument)
-  return navDocument
+  , {strict: true}).then((navDocument) => {
+    navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
+    return Buffer.from(navDocument, 'utf8')
+  })
 }
 
 export function createCoverPage (ffc) {
@@ -283,7 +287,7 @@ export function createCoverPage (ffc) {
     ]
   }
 
-  let coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
+  return render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         ffc.coverImage ? m('meta', {name: 'viewport', content: 'width=' + width + ', height=' + height}) : null,
@@ -292,9 +296,10 @@ export function createCoverPage (ffc) {
       ]),
       m('body', {'epub:type': 'cover'}, body)
     ])
-  ))
-  // console.log(coverPage)
-  return coverPage
+  , {strict: true}).then((coverPage) => {
+    coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
+    return Buffer.from(coverPage, 'utf8')
+  })
 }
 
 function infoBox (heading, data) {
@@ -315,7 +320,7 @@ function calcWordCount (chapters) {
 }
 
 export function createTitlePage (ffc) {
-  let titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(render(
+  return render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
@@ -357,8 +362,9 @@ export function createTitlePage (ffc) {
         ])
       ])
     ])
-  ))
-  titlePage = titlePage.replace('%%HTML_CONTENT%%', '\n' + ffc.storyInfo.description + '\n')
-  // console.log(titlePage)
-  return titlePage
+  , {strict: true}).then((titlePage) => {
+    titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(titlePage)
+    titlePage = titlePage.replace('%%HTML_CONTENT%%', '\n' + ffc.storyInfo.description + '\n')
+    return Buffer.from(titlePage, 'utf8')
+  })
 }

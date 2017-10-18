@@ -2,129 +2,121 @@
 import m from 'mithril'
 import { XmlEntities } from 'html-entities'
 import twemoji from 'twemoji'
-import render from './lib/mithril-node-render'
+import render from 'mithril-node-render'
 
 import fetch from './fetch'
 import { youtubeKey } from './constants'
+import { replaceAsync } from './utils'
 
 const entities = new XmlEntities()
 
-export function cleanMarkup (html) {
+export async function cleanMarkup (html) {
   if (!html) {
     return Promise.resolve('')
   }
 
-  return new Promise((resolve, reject) => {
-    html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
-    html = html.replace(/(<img class="emoji" draggable="false" alt=".*?" src=".*?")>/g, '$1/>')
-    // replace HTML entities with decimal entities
-    html = html.replace(/&nbsp;/g, '&#160;')
-    html = html.replace(/&emsp;/g, '&#8195;')
+  html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
+  // replace HTML entities with decimal entities
+  html = html.replace(/&nbsp;/g, '&#160;')
+  html = html.replace(/&emsp;/g, '&#8195;')
 
-    // fix some tags
-    html = html.replace(/<u>/g, '<span style="text-decoration: underline">')
-    html = html.replace(/<\/u>/g, '</span>')
-    html = html.replace(/<s>/g, '<span style="text-decoration: line-through">')
-    html = html.replace(/<\/s>/g, '</span>')
+  // fix some tags
+  html = html.replace(/<u>/g, '<span style="text-decoration: underline">')
+  html = html.replace(/<\/u>/g, '</span>')
+  html = html.replace(/<s>/g, '<span style="text-decoration: line-through">')
+  html = html.replace(/<\/s>/g, '</span>')
 
-    html = html.replace(/<p>\s*/g, '<p>')
-    html = html.replace(/\s*<\/p>/g, '</p>')
+  html = html.replace(/<p>\s*/g, '<p>')
+  html = html.replace(/\s*<\/p>/g, '</p>')
 
-    // html = fixParagraphIndent(html)
+  // html = fixParagraphIndent(html)
 
-    html = fixDoubleSpacing(html)
+  html = fixDoubleSpacing(html)
 
-    // fix floating blockquote tags
-    html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
-    html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="right_insert">')
+  // fix floating blockquote tags
+  html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
+  html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="right_insert">')
 
-    let imageEmbed = /<img data-src="(.*?)" class="user_image" src="(.*?)" data-lightbox\/>/g
-    html = html.replace(imageEmbed, (match, originalUrl, cdnUrl) => {
-      return render(m('img', {src: entities.decode(cdnUrl), alt: 'Image'}))
-    })
-
-    // Fix links pointing to pages on fimfiction
-    // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
-    let matchLink = /(<a .?href=")(.+?)(".+?>)/g
-    html = html.replace(matchLink, (match, head, url, tail) => {
-      if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
-        if (url.substring(0, 1) === '/') {
-          url = 'http://www.fimfiction.net' + entities.decode(url)
-        } else {
-          // do something else
-        }
-      }
-
-      return head + url + tail
-    })
-
-    let cache = new Map()
-    let completeCount = 0
-
-    let matchYouTube = /<p><a class="embed" href="https:\/\/www\.youtube\.com\/watch\?v=(.*?)">.*?<\/a><\/p>/g
-    for (let ma; (ma = matchYouTube.exec(html));) {
-      let youtubeId = ma[1]
-      cache.set(youtubeId, null)
-    }
-
-    let matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
-    html = html.replace(matchSoundCloud, (match, url) => {
-      return render(m('.soundcloud.leftalign', [
-        'SoundCloud: ', m('a', {href: entities.decode(url), rel: 'nofollow'}, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
-      ]))
-    })
-
-    if (cache.size === 0) {
-      continueParsing()
-    } else {
-      getYoutubeInfo([...cache.keys()])
-    }
-
-    function getYoutubeInfo (ids) {
-      fetch('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey).then((raw) => {
-        let data = []
-        try {
-          data = JSON.parse(raw).items
-        } catch (e) { }
-        data.forEach((video) => {
-          cache.set(video.id, video.snippet)
-          completeCount++
-        })
-        if (completeCount === cache.size || data.length === 0) {
-          html = html.replace(matchYouTube, replaceYouTube)
-          continueParsing()
-        }
-      })
-    }
-
-    function replaceYouTube (match, id) {
-      let youtubeId = id
-      let thumbnail = 'http://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
-      let youtubeUrl = 'https://youtube.com/watch?v=' + youtubeId
-      let title = 'Youtube Video'
-      let caption = ''
-      let data = cache.get(youtubeId)
-      if (data) {
-        thumbnail = (data.thumbnails.standard || data.thumbnails.high || data.thumbnails.medium || data.thumbnails.default).url
-        title = data.title
-        caption = data.title + ' on YouTube'
-      } else {
-        return ''
-      }
-      return render(m('figure.youtube', [
-        m('a', {href: youtubeUrl, rel: 'nofollow'},
-          m('img', {src: thumbnail, alt: title})
-        ),
-        m('figcaption', m('a', {href: youtubeUrl, rel: 'nofollow'}, caption))
-      ]))
-    }
-
-    function continueParsing () {
-      // html = tidy(html, tidyOptions).trim()
-
-      resolve(html)
-    }
+  let imageEmbed = /<img data-src="(.*?)" class="user_image" src="(.*?)" data-lightbox\/>/g
+  html = await replaceAsync(html, imageEmbed, (match, originalUrl, cdnUrl) => {
+    return render(m('img', {src: entities.decode(cdnUrl), alt: 'Image'}), {strict: true})
   })
+
+  // Fix links pointing to pages on fimfiction
+  // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
+  let matchLink = /(<a .?href=")(.+?)(".+?>)/g
+  html = html.replace(matchLink, (match, head, url, tail) => {
+    if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
+      if (url.substring(0, 1) === '/') {
+        url = 'http://www.fimfiction.net' + entities.decode(url)
+      } else {
+        // do something else
+      }
+    }
+
+    return head + url + tail
+  })
+
+  let cache = new Map()
+  let completeCount = 0
+
+  let matchYouTube = /<p><a class="embed" href="https:\/\/www\.youtube\.com\/watch\?v=(.*?)">.*?<\/a><\/p>/g
+  for (let ma; (ma = matchYouTube.exec(html));) {
+    let youtubeId = ma[1]
+    cache.set(youtubeId, null)
+  }
+
+  let matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
+  html = await replaceAsync(html, matchSoundCloud, (match, url) => {
+    return render(m('.soundcloud.leftalign', [
+      'SoundCloud: ', m('a', {href: entities.decode(url), rel: 'nofollow'}, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
+    ]), {strict: true})
+  })
+
+  if (cache.size === 0) {
+    return html
+  } else {
+    return getYoutubeInfo([...cache.keys()])
+  }
+
+  async function getYoutubeInfo (ids) {
+    return fetch('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey).then(async (raw) => {
+      let data = []
+      try {
+        data = JSON.parse(raw).items
+      } catch (e) { }
+      data.forEach((video) => {
+        cache.set(video.id, video.snippet)
+        completeCount++
+      })
+      if (completeCount === cache.size || data.length === 0) {
+        html = await replaceAsync(html, matchYouTube, replaceYouTube)
+        return html
+      }
+    })
+  }
+
+  function replaceYouTube (match, id) {
+    let youtubeId = id
+    let thumbnail = 'http://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
+    let youtubeUrl = 'https://youtube.com/watch?v=' + youtubeId
+    let title = 'Youtube Video'
+    let caption = ''
+    let data = cache.get(youtubeId)
+    if (data) {
+      thumbnail = (data.thumbnails.standard || data.thumbnails.high || data.thumbnails.medium || data.thumbnails.default).url
+      title = data.title
+      caption = data.title + ' on YouTube'
+    } else {
+      return Promise.resolve('')
+    }
+    return render(m('figure.youtube', [
+      m('a', {href: youtubeUrl, rel: 'nofollow'},
+        m('img', {src: thumbnail, alt: title})
+      ),
+      m('figcaption', m('a', {href: youtubeUrl, rel: 'nofollow'}, caption))
+    ]), {strict: true})
+  }
 }
 
 export function fixDoubleSpacing (html) {
