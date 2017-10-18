@@ -491,7 +491,7 @@ class FimFic2Epub extends Emitter {
 
     for (let ma; (ma = matchUrl.exec(html));) {
       let url = ma[1]
-      let cleanurl = decodeURI(entities.decode(url))
+      let cleanurl = entities.decode(url)
       if (this.remoteResources.has(cleanurl)) {
         let r = this.remoteResources.get(cleanurl)
         if (r.where.indexOf(where) === -1) {

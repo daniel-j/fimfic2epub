@@ -37,10 +37,12 @@ export async function cleanMarkup (html) {
   html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
   html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="right_insert">')
 
+  /*
   let imageEmbed = /<img data-src="(.*?)" class="user_image" src="(.*?)" data-lightbox\/>/g
   html = await replaceAsync(html, imageEmbed, (match, originalUrl, cdnUrl) => {
     return render(m('img', {src: entities.decode(cdnUrl), alt: 'Image'}), {strict: true})
   })
+  */
 
   // Fix links pointing to pages on fimfiction
   // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
