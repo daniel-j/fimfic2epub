@@ -37,6 +37,8 @@ export function createChapter (ch) {
     sections.reverse()
   }
 
+  const tokenContent = '%%HTML_CONTENT_' + Math.random() + '%%'
+
   return Promise.all([
     render(
       m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
@@ -45,23 +47,23 @@ export function createChapter (ch) {
           m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
           m('title', title)
         ]),
-        m('body', [
+        m('body', {'epub:type': 'bodymatter chapter'}, m('section', [
           title ? m('.chapter-title', [
             m('h1', title),
             m('hr.old')
           ]) : null,
-          '%%HTML_CONTENT%%',
+          tokenContent,
           (link || linkNotes) ? m('p.double', {style: 'text-align: center; clear: both;'},
             link ? m('a.chaptercomments', {href: link + '#comment_list'}, 'Read chapter comments online') : null,
             linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null
           ) : null
-        ])
+        ]))
       ])
-    , {strict: true}),
+      , {strict: true}),
     render(sections)
   ]).then(([chapterPage, sectionsData]) => {
-    chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(chapterPage)
-    chapterPage = chapterPage.replace('%%HTML_CONTENT%%', '\n' + sectionsData + '\n')
+    chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + chapterPage
+    chapterPage = chapterPage.replace(tokenContent, '\n' + sectionsData + '\n')
     return chapterPage
   })
 }
@@ -149,7 +151,7 @@ export function createOpf (ffc) {
         m('meta', {refines: '#cre', property: 'role', scheme: 'marc:relators'}, 'aut'),
         m('dc:date', new Date((ffc.storyInfo.publishDate || ffc.storyInfo.date_modified) * 1000).toISOString().substring(0, 10)),
         m('dc:publisher', 'Fimfiction'),
-        m('dc:description', ffc.storyInfo.short_description),
+        ffc.storyInfo.short_description ? m('dc:description', ffc.storyInfo.short_description) : null,
         m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
         ffc.coverImage ? m('meta', {name: 'cover', content: 'cover'}) : null,
@@ -161,12 +163,15 @@ export function createOpf (ffc) {
       m('manifest', [
         ffc.coverImage ? m('item', {id: 'cover', href: ffc.coverFilename, 'media-type': ffc.coverType, properties: 'cover-image'}) : null,
         m('item', {id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml'}),
-        m('item', {id: 'nav', 'href': 'Text/nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav'}),
-        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex ? m('item', {id: 'notesnav', 'href': 'Text/notesnav.xhtml', 'media-type': 'application/xhtml+xml'}) : null,
+        m('item', {id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav'}),
+        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? m('item', {id: 'notesnav', 'href': 'notesnav.xhtml', 'media-type': 'application/xhtml+xml'}) : null,
 
         m('item', {id: 'style', href: 'Styles/style.css', 'media-type': 'text/css'}),
         m('item', {id: 'coverstyle', href: 'Styles/coverstyle.css', 'media-type': 'text/css'}),
         m('item', {id: 'titlestyle', href: 'Styles/titlestyle.css', 'media-type': 'text/css'}),
+        m('item', {id: 'navstyle', href: 'Styles/navstyle.css', 'media-type': 'text/css'}),
+
+        ffc.iconsFont ? m('item', {id: 'font-awesome', href: 'Fonts/fontawesome-webfont-subset.ttf', 'media-type': 'application/x-font-ttf'}) : null,
 
         m('item', {id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.coverImage ? 'svg' : undefined}),
         m('item', {id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasRemoteResources.titlePage ? 'remote-resources' : null})
@@ -183,13 +188,13 @@ export function createOpf (ffc) {
       ))),
       m('guide', [
         m('reference', {type: 'cover', title: 'Cover', href: 'Text/cover.xhtml'}),
-        m('reference', {type: 'toc', title: 'Contents', href: 'Text/nav.xhtml'})
+        m('reference', {type: 'toc', title: 'Contents', href: 'nav.xhtml'})
       ])
     ])
-  , {strict: true}).then((contentOpf) => {
-    contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(contentOpf)
-    return Buffer.from(contentOpf, 'utf8')
-  })
+    , {strict: true}).then((contentOpf) => {
+      contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(contentOpf)
+      return contentOpf
+    })
 }
 
 function navPoints (list) {
@@ -214,61 +219,84 @@ export function createNcx (ffc) {
       ]),
       m('docTitle', m('text', ffc.storyInfo.title)),
       m('navMap', navPoints([
-        ['Cover', 'Text/cover.xhtml']
+        ['Cover', 'Text/cover.xhtml'],
+        ['Title Page', 'Text/title.xhtml'],
+        ['Contents', 'nav.xhtml']
       ].concat(ffc.storyInfo.chapters.map((ch, num) =>
         [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
-      ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'Text/notesnav.xhtml']] : null)))
+      ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'notesnav.xhtml']] : null)))
     ])
-  , {strict: true}).then((tocNcx) => {
-    tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(tocNcx)
-    return Buffer.from(tocNcx, 'utf8')
-  })
+    , {strict: true}).then((tocNcx) => {
+      tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(tocNcx)
+      return tocNcx
+    })
 }
 
-export function createNav (ffc, mode = 0) {
-  let title, list
-  switch (mode) {
-    case 0:
-      title = 'Contents'
-      list = [m('li', {hidden: ''}, m('a', {href: 'cover.xhtml'}, 'Cover'))]
-        .concat(ffc.storyInfo.chapters.map((ch, num) =>
-          m('li', [
-            m('a.leftalign', {href: 'chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
-            // m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000)), m('span', {style: 'display: none'}, ' · ')]),
-            // m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB')))
-          ])
-        ))
-      if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
-        list.push(m('li', m('a.leftalign', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
-      }
-      break
-    case 1:
-      title = 'Author\'s Notes'
-      list = ffc.chaptersWithNotes.map((num) => {
-        let ch = ffc.storyInfo.chapters[num]
-        return m('li', m('a.leftalign', {href: 'note_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
-      })
-      break
+export function createNav (ffc) {
+  let list = [
+    m('li', {hidden: ''}, m('a', {href: 'Text/cover.xhtml'}, 'Cover')),
+    m('li', {hidden: ''}, m('a', {href: 'Text/title.xhtml'}, 'Title Page')),
+    ffc.storyInfo.chapters.length > 0 ? m('li', {hidden: ''}, m('a', {href: 'nav.xhtml'}, 'Contents')) : null
+  ].concat(ffc.storyInfo.chapters.map((ch, num) =>
+    m('li', [
+      m('a.leftalign', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
+    ])
+  ))
+  let prettyList = ffc.storyInfo.chapters.map((ch, num) =>
+    m('.item', [
+      m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB'))),
+      m('a.leftalign', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title),
+      m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000))])
+    ])
+  )
+  if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
+    list.push(m('li', m('a', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
+    prettyList.push(m('.item.double', m('a.leftalign', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
   }
 
   return render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
-        m('title', title)
+        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css'}),
+        m('title', 'Contents')
       ]),
-      m('body#navpage', [
-        m('nav#toc', mode === 0 ? {'epub:type': 'toc'} : null, [
-          m('h3', title),
-          m('ol', list)
-        ])
-      ])
+      m('body', {'epub:type': 'frontmatter toc'}, m('section', [
+        m('h3', 'Contents'),
+        m('#toc.hidden', prettyList),
+        m('nav.invisible', {'epub:type': 'toc'}, m('ol', list))
+      ]))
     ])
-  , {strict: true}).then((navDocument) => {
-    navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
-    return Buffer.from(navDocument, 'utf8')
+    , {strict: true}).then((navDocument) => {
+      navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
+      return navDocument
+    })
+}
+
+export function createNotesNav (ffc) {
+  let list = ffc.chaptersWithNotes.map((num) => {
+    let ch = ffc.storyInfo.chapters[num]
+    return m('.item', m('a.leftalign', {href: 'Text/note_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
   })
+
+  return render(
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
+      m('head', [
+        m('meta', {charset: 'utf-8'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css'}),
+        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css'}),
+        m('title', 'Author\'s Notes')
+      ]),
+      m('body#navpage', {'epub:type': 'frontmatter toc'}, m('section', [
+        m('h3', 'Author\'s Notes'),
+        m('#toc', list)
+      ]))
+    ])
+    , {strict: true}).then((navDocument) => {
+      navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
+      return navDocument
+    })
 }
 
 export function createCoverPage (ffc) {
@@ -294,12 +322,12 @@ export function createCoverPage (ffc) {
         m('title', 'Cover'),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/coverstyle.css'})
       ]),
-      m('body', {'epub:type': 'cover'}, body)
+      m('body#coverpage', {'epub:type': 'frontmatter cover'}, m('section', body))
     ])
-  , {strict: true}).then((coverPage) => {
-    coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
-    return Buffer.from(coverPage, 'utf8')
-  })
+    , {strict: true}).then((coverPage) => {
+      coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
+      return coverPage
+    })
 }
 
 function infoBox (heading, data) {
@@ -320,6 +348,15 @@ function calcWordCount (chapters) {
 }
 
 export function createTitlePage (ffc) {
+  const tokenContent = '%%HTML_CONTENT_' + Math.random() + '%%'
+
+  const completedIcon = {
+    complete: 'check',
+    incomplete: 'pencil',
+    hiatus: 'pause',
+    cancelled: 'ban'
+  }
+
   return render(
     m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
       m('head', [
@@ -328,43 +365,46 @@ export function createTitlePage (ffc) {
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/titlestyle.css'}),
         m('title', ffc.storyInfo.title)
       ]),
-      m('body#titlepage', [
+      m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('section', [
         m('.title', [
+          m('div', {className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
           m('.story_name', ffc.storyInfo.title + ' '),
           m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
-        m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Read on Fimfiction')),
         // m('hr'),
-        m('.categories', [
-          m('div', {className: 'content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
-          ffc.categories.map((tag) =>
-            m('div', {className: tag.className}, tag.name)
+        m('.tags', [
+          ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
+            [m('div', {className: tag.className}, tag.name), ' ']
           )
         ]),
+        m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Story on Fimfiction')),
+        m('br'),
         // m('hr'),
         ffc.storyInfo.prequel ? [m('div', [
           'This story is a sequel to ',
           m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
         ]), m('hr')] : null,
-        m('#description', '%%HTML_CONTENT%%'),
+        m('#description', tokenContent),
         m('.bottom', [
-          m('span', {className: 'completed-status-' + ffc.storyInfo.status.toLowerCase()}, ffc.storyInfo.status),
+          m('div', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
+            m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()]),
+            m('span', ffc.storyInfo.status)
+          ]),
           ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
           infoBox('Last Modified', prettyDate(new Date(ffc.storyInfo.date_modified * 1000))),
           infoBox('Word Count', calcWordCount(ffc.storyInfo.chapters).toLocaleString('en-GB'))
         ]),
         // m('hr'),
-        m('.characters', [
-          ffc.tags.map((t) =>
-            // m('span', {className: 'character_icon', title: t.name}, m('img', {src: t.image, className: 'character_icon'}))
-            m('span.story_character', t.name)
+        m('.tags', [
+          ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
+            [m('div', {className: tag.className}, tag.name), ' ']
           )
         ])
-      ])
+      ]))
     ])
-  , {strict: true}).then((titlePage) => {
-    titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(titlePage)
-    titlePage = titlePage.replace('%%HTML_CONTENT%%', '\n' + ffc.storyInfo.description + '\n')
-    return Buffer.from(titlePage, 'utf8')
-  })
+    , {strict: true}).then((titlePage) => {
+      titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + titlePage
+      titlePage = titlePage.replace(tokenContent, '\n' + ffc.storyInfo.description + '\n')
+      return titlePage
+    })
 }
