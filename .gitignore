@@ -1,13 +1,11 @@
 .DS_Store
 node_modules/
-extension/fimfic2epub.js
-extension/eventPage.js
-extension/*.js.map
+extension/build/
 extension.crx
 extension.pem
 extension.xpi
 extension.zip
 fimfic2epub.safariextension/
-fimfic2epub.js
-fimfic2epub.js.map
+dist/
+build/
 *.epub

@@ -12,7 +12,7 @@ const bundleExtensionConfig = {
 
   output: {
     path: path.join(__dirname, '/'),
-    filename: './extension/[name].js'
+    filename: './extension/build/[name].js'
   },
 
   module: {
@@ -38,16 +38,27 @@ const bundleExtensionConfig = {
     modules: [
       path.resolve('./src'),
       'node_modules'
-    ],
-    alias: {
-      fs: require.resolve('./src/false.js')
-    }
+    ]
+  },
+
+  node: {
+    fs: 'empty'
   },
 
   externals: ['request'],
 
-  plugins: [],
-  devtool: 'source-map'
+  plugins: [
+    // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
+  ],
+  performance: {
+    hints: false
+  },
+  optimization: {
+    concatenateModules: inProduction,
+    minimize: inProduction
+  },
+  devtool: inProduction ? 'nosources-source-map' : 'source-map',
+  mode: inProduction ? 'production' : 'development'
 }
 
 const bundleNpmModuleConfig = {
@@ -55,7 +66,7 @@ const bundleNpmModuleConfig = {
 
   output: {
     path: path.join(__dirname, '/'),
-    filename: './fimfic2epub.js',
+    filename: './dist/fimfic2epub.js',
     libraryTarget: 'commonjs2'
   },
 
@@ -69,7 +80,11 @@ const bundleNpmModuleConfig = {
         exclude: /node_modules/,
         query: {
           sourceMaps: !inProduction,
-          presets: ['es2015']
+          presets: [['env', {
+            targets: {
+              node: '8.0.0'
+            }
+          }]]
         }
       },
       {
@@ -87,10 +102,22 @@ const bundleNpmModuleConfig = {
     ]
   },
 
+  node: {
+    __dirname: false
+  },
+
   externals: [nodeExternals({whitelist: ['es6-event-emitter', /^babel-runtime/]})],
 
   plugins: [],
-  devtool: 'source-map'
+  performance: {
+    hints: false
+  },
+  optimization: {
+    concatenateModules: inProduction,
+    minimize: inProduction
+  },
+  devtool: 'nosources-source-map',
+  mode: inProduction ? 'production' : 'development'
 }
 
 export default [bundleExtensionConfig, bundleNpmModuleConfig]

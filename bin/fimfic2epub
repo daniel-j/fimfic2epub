@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 
-// Fix for mithril
-const noop = () => {}
-global.window = {
-  document: { createDocumentFragment: noop },
-  history: { pushState: noop }
-}
+// use a mock DOM so we can run mithril on the server
+require('mithril/test-utils/browserMock')(global)
 
-const FimFic2Epub = require('../fimfic2epub')
+const FimFic2Epub = require('../dist/fimfic2epub')
 const fs = require('fs')
 
 const STORY_ID = process.argv[2]
@@ -22,9 +18,11 @@ if (outputStdout) {
 }
 
 ffc.on('progress', (percent, status) => {
+  /*
   if (status) {
     console.log('fimfic2epub: ' + status)
   }
+  */
 })
 
 ffc.fetchAll()

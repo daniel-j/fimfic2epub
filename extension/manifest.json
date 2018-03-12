@@ -4,21 +4,20 @@
 	"name": "fimfic2epub",
 	"short_name": "fimfic2epub",
 	"description": "Improved EPUB exporter for Fimfiction",
-	"version": "1.6.5",
 
 	"icons": {
 		"128": "icon-128.png"
 	},
 
 	"background": {
-		"scripts": ["eventPage.js"],
+		"scripts": ["build/eventPage.js"],
 		"persistent": false
 	},
 
 	"content_scripts": [
 		{
 			"matches": ["https://www.fimfiction.net/*", "http://www.fimfiction.net/*"],
-			"js": ["fimfic2epub.js"],
+			"js": ["build/fimfic2epub.js"],
 			"css": ["inject.css"]
 		}
 	],

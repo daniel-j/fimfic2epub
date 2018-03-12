@@ -4,7 +4,7 @@ CHROME=`command -v chrome || command -v chromium || command -v chromium-browser 
 
 rm -f extension.crx
 
-z=`cd extension && zip -Xr9D ../extension.zip .`
+# z=`cd extension && zip -Xr9D ../extension.zip .`
 
 code=-1
 

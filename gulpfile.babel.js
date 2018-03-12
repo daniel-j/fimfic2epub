@@ -7,11 +7,14 @@ import Sequence from 'run-sequence'
 import watch from 'gulp-watch'
 import lazypipe from 'lazypipe'
 import filter from 'gulp-filter'
+import merge from 'merge-stream'
+import change from 'gulp-change'
+import rename from 'gulp-rename'
 
 import jsonedit from 'gulp-json-editor'
 import zip from 'gulp-zip'
 
-import { execFile, exec } from 'child_process'
+// import { execFile, exec } from 'child_process'
 
 // script
 import standard from 'gulp-standard'
@@ -20,44 +23,33 @@ import webpackConfig from './webpack.config.babel.js'
 
 const sequence = Sequence.use(gulp)
 
-const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+// const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 let watchOpts = {
   readDelay: 500,
-  verbose: true
+  verbose: true,
+  read: false
 }
 
-webpackConfig.forEach((c) => {
-  if (inProduction) {
-    c.plugins.push(new webpack.optimize.ModuleConcatenationPlugin())
-    c.plugins.push(new webpack.LoaderOptionsPlugin({
-      minimize: true,
-      debug: false
-    }))
-    /*
-    c.plugins.push(new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false,
-        screw_ie8: true
-      },
-      comments: false,
-      mangle: {
-        screw_ie8: true
-      },
-      screw_ie8: true,
-      sourceMap: !!c.devtool
-    }))
-    */
-  }
-  c.plugins.push(new webpack.DefinePlugin({
-    FIMFIC2EPUB_VERSION: JSON.stringify(require('./package.json').version)
-  }))
+let packageVersion = require('./package.json').version
+
+let webpackDefines = new webpack.DefinePlugin({
+  FIMFIC2EPUB_VERSION: JSON.stringify(packageVersion)
 })
 
-const wpCompiler = webpack(webpackConfig)
+webpackConfig.forEach((c) => {
+  c.plugins.push(webpackDefines)
+})
+
+let wpCompiler = webpack(webpackConfig)
 
 function webpackTask (callback) {
-  // run webpack
+  if (webpackDefines.definitions.FIMFIC2EPUB_VERSION !== JSON.stringify(packageVersion)) {
+    webpackDefines.definitions.FIMFIC2EPUB_VERSION = JSON.stringify(packageVersion)
+    wpCompiler = webpack(webpackConfig)
+  }
+
+  // run webpack compiler
   wpCompiler.run(function (err, stats) {
     if (err) throw new gutil.PluginError('webpack', err)
     gutil.log('[webpack]', stats.toString({
@@ -71,6 +63,16 @@ function webpackTask (callback) {
   })
 }
 
+function convertFontAwesomeVars (contents) {
+  let vars = {}
+  let matchVar = /\$fa-var-(.*?): "\\(.*?)";/g
+  let ma
+  for (;(ma = matchVar.exec(contents));) {
+    vars[ma[1]] = String.fromCharCode(parseInt(ma[2], 16))
+  }
+  return JSON.stringify(vars)
+}
+
 let lintPipe = lazypipe()
   .pipe(filter, ['**/*', '!src/lib/**/*'])
   .pipe(standard)
@@ -78,21 +80,25 @@ let lintPipe = lazypipe()
 
 // Cleanup task
 gulp.task('clean', () => del([
-  'extension/fimfic2epub.js',
-  'extension/eventPage.js',
-  'extension/*.js.map',
-  'fimfic2epub.js',
-  'fimfic2epub.js.map',
+  'build/',
+  'extension/build/',
+  'dist/',
   'extension.zip',
   'extension.xpi',
   'extension.crx',
   'fimfic2epub.safariextension/'
 ]))
 
+gulp.task('version', (done) => {
+  delete require.cache[require.resolve('./package.json')]
+  packageVersion = require('./package.json').version
+  done()
+})
+
 // Main tasks
-gulp.task('webpack', webpackTask)
+gulp.task('webpack', ['version', 'fontawesome'], webpackTask)
 gulp.task('watch:webpack', () => {
-  return watch(['src/**/*.js', 'src/**/*.styl'], watchOpts, function () {
+  return watch(['src/**/*.js', 'src/**/*.styl', './package.json'], watchOpts, () => {
     return sequence('webpack')
   })
 })
@@ -101,8 +107,8 @@ gulp.task('lint', () => {
   return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js', 'bin/fimfic2epub']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
-  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js', 'bin/fimfic2epub'], watchOpts, function (file) {
-    gulp.src(file.path).pipe(lintPipe())
+  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js', 'bin/fimfic2epub'], watchOpts, (file) => {
+    return gulp.src(file.path).pipe(lintPipe())
   })
 })
 
@@ -113,20 +119,38 @@ gulp.task('default', (done) => {
 
 // Watch task
 gulp.task('watch', (done) => {
-  sequence('default', ['watch:lint', 'watch:webpack'], done)
+  sequence('default', ['watch:lint', 'watch:pack', 'watch:webpack'], done)
 })
 
-// creates extensions for chrome and firefox
+gulp.task('fontawesome', () => {
+  let copy = gulp.src('node_modules/font-awesome/fonts/fontawesome-webfont.ttf')
+    .pipe(gulp.dest('extension/build/fonts/'))
+  let codes = gulp.src('node_modules/font-awesome/scss/_variables.scss')
+    .pipe(change(convertFontAwesomeVars))
+    .pipe(rename({
+      basename: 'font-awesome-codes',
+      extname: '.json',
+      dirname: ''
+    }))
+    .pipe(gulp.dest('build/'))
+  return merge(copy, codes)
+})
 gulp.task('pack', (done) => {
-  sequence(['pack:firefox', 'pack:chrome', 'pack:safari'], done)
+  sequence(['pack:firefox', 'pack:chrome'], done)
+})
+gulp.task('watch:pack', () => {
+  return watch(['extension/**/*', '!extension/build/**/*'], watchOpts, () => {
+    return sequence('pack')
+  })
 })
 
-gulp.task('pack:firefox', () => {
-  let manifest = filter('extension/manifest.json', {restore: true})
+gulp.task('pack:firefox', ['version'], () => {
+  const manifest = filter('extension/manifest.json', {restore: true})
 
   return gulp.src('extension/**/*')
     .pipe(manifest)
-    .pipe(jsonedit(function (json) {
+    .pipe(jsonedit((json) => {
+      json.version = packageVersion
       if (json.content_scripts) {
         // tweak the manifest so Firefox can read it
         json.applications = {
@@ -143,20 +167,23 @@ gulp.task('pack:firefox', () => {
     .pipe(gulp.dest('./'))
 })
 
-gulp.task('pack:chrome', (done) => {
-  execFile('./packchrome.sh', [], (error, stdout, stderr) => {
-    // gutil.log('[pack:chrome]', stdout)
-    if (error) {
-      done(new gutil.PluginError('pack:chrome', stderr, {showStack: false}))
-      return
-    }
-    done()
-  })
+gulp.task('pack:chrome', ['version'], (done) => {
+  const manifest = filter('extension/manifest.json', {restore: true})
+
+  return gulp.src('extension/**/*')
+    .pipe(manifest)
+    .pipe(jsonedit({
+      version: packageVersion
+    }))
+    .pipe(manifest.restore)
+    .pipe(zip('extension.zip'))
+    .pipe(gulp.dest('./'))
 })
 
+/*
 gulp.task('pack:safari', (done) => {
   exec('rm -rf fimfic2epub.safariextension/; cp -r extension/ fimfic2epub.safariextension', [], (error, stdout, stderr) => {
-    // gutil.log('[pack:chrome]', stdout)
+    // gutil.log('[pack:safari]', stdout)
     if (error || stderr) {
       done(new gutil.PluginError('pack:safari', stderr, {showStack: false}))
       return
@@ -164,3 +191,4 @@ gulp.task('pack:safari', (done) => {
     done()
   })
 })
+*/
