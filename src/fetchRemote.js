@@ -56,10 +56,10 @@ function fetchBackground (url, responseType) {
 }
 
 export default function fetchRemote (url, responseType) {
-  if (url.indexOf('//') === 0) {
-    url = 'http:' + url
+  if (url.startsWith('//')) {
+    url = 'https:' + url
   }
-  if (!isNode && document.location.protocol === 'https:' && url.indexOf('http:') === 0) {
+  if (!isNode && document.location.protocol === 'https:' && url.startsWith('http:')) {
     return fetchBackground(url, responseType)
   }
   return fetch(url, responseType).then((data) => {

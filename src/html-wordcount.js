@@ -11,6 +11,6 @@ export default function htmlWordCount (html) {
   let count = 0
   try {
     count = matchWords(text).length
-  } catch (err) {}
+  } catch (err) { count = 0 }
   return count
 }

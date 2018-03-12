@@ -16,7 +16,9 @@ export async function cleanMarkup (html) {
   }
 
   html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
+
   // replace HTML entities with decimal entities
+  html = html.replace(/\xA0/g, '&#160;')
   html = html.replace(/&nbsp;/g, '&#160;')
   html = html.replace(/&emsp;/g, '&#8195;')
 
@@ -50,7 +52,7 @@ export async function cleanMarkup (html) {
   html = html.replace(matchLink, (match, head, url, tail) => {
     if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
       if (url.substring(0, 1) === '/') {
-        url = 'http://www.fimfiction.net' + entities.decode(url)
+        url = 'https://fimfiction.net' + entities.decode(url)
       } else {
         // do something else
       }
@@ -86,7 +88,10 @@ export async function cleanMarkup (html) {
       let data = []
       try {
         data = JSON.parse(raw).items
-      } catch (e) { }
+      } catch (e) {}
+      if (!data) {
+        data = []
+      }
       data.forEach((video) => {
         cache.set(video.id, video.snippet)
         completeCount++
@@ -100,7 +105,7 @@ export async function cleanMarkup (html) {
 
   function replaceYouTube (match, id) {
     let youtubeId = id
-    let thumbnail = 'http://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
+    let thumbnail = 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
     let youtubeUrl = 'https://youtube.com/watch?v=' + youtubeId
     let title = 'Youtube Video'
     let caption = ''
