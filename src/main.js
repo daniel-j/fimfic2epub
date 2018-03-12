@@ -6,6 +6,7 @@ import m from 'mithril'
 import prop from 'mithril/stream'
 import { saveAs } from 'file-saver'
 import autosize from 'autosize'
+import htmlToText from 'html-to-text'
 
 function blobToDataURL (blob) {
   return new Promise((resolve, reject) => {
@@ -31,9 +32,7 @@ try {
 } catch (e) {}
 
 let logoUrl = chrome.extension.getURL('fimfic2epub-logo.png')
-
 let ffc
-
 let stories = document.querySelectorAll('.story_container')
 
 stories.forEach((story) => {
@@ -138,7 +137,7 @@ let dialog = {
     this.joinSubjects = prop(ffc.options.joinSubjects)
     this.paragraphStyle = prop(ffc.options.paragraphStyle)
 
-    this.onOpen = function (vnode) {
+    this.onOpen = (vnode) => {
       this.el(vnode.dom)
       this.center()
       this.isLoading(true)
@@ -147,7 +146,11 @@ let dialog = {
         ffcProgress(-1)
         this.title(ffc.storyInfo.title)
         this.author(ffc.storyInfo.author.name)
-        this.description(ffc.storyInfo.short_description)
+        this.description(htmlToText.fromString(ffc.storyInfo.description, {
+          wordwrap: false,
+          ignoreImage: true,
+          ignoreHref: true
+        }) || ffc.storyInfo.short_description)
         this.subjects(ffc.subjects.slice(0))
         redraw(true)
         this.center()
@@ -156,11 +159,12 @@ let dialog = {
           redraw()
         })
       }).catch((err) => {
-        throw err
+        console.error(err)
       })
     }
 
     this.setCoverFile = (e) => {
+      this.coverUrl('')
       this.coverFile(e.target.files ? e.target.files[0] : null)
     }
 
@@ -220,43 +224,8 @@ let dialog = {
     }
 
     this.createEpub = (e) => {
-      ffcProgress(0)
-      ffcStatus('')
       e.target.disabled = true
-      let chain = Promise.resolve()
-      ffc.coverUrl = ''
-      ffc.coverImage = null
-      if (this.checkboxCoverUrl()) {
-        ffc.coverUrl = this.coverUrl()
-      } else if (this.coverFile()) {
-        chain = chain.then(blobToArrayBuffer.bind(null, this.coverFile())).then(ffc.setCoverImage.bind(ffc))
-      }
-      ffc.setTitle(this.title())
-      ffc.setAuthorName(this.author())
-      ffc.storyInfo.short_description = this.description()
-      ffc.options.addCommentsLink = this.addCommentsLink()
-      ffc.options.includeAuthorNotes = this.includeAuthorNotes()
-      ffc.options.useAuthorNotesIndex = this.useAuthorNotesIndex()
-      ffc.options.addChapterHeadings = this.addChapterHeadings()
-      ffc.options.includeExternal = this.includeExternal()
-      ffc.options.paragraphStyle = this.paragraphStyle()
-      ffc.subjects = this.subjects()
-      ffc.options.joinSubjects = this.joinSubjects()
-      redraw()
-
-      chain
-        .then(ffc.fetchAll.bind(ffc))
-        .then(ffc.build.bind(ffc))
-        .then(ffc.getFile.bind(ffc)).then((file) => {
-          if (typeof safari !== 'undefined') {
-            blobToDataURL(file).then((dataurl) => {
-              document.location.href = dataurl
-              alert('Add .epub to the filename of the downloaded file')
-            })
-          } else {
-            saveAs(file, ffc.filename)
-          }
-        })
+      createEpub(this)
     }
   },
 
@@ -327,6 +296,48 @@ function closeDialog () {
   m.mount(dialogContainer, null)
 }
 
+function createEpub (model) {
+  ffcProgress(0)
+  ffcStatus('')
+  let chain = Promise.resolve()
+  ffc.coverUrl = ''
+  ffc.coverImage = null
+  if (model.checkboxCoverUrl()) {
+    ffc.coverUrl = model.coverUrl()
+  } else if (model.coverFile()) {
+    chain = chain
+      .then(() => blobToArrayBuffer(model.coverFile()))
+      .then(ffc.setCoverImage.bind(ffc))
+  }
+
+  ffc.setTitle(model.title())
+  ffc.setAuthorName(model.author())
+  ffc.storyInfo.short_description = model.description()
+  ffc.options.addCommentsLink = model.addCommentsLink()
+  ffc.options.includeAuthorNotes = model.includeAuthorNotes()
+  ffc.options.useAuthorNotesIndex = model.useAuthorNotesIndex()
+  ffc.options.addChapterHeadings = model.addChapterHeadings()
+  ffc.options.includeExternal = model.includeExternal()
+  ffc.options.paragraphStyle = model.paragraphStyle()
+  ffc.subjects = model.subjects()
+  ffc.options.joinSubjects = model.joinSubjects()
+  redraw()
+
+  chain
+    .then(ffc.fetchAll.bind(ffc))
+    .then(ffc.build.bind(ffc))
+    .then(ffc.getFile.bind(ffc)).then((file) => {
+      if (typeof safari !== 'undefined') {
+        blobToDataURL(file).then((dataurl) => {
+          document.location.href = dataurl
+          alert('Add .epub to the filename of the downloaded file')
+        })
+      } else {
+        saveAs(file, ffc.filename)
+      }
+    })
+}
+
 function openStory (id) {
   if (!ffc) {
     ffc = new FimFic2Epub(id)
@@ -336,10 +347,7 @@ function openStory (id) {
     closeDialog()
     ffc = new FimFic2Epub(id)
     ffc.on('progress', onProgress)
-  } else {
-
   }
-
   openDialog()
 }
 
