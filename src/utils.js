@@ -25,3 +25,37 @@ export function replaceAsync (str, re, callback) {
     return strings.join('')
   })
 }
+
+let webpdecoder = null
+
+export function webp2png (data) {
+  return new Promise((resolve, reject) => {
+    const libwebp = require('./vendor/libwebp')
+    const WebPRiffParser = require('./vendor/libwebp-demux').WebPRiffParser
+    const PNGPacker = require('node-png/lib/packer')
+
+    if (!webpdecoder) {
+      webpdecoder = new libwebp.WebPDecoder()
+    }
+
+    let frame = WebPRiffParser(data, 0).frames[0]
+    let width = [0]
+    let height = [0]
+    let decodedData = webpdecoder.WebPDecodeRGBA(
+      data,
+      frame['src_off'], frame['src_size'],
+      width, height
+    )
+
+    let png = new PNGPacker({})
+    let buffers = []
+    png.on('data', (chunk) => {
+      buffers.push(chunk)
+    })
+    png.once('end', () => {
+      let pngData = Buffer.concat(buffers)
+      resolve(pngData)
+    })
+    png.pack(decodedData, width[0], height[0])
+  })
+}
