@@ -1,4 +1,6 @@
+/* global chrome */
 
+import path from 'path'
 import JSZip from 'jszip'
 import escapeStringRegexp from 'escape-string-regexp'
 import zeroFill from 'zero-fill'
@@ -11,13 +13,15 @@ import isSvg from 'is-svg'
 import sizeOf from 'image-size'
 import Emitter from 'es6-event-emitter'
 
-import { styleCss, coverstyleCss, titlestyleCss, paragraphsCss } from './styles'
-
 import { cleanMarkup } from './cleanMarkup'
 import htmlWordCount from './html-wordcount'
 import fetch from './fetch'
 import fetchRemote from './fetchRemote'
 import * as template from './templates'
+import { styleCss, coverstyleCss, titlestyleCss, iconsCss, navstyleCss, paragraphsCss } from './styles'
+import * as utils from './utils'
+import subsetFont from './subsetFont'
+import fontAwesomeCodes from '../build/font-awesome-codes.json'
 
 import { containerXml } from './constants'
 
@@ -82,12 +86,12 @@ class FimFic2Epub extends Emitter {
     })
   }
 
-  constructor (storyId) {
+  constructor (storyId, options = {}) {
     super()
 
     this.storyId = FimFic2Epub.getStoryId(storyId)
 
-    this.options = {
+    this.defaultOptions = {
       addCommentsLink: true,
       includeAuthorNotes: true,
       useAuthorNotesIndex: false,
@@ -96,6 +100,8 @@ class FimFic2Epub extends Emitter {
       paragraphStyle: 'spaced',
       joinSubjects: false
     }
+
+    this.options = Object.assign(this.defaultOptions, options)
 
     // promise cache
     this.pcache = {
@@ -114,8 +120,11 @@ class FimFic2Epub extends Emitter {
     this.notesHtml = []
     this.hasAuthorNotes = false
     this.chaptersWithNotes = []
+    this.pages = {}
     this.remoteResourcesCached = false
     this.remoteResources = new Map()
+    this.usedIcons = new Set()
+    this.iconsFont = null
     this.coverUrl = ''
     this.coverImage = null
     this.coverFilename = ''
@@ -127,7 +136,6 @@ class FimFic2Epub extends Emitter {
     }
 
     this.cachedFile = null
-    this.categories = []
     this.tags = []
 
     this.zip = null
@@ -143,7 +151,9 @@ class FimFic2Epub extends Emitter {
     this.pcache.fetchAll = this.fetchMetadata()
       .then(this.fetchChapters.bind(this))
       .then(this.fetchCoverImage.bind(this))
+      .then(this.buildPages.bind(this))
       .then(this.buildChapters.bind(this))
+      .then(this.findIcons.bind(this))
       .then(this.fetchRemoteFiles.bind(this))
       .then(() => {
         this.progress(0, 0.95)
@@ -166,22 +176,27 @@ class FimFic2Epub extends Emitter {
 
     this.progress(0, 0, 'Fetching metadata...')
 
-    this.pcache.metadata = FimFic2Epub.fetchStoryInfo(this.storyId).then((storyInfo) => {
-      this.storyInfo = storyInfo
-      this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
-      this.filename = FimFic2Epub.getFilename(this.storyInfo)
-      this.progress(0, 0.5)
-    })
-    .then(this.fetchTitlePage.bind(this))
-    .then(() => {
-      this.progress(0, 1)
-    })
-    .then(() => cleanMarkup(this.description)).then((html) => {
-      this.storyInfo.description = html
-      this.findRemoteResources('description', 'description', html)
-    }).then(() => {
-      this.pcache.metadata = null
-    })
+    this.pcache.metadata = FimFic2Epub.fetchStoryInfo(this.storyId)
+      .then((storyInfo) => {
+        this.storyInfo = storyInfo
+        this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
+        this.filename = FimFic2Epub.getFilename(this.storyInfo)
+        this.storyInfo.chapters.forEach((chapter) => {
+          if (chapter.date_modified > this.storyInfo.date_modified) {
+            this.storyInfo.date_modified = chapter.date_modified
+          }
+        })
+        this.progress(0, 0.5)
+      })
+      .then(this.fetchTitlePage.bind(this))
+      .then(() => {
+        this.progress(0, 1)
+      })
+      .then(() => cleanMarkup(this.description)).then((html) => {
+        this.storyInfo.description = html
+      }).then(() => {
+        this.pcache.metadata = null
+      })
     return this.pcache.metadata
   }
 
@@ -201,10 +216,9 @@ class FimFic2Epub extends Emitter {
     this.progress(0, 0, 'Fetching chapters...')
 
     let chapterCount = this.storyInfo.chapters.length
-    let url = 'https://www.fimfiction.net/story/download/' + this.storyInfo.id + '/html'
+    let url = 'https://fimfiction.net/story/download/' + this.storyInfo.id + '/html'
 
     this.pcache.chapters = fetch(url).then((html) => {
-      // console.log(html)
       let p = Promise.resolve()
       let matchChapter = /<article class="chapter">[\s\S]*?<\/header>([\s\S]*?)<\/article>/g
       for (let ma, i = 0; (ma = matchChapter.exec(html)); i++) {
@@ -215,9 +229,7 @@ class FimFic2Epub extends Emitter {
         let notesContent = ''
         let notesFirst = authorNotesPos === 0
         if (authorNotesPos !== -1) {
-          // console.log(chapterContent.length)
           chapterContent = chapterContent.replace(/<aside class="authors-note">([\s\S]*?)<\/aside>/, (match, content, pos) => {
-            // console.log(pos + match.length)
             content = content.replace(/<header><h1>.*?<\/h1><\/header>/, '')
             notesContent = content.trim().replace(trimWhitespace, '')
             return ''
@@ -269,6 +281,16 @@ class FimFic2Epub extends Emitter {
       let iter = this.remoteResources.entries()
       let completeCount = 0
 
+      let next = (r) => {
+        completeCount++
+        if (r.data) {
+          this.progress(0, completeCount / this.remoteResources.size, 'Fetched remote file ' + completeCount + ' / ' + this.remoteResources.size)
+        } else {
+          this.progress(0, completeCount / this.remoteResources.size, 'Fetching remote files...')
+        }
+        recursive()
+      }
+
       let recursive = () => {
         let r = iter.next().value
         if (!r) {
@@ -279,11 +301,15 @@ class FimFic2Epub extends Emitter {
         }
         let url = r[0]
         r = r[1]
+        if (r.data) {
+          next(r)
+          return
+        }
 
-        fetchRemote(url, 'arraybuffer').then((data) => {
+        fetchRemote(url, 'arraybuffer').then(async (data) => {
           r.dest = null
           let info = fileType(isNode ? data : new Uint8Array(data))
-          if (!info) {
+          if (!info || info.mime === 'application/xml') {
             // file-type doesn't support SVG, extra check:
             if (isSvg(Buffer.from(data).toString('utf8'))) {
               info = {
@@ -293,18 +319,20 @@ class FimFic2Epub extends Emitter {
             }
           }
           if (info) {
+            if (info.mime === 'image/webp') {
+              data = await utils.webp2png(isNode ? data : new Uint8Array(data))
+              info = fileType(data)
+            }
             let type = info.mime
             r.type = type
-            let isImage = type.indexOf('image/') === 0
+            let isImage = type.startsWith('image/')
             let folder = isImage ? 'Images' : 'Misc'
             let dest = folder + '/*.' + info.ext
             r.dest = dest.replace('*', r.filename)
             r.data = data
           }
-          completeCount++
-          this.progress(0, completeCount / this.remoteResources.size, 'Fetched remote file ' + completeCount + ' / ' + this.remoteResources.size)
-          recursive()
-        })
+          next(r)
+        }).catch((err) => { console.error(err) })
       }
 
       // concurrent downloads!
@@ -313,10 +341,20 @@ class FimFic2Epub extends Emitter {
       recursive()
       recursive()
     }).then(() => {
-      this.remoteResourcesCached = true
       this.pcache.remoteResources = null
     })
     return this.pcache.remoteResources
+  }
+
+  async buildPages () {
+    this.pages.cover = await template.createCoverPage(this)
+    this.pages.title = await template.createTitlePage(this)
+    this.findRemoteResources('titlepage', 'titlepage', this.pages.title)
+    this.pages.nav = await template.createNav(this)
+    delete this.pages.notesnav
+    if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && this.hasAuthorNotes) {
+      this.pages.notesnav = await template.createNotesNav(this)
+    }
   }
 
   buildChapters () {
@@ -352,7 +390,7 @@ class FimFic2Epub extends Emitter {
     return chain
   }
 
-  build () {
+  async build () {
     this.cachedFile = null
     this.zip = null
 
@@ -363,19 +401,20 @@ class FimFic2Epub extends Emitter {
     this.zip.file('mimetype', 'application/epub+zip')
     this.zip.file('META-INF/container.xml', containerXml)
 
-    this.zip.file('OEBPS/content.opf', template.createOpf(this))
+    this.zip.file('OEBPS/content.opf', Buffer.from(await template.createOpf(this), 'utf8'))
 
     if (this.coverImage) {
-      this.zip.file('OEBPS/' + this.coverFilename, this.coverImage)
+      this.zip.file('OEBPS/' + this.coverFilename, Buffer.from(this.coverImage))
     }
-    this.zip.file('OEBPS/Text/cover.xhtml', template.createCoverPage(this))
+    this.zip.file('OEBPS/Text/cover.xhtml', Buffer.from(this.pages.cover, 'utf8'))
     this.zip.file('OEBPS/Styles/coverstyle.css', Buffer.from(coverstyleCss, 'utf8'))
 
-    this.zip.file('OEBPS/Text/title.xhtml', template.createTitlePage(this))
+    this.zip.file('OEBPS/Text/title.xhtml', Buffer.from(this.pages.title, 'utf8'))
     this.zip.file('OEBPS/Styles/titlestyle.css', Buffer.from(titlestyleCss, 'utf8'))
 
-    this.zip.file('OEBPS/Text/nav.xhtml', template.createNav(this, 0))
-    this.zip.file('OEBPS/toc.ncx', template.createNcx(this))
+    this.zip.file('OEBPS/nav.xhtml', Buffer.from(this.pages.nav, 'utf8'))
+    this.zip.file('OEBPS/toc.ncx', Buffer.from(await template.createNcx(this), 'utf8'))
+    this.zip.file('OEBPS/Styles/navstyle.css', Buffer.from(navstyleCss, 'utf8'))
 
     for (let i = 0; i < this.chapters.length; i++) {
       let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
@@ -384,7 +423,7 @@ class FimFic2Epub extends Emitter {
     }
 
     if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && this.hasAuthorNotes) {
-      this.zip.file('OEBPS/Text/notesnav.xhtml', template.createNav(this, 1))
+      this.zip.file('OEBPS/notesnav.xhtml', Buffer.from(this.pages.notesnav, 'utf8'))
 
       for (let i = 0; i < this.chapters.length; i++) {
         if (!this.chapters[i].notes) continue
@@ -394,7 +433,14 @@ class FimFic2Epub extends Emitter {
       }
     }
 
-    this.zip.file('OEBPS/Styles/style.css', Buffer.from(styleCss + '\n\n' + (paragraphsCss[this.options.paragraphStyle] || ''), 'utf8'))
+    if (this.iconsFont) {
+      this.zip.file('OEBPS/Fonts/fontawesome-webfont-subset.ttf', this.iconsFont)
+    }
+
+    this.zip.file('OEBPS/Styles/style.css', Buffer.from(
+      styleCss + '\n\n' + this.iconsStyle() + '\n\n' +
+      (paragraphsCss[this.options.paragraphStyle] || '')
+      , 'utf8'))
 
     this.remoteResources.forEach((r) => {
       if (r.dest) {
@@ -433,6 +479,9 @@ class FimFic2Epub extends Emitter {
         this.cachedFile = file
         return file
       })
+      .catch((err) => {
+        console.error(err)
+      })
   }
 
   // example usage: .pipe(fs.createWriteStream(filename))
@@ -459,8 +508,9 @@ class FimFic2Epub extends Emitter {
     this.filename = FimFic2Epub.getFilename(this.storyInfo)
   }
   setCoverImage (buffer) {
-    let info = fileType(isNode ? buffer : new Uint8Array(buffer))
-    if (!info || info.mime.indexOf('image/') !== 0) {
+    buffer = isNode ? buffer : new Uint8Array(buffer)
+    let info = fileType(buffer)
+    if (!info || !info.mime.startsWith('image/')) {
       throw new Error('Invalid image')
     }
     this.coverImage = buffer
@@ -509,6 +559,49 @@ class FimFic2Epub extends Emitter {
     }
   }
 
+  async findIcons () {
+    let matchIcon = /<i class="fa fa-fw fa-(.*?)"(><\/i|\/)>/g
+    this.usedIcons.clear()
+
+    const scan = (html) => {
+      if (!html) return
+      for (let ma; (ma = matchIcon.exec(html));) {
+        if (ma[1] in fontAwesomeCodes) {
+          this.usedIcons.add(ma[1])
+        } else {
+          console.warn('Unknown icon:', ma[1])
+        }
+      }
+    }
+
+    scan(this.pages.title)
+    this.chaptersHtml.forEach(scan)
+    this.notesHtml.forEach(scan)
+
+    if (this.usedIcons.size === 0) {
+      this.iconsFont = null
+      return
+    }
+
+    let glyphs = [...this.usedIcons].map((name) => {
+      return fontAwesomeCodes[name].charCodeAt(0)
+    })
+    let fontPath = path.join(__dirname, '../node_modules/', 'font-awesome/fonts/fontawesome-webfont.ttf')
+    if (!isNode) {
+      fontPath = chrome.extension.getURL('build/fonts/fontawesome-webfont.ttf')
+    }
+    this.iconsFont = await subsetFont(fontPath, glyphs, {local: isNode})
+  }
+
+  iconsStyle () {
+    if (this.usedIcons.size === 0) return ''
+    let style = iconsCss.trim() + '\n'
+    this.usedIcons.forEach((name) => {
+      style += '.fa-' + name + ':before { content: "\\' + fontAwesomeCodes[name].charCodeAt(0).toString(16) + '"; }\n'
+    })
+    return style
+  }
+
   fetchCoverImage () {
     if (this.pcache.coverImage) {
       return this.pcache.coverImage
@@ -525,10 +618,11 @@ class FimFic2Epub extends Emitter {
     this.progress(0, 0, 'Fetching cover image...')
 
     this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then((data) => {
-      let info = fileType(isNode ? data : new Uint8Array(data))
+      data = isNode ? data : new Uint8Array(data)
+      let info = fileType(data)
       if (info) {
         let type = info.mime
-        let isImage = type.indexOf('image/') === 0
+        let isImage = type.startsWith('image/')
         if (!isImage) {
           return null
         }
@@ -550,8 +644,25 @@ class FimFic2Epub extends Emitter {
   }
 
   fetchTitlePage () {
-    let url = this.storyInfo.url.replace('http://www.fimfiction.net', '')
-    return fetch(url).then(this.extractTitlePageInfo.bind(this))
+    let viewMature = true
+    let isStoryMature = this.storyInfo.content_rating === 2
+    if (!isNode) {
+      viewMature = document.cookie.split('; ').includes('view_mature=true')
+      if (!viewMature && isStoryMature) {
+        if (window.setCookie) {
+          window.setCookie('view_mature', true, 365)
+        } else {
+          document.cookie = 'view_mature=true; path=/'
+        }
+      }
+    }
+    return fetch(this.storyInfo.url).then((data) => {
+      if (!viewMature && isStoryMature) {
+        // Delete cookie
+        document.cookie = 'view_mature=false; path=/; Max-Age=0'
+      }
+      return data
+    }).then(this.extractTitlePageInfo.bind(this))
   }
 
   extractTitlePageInfo (html) {
@@ -562,48 +673,25 @@ class FimFic2Epub extends Emitter {
     let endTagsPos = tagsHtml.indexOf('</ul>')
     tagsHtml = tagsHtml.substring(0, endTagsPos)
 
-    let categories = []
     let tags = []
+    let c
     tags.byImage = {}
     this.subjects.length = 0
     this.subjects.push('Fimfiction')
     this.subjects.push(this.storyInfo.content_rating_text)
-    // sex, gore tags
-    let matchTag = /<a href="(.*?)" class="([^"]*?)">(.*?)<\/a>/g
-    for (let c; (c = matchTag.exec(tagsHtml));) {
+
+    let matchTag = /<a href="([^"]*?)" class="([^"]*?)" title="[^"]*?" data-tag="([^"]*?)".*?>(.*?)<\/a>/g
+    for (;(c = matchTag.exec(tagsHtml));) {
       let cat = {
-        url: 'http://www.fimfiction.net' + c[1],
-        className: 'story_category story_category_' + c[2].replace('tag-', ''),
-        name: entities.decode(c[3])
+        url: 'https://fimfiction.net' + c[1],
+        className: 'story-tag ' + c[2],
+        name: entities.decode(c[4]),
+        type: c[2].replace('tag-', '')
       }
-      categories.push(cat)
+      tags.push(cat)
       this.subjects.push(cat.name)
     }
-    // genre tags
-    matchTag = /<a href="(.*?)" class="tag-genre" data-tag="(.*?)">(.*?)<\/a>/g
-    for (let c; (c = matchTag.exec(tagsHtml));) {
-      let cat = {
-        url: 'http://www.fimfiction.net' + c[1],
-        className: 'story_category story_category_' + c[2],
-        name: entities.decode(c[3])
-      }
-      categories.push(cat)
-      this.subjects.push(cat.name)
-    }
-    // character tags
-    matchTag = /<a href="(.*?)" class="tag-character" title=".*?" data-tag="(.*?)">(.*?)<\/a>/g
-    for (let c; (c = matchTag.exec(tagsHtml));) {
-      let t = {
-        url: 'http://www.fimfiction.net' + c[1],
-        // filename: 'tag-' + c[2],
-        name: entities.decode(c[3])
-        // image: 'https://static.fimfiction.net/images/characters/' + entities.decode(c[2]).replace(/-/g, '_') + '.png'
-      }
-      tags.push(t)
-      // tags.byImage[t.image] = t
-      // this.remoteResources.set(t.image, {filename: t.filename, originalUrl: t.image, where: ['tags']})
-    }
-    this.categories = categories
+    this.tags = tags
 
     html = html.substring(endTagsPos + 5)
     html = html.substring(html.indexOf('<span class="description-text bbcode">') + 38)
@@ -611,7 +699,7 @@ class FimFic2Epub extends Emitter {
     let ma = html.match(/This story is a sequel to <a href="([^"]*)">(.*?)<\/a>/)
     if (ma) {
       this.storyInfo.prequel = {
-        url: 'http://www.fimfiction.net' + ma[1],
+        url: 'https://fimfiction.net' + ma[1],
         title: entities.decode(ma[2])
       }
       html = html.substring(html.indexOf('<hr />') + 6)
@@ -633,20 +721,6 @@ class FimFic2Epub extends Emitter {
     }
 
     html = html.substring(0, html.indexOf('<div class="button-group"'))
-
-    matchTag = /<a href="\/tag\/(.*?)" class="character_icon" title="(.*?)" style=".*?"><img src="(.*?)" class="character_icon" \/><\/a>/g
-    for (let tag; (tag = matchTag.exec(html));) {
-      let t = {
-        url: 'http://www.fimfiction.net/tag/' + tag[1],
-        filename: 'tag-' + tag[1],
-        name: entities.decode(tag[2]),
-        image: entities.decode(tag[3])
-      }
-      tags.push(t)
-      tags.byImage[t.image] = t
-      this.remoteResources.set(t.image, {filename: t.filename, originalUrl: t.image, where: ['tags']})
-    }
-    this.tags = tags
   }
 
   parseChapterPage (html) {
@@ -685,12 +759,10 @@ class FimFic2Epub extends Emitter {
               if (ourl.test(this.chapters[w])) {
                 this.storyInfo.chapters[w].remote = true
               }
-            } else if (w === 'description') {
-              if (ourl.test(this.storyInfo.description)) {
+            } else if (w === 'titlepage') {
+              if (ourl.test(this.pages.title)) {
                 this.hasRemoteResources.titlePage = true
               }
-            } else if (w === 'tags') {
-              this.hasRemoteResources.titlePage = true
             }
           }
         }
@@ -706,10 +778,8 @@ class FimFic2Epub extends Emitter {
               this.chaptersHtml[w.chapter] = this.chaptersHtml[w.chapter].replace(ourl, dest)
             } else if (typeof w === 'object' && w.note !== undefined && this.notesHtml[w.note]) {
               this.notesHtml[w.note] = this.notesHtml[w.note].replace(ourl, dest)
-            } else if (w === 'description') {
-              this.storyInfo.description = this.storyInfo.description.replace(ourl, dest)
-            } else if (w === 'tags') {
-              this.tags.byImage[r.originalUrl].image = dest
+            } else if (w === 'titlepage') {
+              this.pages.title = this.pages.title.replace(ourl, dest)
             }
           }
         }
