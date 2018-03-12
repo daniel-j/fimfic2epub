@@ -3,21 +3,19 @@
 fimfic2epub
 ===========
 
-This is a tool to generate better EPUB ebooks from [fimfiction](http://www.fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
+This is a tool to generate better EPUB ebooks from [fimfiction](https://fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
 
 [Screenshot](http://i.imgbox.com/MalEBiuC.png) of Chrome extension
 
 Demo
 ----
-You can have a look at what a generated EPUB looks like [here](http://books.djazz.se/?epub=epub_content%2Fsummer_island). It was generated from the story [Summer Island](http://www.fimfiction.net/story/289663/summer-island).
+You can have a look at what a generated EPUB looks like [here](http://books.djazz.se/?epub=epub_content%2Fsummer_island). It was generated from the story [Summer Island](https://fimfiction.net/story/289663/summer-island).
 
 
 Usage (browser extension)
 -----------------
 
-You can download the Chome extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/fimfic2epub/fiijkoniocipeemlflajmmaecfhfcand).
-
-Right now the addon is not available in Add-ons for Firefox, but it's fully compatible.
+You can download the Chome extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/fimfic2epub/fiijkoniocipeemlflajmmaecfhfcand) and [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/fimfic2epub/)
 
 
 Installation & usage (command line)
@@ -45,7 +43,7 @@ $ fimfic2epub 180690 - > path/to/file.epub
 Building
 --------
 
-Make sure [Node.js](https://nodejs.org) is installed. After you've cloned this repository, run `npm install` and `npm run build` to build it. This project uses [gulp](http://gulpjs.com/).
+Make sure [Node.js](https://nodejs.org) is installed. After you've cloned this repository, run `npm install` and `npm run build` to build it. This project uses [gulp](http://gulpjs.com/). Run `npm run dev` for a quicker development build. You can add `watch` to both for automatic rebuilding.
 
 
 Development
