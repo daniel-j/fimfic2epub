@@ -1,10 +1,23 @@
 
 @require 'mixins'
+@require 'reset'
+
+@page {
+  margin-top: 0.3em;
+  margin-bottom: 0.2em;
+}
+
 
 body {
   background-color: white;
   color: black;
   text-align: justify;
+  hyphens: auto;
+  -epub-hyphens: auto;
+}
+
+a, u {
+  text-decoration-skip: ink;
 }
 
 p {
@@ -22,9 +35,6 @@ p {
   &.indented {
     text-indent: 1em;
   }
-  &:first-child {
-    margin-top: 0;
-  }
 }
 div p {
   text-indent: 0;
@@ -32,6 +42,8 @@ div p {
 
 h1, h2, h3, h4, h5, h6 {
   text-align: left;
+  hyphens: none;
+  -epub-hyphens: none;
 }
 
 em {
@@ -42,7 +54,7 @@ em em {
 }
 
 .chapter-title {
-  margin-top: 1.5em;
+  margin-top: 2em;
   margin-bottom: 1.5em;
 
   h1 {
@@ -57,24 +69,19 @@ img {
   width: auto;
   max-width: 100%;
   max-height: 100%;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 img.emoji {
   height: 1em;
+  vertical-align: top;
+}
+img.emoticon {
+  height: 1.3em;
+  vertical-align: bottom;
 }
 
-hr.old {
-  padding: 0;
-  margin-top: 0.8em;
-  margin-bottom: 0.8em;
-  height: 0;
-  border: none;
-  border-bottom: 1px solid #000;
-  border-color: currentColor;
-  opacity: 0.5;
-  width: 100%;
-}
-
-// Fimfiction's new horizontal ruler:
 hr {
   box-sizing: border-box;
   padding: 0;
@@ -88,90 +95,186 @@ hr {
   border-bottom-style: solid;
   border-color: #999;
   border-color: currentColor;
-  height: 4px;
+
+  height: 0.15em;
+  min-height: 4px;
   background: transparent;
   width: 90%;
   margin: 2em auto;
+
+  clear: both;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 
 // This looks bad on black background/dark themes
 /*hr:after {
-  color: #333;
   display: inline-block;
   position: relative;
   top: -0.5em;
   font-size: 1.0em;
   padding: 0 0.5em;
   background: white;
-  line-height: 1.0em
+  line-height: 1.0em;
 
+  color: #999;
   color: currentColor;
   content: "\274A   \274A   \274A";
   margin-top: 2px;
 }*/
 
-blockquote {
-  margin: 10px 0px;
-  padding: 20px;
+hr.old {
+  padding: 0;
+  margin-top: 0.5em;
+  margin-bottom: 1em;
+  height: 0;
+  min-height: 0;
   border: none;
-  border-left: 5px solid rgba(0,0,0,0.2);
-  bgcolor(rgba(0,0,0,0.1));
+  border-bottom: 1px solid #999;
+  border-color: currentColor;
+  opacity: 0.5;
+  width: 100%;
+}
+
+blockquote {
+  clear: both;
+  margin: 1em 0;
+  padding: 0.1px 0;
+  padding-left: 4%;
+  border: none;
+  border-left: 0.4rem solid #CCC;
+  border-left: 0.4rem solid rgba(0,0,0,0.2);
+  // bgcolor(#EEE);
+  // bgcolor(rgba(0,0,0,0.075));
+  // clearfix
+  &:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
   
   /:root[__ibooks_internal_theme*="Night"] & {
     border-color: rgba(255,255,255,0.2);
-    bgcolor(rgba(255,255,255,0.1));
+    // bgcolor(rgba(255,255,255,0.1));
   }
+}
 
-  &.left_insert, &.right_insert {
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    padding: 15px;
-    background-color: #F7F7F7;
-    border: 1px solid #AAA;
-    width: 50%;
-    box-shadow: 5px 5px 0px #EEE;
-    /:root[__ibooks_internal_theme*="Gray"] & {
-      bgcolor(rgba(0,0,0,0.1));
-      box-shadow: 5px 5px 0px #666;
-    }
-    
-    /:root[__ibooks_internal_theme*="Night"] & {
-      bgcolor(rgba(255,255,255,0.1));
-      box-shadow: none;
-    }
+.bbcode-figure-left {
+  max-width: 40%;
+  float: left;
+  margin: 0;
+  margin-right: 1.5rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+.bbcode-figure-right {
+  max-width: 40%;
+  float: right;
+  margin: 0;
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+figure img {
+  border-radius: 5px;
+}
+.bbcode-indent {
+  &-1 { margin-left: 1em; }
+  &-2 { margin-left: 2em; }
+  &-3 { margin-left: 3em; }
+  &-4 { margin-left: 4em; }
+}
+.bbcode-pre-line p {
+  text-indent: 0 !important;
+}
+
+sub {
+  font-size: 0.675em;
+  line-height: 1.2;
+  vertical-align: sub;
+  vertical-align: -20%;
+}
+sup {
+  font-size: 0.675em;
+  line-height: 1.2;
+  vertical-align: super;
+  vertical-align: 35%;
+}
+code {
+  font-family: monospace;
+  background-color: #DDD;
+  bgcolor(rgba(200, 200, 200, 0.2));
+  padding: .1875rem;
+  border-radius: .3125rem;
+}
+pre {
+  margin: 1em 0;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.4;
+}
+pre code {
+  padding: 1em;
+  padding: 1rem;
+  display: block;
+  position: relative;
+  ord-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.spoiler {
+  background-color: black;
+  color: transparent;
+  /:root[__ibooks_internal_theme*="Gray"] &, /:root[__ibooks_internal_theme*="Night"] & {
+    background-color: white;
   }
-  &.left_insert {
-    margin-right: 25px;
-    float: left;
-  }
-  &.right_insert {
-    margin-left: 25px;
-    float: right;
+  &:hover {
+    background-color: initial;
+    color: inherit;
+    /:root[__ibooks_internal_theme*="Gray"] &, /:root[__ibooks_internal_theme*="Night"] & {
+      background-color: initial;
+    }
   }
 }
 
 figure.youtube {
-  margin: 1em auto;
-  width: 60%;
-  max-width: 640px;
+  clear: both;
+  margin: 0 auto;
+  padding: 1em 0;
+  width: 70%;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
   
-  border: 1px solid #999;
-  border-radius: 3px;
-  padding: 3px;
+  & > a {
+    display: block;
+    width: 70%;
+    margin: 0 auto;
+  }
   
   img {
     display: block;
     width: 100%;
+    border-radius: 7px;
   }
 
   figcaption {
-    line-height: 1em;
-    text-align: left;
-    padding: 3px;
+    line-height: 1rem;
+    text-align: center;
+    margin-top: .3rem;
 
     a {
       font-style: italic;
-      font-size: 0.75em;
+      font-size: 0.75rem;
     }
   }
 }
@@ -182,12 +285,13 @@ figure.youtube {
 
 #author_notes {
   clear: both;
-  border: 1px solid #ddd;
+
+  border: 1px solid #DDD;
   border-radius: 3px;
   line-height: 1.7em;
-  padding: 16px;
-  margin-top: 1.0em;
-  margin-bottom: 1.0em;
+  padding: 1em;
+  margin-top: 2em;
+  margin-bottom: 2em;
   background-color: #EEE;
   color: #555;
   
@@ -198,6 +302,11 @@ figure.youtube {
 }
 
 a.chaptercomments {
+  clear: both;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+
   text-decoration: none;
   display: inline-block;
   position: relative;
@@ -224,40 +333,3 @@ a.chaptercomments {
   background: linear-gradient(to bottom, #7bb042 0%, #6fa03c 100%);
 }
 
-#toc {
-  h3 {
-    font-weight: normal;
-    text-align: center;
-    margin: 0;
-    margin-bottom: 0.5em;
-  }
-  ol {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-
-    li {
-      // overflow: auto;
-
-      a, .floatbox {
-        padding: 0.3em;
-        padding-left: 0;
-        padding-right: 0;
-        display: inline-block;
-      }
-      .floatbox {
-        float: right;
-      }
-
-      span.date, span.wordcount {
-        font-size: 0.8em;
-        color: #888;
-        text-align: left;
-      }
-    }
-  }
-
-  [hidden] {
-    display: none;
-  }
-}

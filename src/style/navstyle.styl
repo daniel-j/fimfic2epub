@@ -1,0 +1,62 @@
+
+.invisible {
+  display: none;
+}
+
+
+h3 {
+  font-weight: normal;
+  text-align: center;
+  margin: 0;
+  margin-bottom: 1em;
+}
+
+#toc {
+
+  .item {
+    margin: 0.2em 0;
+    text-indent: -0.5em;
+    margin-left: 0.5em;
+    text-align: left;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    clear: both;
+    vertical-align: middle;
+
+    // clearfix
+    &:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    &.double {
+      margin-top: 1em;
+    }
+
+    .date {
+      display: inline;
+      font-size: 0.7em;
+      white-space: nowrap;
+      opacity: 0.6;
+    }
+    .floatbox {
+      display: block;
+      float: right;
+      white-space: nowrap;
+      vertical-align: middle;
+      text-align: right;
+      padding-left: 1em;
+      margin-left: 1em;
+    }
+    .wordcount {
+      font-size: 0.7em;
+      opacity: 0.6;
+    }
+  }
+}
+
+li[hidden] {
+  display: none;
+}
+
