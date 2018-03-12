@@ -586,9 +586,16 @@ class FimFic2Epub extends Emitter {
     let glyphs = [...this.usedIcons].map((name) => {
       return fontAwesomeCodes[name].charCodeAt(0)
     })
-    let fontPath = path.join(__dirname, '../node_modules/', 'font-awesome/fonts/fontawesome-webfont.ttf')
+    let fontPath
     if (!isNode) {
       fontPath = chrome.extension.getURL('build/fonts/fontawesome-webfont.ttf')
+    } else {
+      // TODO: Fix better font detection
+      const fs = require('fs')
+      fontPath = path.join(__dirname, '../node_modules/', 'font-awesome/fonts/fontawesome-webfont.ttf')
+      if (!fs.existsSync(fontPath)) {
+        fontPath = path.join(__dirname, '../../', 'font-awesome/fonts/fontawesome-webfont.ttf')
+      }
     }
     this.iconsFont = await subsetFont(fontPath, glyphs, {local: isNode})
   }
