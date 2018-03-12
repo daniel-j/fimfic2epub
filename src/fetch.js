@@ -3,16 +3,17 @@ import isNode from 'detect-node'
 
 function fetchNode (url, responseType) {
   const request = require('request')
-  if (url.indexOf('/') === 0) {
-    url = 'http://www.fimfiction.net' + url
+  if (url.startsWith('/')) {
+    url = 'https://fimfiction.net' + url
   }
   return new Promise((resolve, reject) => {
     request({
       url: url,
       encoding: responseType ? null : 'utf8',
       headers: {
-        referer: 'http://www.fimfiction.net/',
-        cookie: 'view_mature=true'
+        'referer': 'https://fimfiction.net/',
+        'cookie': 'view_mature=true',
+        'accept': '*/*'
       }
     }, (error, response, body) => {
       if (error) {
@@ -26,10 +27,10 @@ function fetchNode (url, responseType) {
 }
 
 export default function fetch (url, responseType) {
-  if (url.indexOf('//') === 0) {
+  if (url.startsWith('//')) {
     url = 'http:' + url
   }
-  if (url.indexOf('/') === 0) {
+  if (url.startsWith('/')) {
     url = 'https://fimfiction.net' + url
   }
 
@@ -38,15 +39,16 @@ export default function fetch (url, responseType) {
   }
   return new Promise((resolve, reject) => {
     if (typeof window.fetch === 'function') {
-      const headers = new Headers()
-      headers.append('cookie', 'view_mature=true')
       window.fetch(url, {
         method: 'GET',
         mode: 'cors',
         credentials: 'include',
         cache: 'default',
-        headers: headers,
-        redirect: 'follow'
+        redirect: 'follow',
+        headers: {
+          'accept': '*/*' // Fix for not getting webp images from Fimfiction
+        },
+        referrer: 'https://fimfiction.net/'
       }).then((response) => {
         if (responseType === 'blob') {
           response.blob().then(resolve, reject)
@@ -60,6 +62,8 @@ export default function fetch (url, responseType) {
       })
     } else {
       let x = new XMLHttpRequest()
+      x.withCredentials = true
+      x.setRequestHeader('accept', '*/*') // Fix for not getting webp images from Fimfiction
       x.open('get', url, true)
       if (responseType) {
         x.responseType = responseType
