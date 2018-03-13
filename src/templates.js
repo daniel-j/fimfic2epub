@@ -322,7 +322,7 @@ export function createCoverPage (ffc) {
         m('title', 'Cover'),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/coverstyle.css'})
       ]),
-      m('body#coverpage', {'epub:type': 'frontmatter cover'}, m('section', body))
+      m('body#coverpage', {'epub:type': 'frontmatter cover'}, body)
     ])
     , {strict: true}).then((coverPage) => {
       coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
