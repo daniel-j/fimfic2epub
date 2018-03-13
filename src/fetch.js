@@ -48,7 +48,7 @@ export default function fetch (url, responseType) {
         headers: {
           'accept': '*/*' // Fix for not getting webp images from Fimfiction
         },
-        referrer: 'https://fimfiction.net/'
+        referrer: window.location.origin
       }).then((response) => {
         if (responseType === 'blob') {
           response.blob().then(resolve, reject)
