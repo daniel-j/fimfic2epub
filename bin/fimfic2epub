@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 const args = require('commander')
-  .command('fimfic2epub <story id|url> [filename]')
+  .command('fimfic2epub <story> [filename]')
   .description(require('../package.json').description)
   .version(require('../package.json').version)
+  .option('-d, --dir <path>', 'Directory to store ebook in. Is prepended to filename')
   .option('-t, --title <value>', 'Set the title of the story')
   .option('-a, --author <value>', 'Set the author of the story')
   .option('-c, --no-comments-link', 'Don\'t add link to online comments')
@@ -27,6 +28,7 @@ require('mithril/test-utils/browserMock')(global)
 
 const FimFic2Epub = require('../dist/fimfic2epub')
 const fs = require('fs')
+const path = require('path')
 
 const STORY_ID = args.args[0]
 
@@ -71,6 +73,10 @@ ffc.fetchMetadata()
 .then(() => {
   let filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || ffc.filename
   let stream
+
+  if (args.dir) {
+    filename = path.join(args.dir, filename)
+  }
 
   if (outputStdout) {
     stream = process.stdout
