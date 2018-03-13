@@ -727,11 +727,9 @@ class FimFic2Epub extends Emitter {
     let extraPos = html.indexOf('<div class="extra_story_data">')
     html = html.substring(extraPos + 30)
 
-    ma = html.match(/<span class="published">First Published<\/span><br \/><span>(.*?)<\/span>/)
+    ma = html.match(/<span class="approved-date">.*?data-time="(.*?)".*?<\/span>/)
     if (ma) {
-      let date = ma[1]
-      date = date.replace(/^(\d+)[a-z]+? ([a-zA-Z]+? \d+)$/, '$1 $2')
-      this.storyInfo.publishDate = (new Date(date).getTime() / 1000) | 0
+      this.storyInfo.publishDate = +ma[1]
     }
 
     html = html.substring(0, html.indexOf('<div class="button-group"'))
