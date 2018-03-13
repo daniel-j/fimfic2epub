@@ -388,7 +388,9 @@ class FimFic2Epub extends Emitter {
           ch.realWordCount = utils.htmlWordCount(chapter.content)
         }
         if (this.options.calculateReadingEase && !ch.readingEase) {
-          ch.readingEase = utils.readingEase(utils.htmlToText(chapter.content))
+          let text = utils.htmlToText(chapter.content)
+          text = text.replace(/\s+/g, ' ').trim()
+          ch.readingEase = utils.readingEase(text)
         }
         this.progress(0, (i + 1) / this.chapters.length, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
       }).then(() => new Promise((resolve) => setTimeout(resolve, 20)))
