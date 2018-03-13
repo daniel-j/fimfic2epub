@@ -5,7 +5,24 @@ fimfic2epub
 
 This is a tool to generate better EPUB ebooks from [fimfiction](https://fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
 
-[Screenshot](http://i.imgbox.com/MalEBiuC.png) of the Chrome extension
+[Screenshot](http://i.imgbox.com/MalEBiuC.png) of the web extension
+
+Features
+--------
+
+* The generated ebook is in modern EPUB3 format with fallbacks for older EPUB2 reading systems
+* Improved styling and formatting of content compared to Fimfiction's export options
+* Cover image can be changed from an image file or url
+* Downloads and embeds artwork from the story inside the EPUB file, including YouTube thumbnails, for optimal offline reading and archiving (optional)
+* Rating, tags, status, story description and more info are available on the title page
+* The table of contents page includes chapter modification dates and word counts
+* Option to put all author notes in an index at the end of the ebook
+* Option to not add a title heading for chapters (in case the story has its own)
+* Tweak paragraph style from double-spaced to indented (similar to book typesetting, may not look good on every story)
+* Emoji, icon and webp support (webp images gets converted to png)
+* Calculation the story's Flesch reading ease (disabled by default because it's a slow process)
+* Customize metadata of the generated ebook, such as title, author, subjects and description
+* Command line tool with same features as the web extension
 
 Demo
 ----
