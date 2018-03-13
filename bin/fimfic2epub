@@ -1,34 +1,76 @@
 #!/usr/bin/env node
 
+const args = require('commander')
+  .command('fimfic2epub <story id|url> [filename]')
+  .description(require('../package.json').description)
+  .version(require('../package.json').version)
+  .option('-t, --title <value>', 'Set the title of the story')
+  .option('-a, --author <value>', 'Set the author of the story')
+  .option('-c, --no-comments-link', 'Don\'t add link to online comments')
+  .option('-h, --no-headings', 'Don\'t add headings to chapters')
+  .option('-e, --no-external', 'Don\'t embed external resources, such as images (breaks EPUB spec)')
+  .option('-n, --no-notes', 'Don\'t include author notes')
+  .option('-i, --notes-index', 'Create an index with all author notes at the end of the ebook')
+  .option('-p, --paragraphs <style>', 'Select a paragraph style [spaced|indented|indentedall|both]', 'spaced')
+  .option('-j, --join-subjects', 'Join subjects to a single value')
+  .option('-r, --reading-ease', 'Calculate Flesch reading ease (slow for long stories)')
+  .option('-C, --cover <url>', 'Set cover image url')
+  .parse(process.argv)
+
+if (args.args.length < 1) {
+  console.error('Error: No story id/url provided')
+  process.exit(1)
+}
+
 // use a mock DOM so we can run mithril on the server
 require('mithril/test-utils/browserMock')(global)
 
 const FimFic2Epub = require('../dist/fimfic2epub')
 const fs = require('fs')
 
-const STORY_ID = process.argv[2]
+const STORY_ID = args.args[0]
 
-const ffc = new FimFic2Epub(STORY_ID)
+const ffc = new FimFic2Epub(STORY_ID, {
+  addCommentsLink: !!args.commentsLink,
+  includeAuthorNotes: !!args.notes,
+  useAuthorNotesIndex: !!args.notesIndex,
+  addChapterHeadings: !!args.headings,
+  includeExternal: !!args.external,
+  paragraphStyle: args.paragraphs,
+  joinSubjects: !!args.joinSubjects,
+  calculateReadingEase: !!args.readingEase
+})
+ffc.coverUrl = args.cover
 
-const outputStdout = process.argv[3] === '-' || process.argv[3] === '/dev/stdout'
+const outputStdout = args.args[1] === '-' || args.args[1] === '/dev/stdout'
 
 if (outputStdout) {
   console.log = console.error
   console.log('Outputting to stdout')
 }
 
+/*
 ffc.on('progress', (percent, status) => {
-  /*
   if (status) {
     console.log('fimfic2epub: ' + status)
   }
-  */
 })
+*/
 
-ffc.fetchAll()
+
+ffc.fetchMetadata()
+.then(() => {
+  if (args.title) {
+    ffc.setTitle(args.title)
+  }
+  if (args.author) {
+    ffc.setAuthorName(args.author)
+  }
+})
+.then(ffc.fetchAll.bind(ffc))
 .then(ffc.build.bind(ffc))
 .then(() => {
-  let filename = process.argv[3] || ffc.filename
+  let filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || ffc.filename
   let stream
 
   if (outputStdout) {

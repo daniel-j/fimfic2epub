@@ -20,6 +20,7 @@
     "bin/"
   ],
   "dependencies": {
+    "commander": "^2.15.0",
     "detect-node": "^2.0.3",
     "escape-string-regexp": "^1.0.5",
     "file-type": "^7.2.0",
