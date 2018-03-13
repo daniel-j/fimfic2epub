@@ -1,4 +1,8 @@
 
+import htmlToTextModule from 'html-to-text'
+import matchWords from 'match-words'
+import { readingLevel } from 'reading-level'
+
 export function replaceAsync (str, re, callback) {
   // http://es5.github.io/#x15.5.4.11
   str = String(str)
@@ -58,4 +62,28 @@ export function webp2png (data) {
     })
     png.pack(decodedData, width[0], height[0])
   })
+}
+
+export function htmlToText (html) {
+  return htmlToTextModule.fromString(html, {
+    wordwrap: false,
+    ignoreImage: true,
+    ignoreHref: true
+  })
+}
+
+export function htmlWordCount (html) {
+  let text = htmlToText(html)
+
+  let count = 0
+  try {
+    count = matchWords(text).length
+  } catch (err) { count = 0 }
+  return count
+}
+
+export function readingEase (text) {
+  const result = readingLevel(text, 'full')
+  const ease = 206.835 - 1.015 * (result.words / result.sentences) - 84.6 * (result.syllables / result.words)
+  return {ease, gradeLevel: result.unrounded}
 }

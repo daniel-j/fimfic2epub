@@ -14,7 +14,6 @@ import sizeOf from 'image-size'
 import Emitter from 'es6-event-emitter'
 
 import { cleanMarkup } from './cleanMarkup'
-import htmlWordCount from './html-wordcount'
 import fetch from './fetch'
 import fetchRemote from './fetchRemote'
 import * as template from './templates'
@@ -98,7 +97,8 @@ class FimFic2Epub extends Emitter {
       addChapterHeadings: true,
       includeExternal: true,
       paragraphStyle: 'spaced',
-      joinSubjects: false
+      joinSubjects: false,
+      calculateReadingEase: false
     }
 
     this.options = Object.assign(this.defaultOptions, options)
@@ -151,8 +151,8 @@ class FimFic2Epub extends Emitter {
     this.pcache.fetchAll = this.fetchMetadata()
       .then(this.fetchChapters.bind(this))
       .then(this.fetchCoverImage.bind(this))
-      .then(this.buildPages.bind(this))
       .then(this.buildChapters.bind(this))
+      .then(this.buildPages.bind(this))
       .then(this.findIcons.bind(this))
       .then(this.fetchRemoteFiles.bind(this))
       .then(() => {
@@ -253,9 +253,7 @@ class FimFic2Epub extends Emitter {
             this.chaptersWithNotes.push(i)
           }
           this.chapters[i] = chapter
-          let ch = this.storyInfo.chapters[i]
-          ch.realWordCount = htmlWordCount(chapter.content)
-        })
+        }).then(() => new Promise((resolve, reject) => setTimeout(resolve, 20)))
       }
       return p
     }).then(() => {
@@ -385,6 +383,15 @@ class FimFic2Epub extends Emitter {
           this.notesHtml[i] = html
         })
       }
+      chain = chain.then(() => {
+        if (!ch.realWordCount) {
+          ch.realWordCount = utils.htmlWordCount(chapter.content)
+        }
+        if (this.options.calculateReadingEase && !ch.readingEase) {
+          ch.readingEase = utils.readingEase(utils.htmlToText(chapter.content))
+        }
+        this.progress(0, (i + 1) / this.chapters.length, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
+      }).then(() => new Promise((resolve) => setTimeout(resolve, 20)))
     }
 
     return chain

@@ -6,7 +6,7 @@ import m from 'mithril'
 import prop from 'mithril/stream'
 import { saveAs } from 'file-saver'
 import autosize from 'autosize'
-import htmlToText from 'html-to-text'
+import { htmlToText } from './utils'
 
 function blobToDataURL (blob) {
   return new Promise((resolve, reject) => {
@@ -136,6 +136,7 @@ let dialog = {
     this.includeExternal = prop(ffc.options.includeExternal)
     this.joinSubjects = prop(ffc.options.joinSubjects)
     this.paragraphStyle = prop(ffc.options.paragraphStyle)
+    this.calculateReadingEase = prop(ffc.options.calculateReadingEase)
 
     this.onOpen = (vnode) => {
       this.el(vnode.dom)
@@ -146,11 +147,7 @@ let dialog = {
         ffcProgress(-1)
         this.title(ffc.storyInfo.title)
         this.author(ffc.storyInfo.author.name)
-        this.description(htmlToText.fromString(ffc.storyInfo.description, {
-          wordwrap: false,
-          ignoreImage: true,
-          ignoreHref: true
-        }) || ffc.storyInfo.short_description)
+        this.description(htmlToText(ffc.storyInfo.description) || ffc.storyInfo.short_description)
         this.subjects(ffc.subjects.slice(0))
         redraw(true)
         this.center()
@@ -257,6 +254,7 @@ let dialog = {
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),
             m(checkbox, {checked: ctrl.useAuthorNotesIndex(), onchange: m.withAttr('checked', ctrl.useAuthorNotesIndex), disabled: !ctrl.includeAuthorNotes()}, 'Put all notes at the end of the ebook'),
+            m(checkbox, {checked: ctrl.calculateReadingEase(), onchange: m.withAttr('checked', ctrl.calculateReadingEase)}, 'Calculate Flesch reading ease'),
             m(checkbox, {checked: ctrl.includeExternal(), onchange: m.withAttr('checked', ctrl.includeExternal)}, 'Download & include remote content (embed images)'),
             m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; color: #777;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.')
           )),
@@ -321,6 +319,7 @@ function createEpub (model) {
   ffc.options.paragraphStyle = model.paragraphStyle()
   ffc.subjects = model.subjects()
   ffc.options.joinSubjects = model.joinSubjects()
+  ffc.options.calculateReadingEase = model.calculateReadingEase()
   redraw()
 
   chain
