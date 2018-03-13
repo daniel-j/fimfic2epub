@@ -221,7 +221,7 @@ export function createNcx (ffc) {
       m('navMap', navPoints([
         ['Cover', 'Text/cover.xhtml'],
         ['Title Page', 'Text/title.xhtml'],
-        ['Contents', 'nav.xhtml']
+        ffc.storyInfo.chapters.length > 1 || (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? ['Contents', 'nav.xhtml'] : null
       ].concat(ffc.storyInfo.chapters.map((ch, num) =>
         [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
       ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'notesnav.xhtml']] : null)))
@@ -236,7 +236,7 @@ export function createNav (ffc) {
   let list = [
     m('li', {hidden: ''}, m('a', {href: 'Text/cover.xhtml'}, 'Cover')),
     m('li', {hidden: ''}, m('a', {href: 'Text/title.xhtml'}, 'Title Page')),
-    ffc.storyInfo.chapters.length > 0 ? m('li', {hidden: ''}, m('a', {href: 'nav.xhtml'}, 'Contents')) : null
+    ffc.storyInfo.chapters.length > 1 || (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? m('li', {hidden: ''}, m('a', {href: 'nav.xhtml'}, 'Contents')) : null
   ].concat(ffc.storyInfo.chapters.map((ch, num) =>
     m('li', [
       m('a.leftalign', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
