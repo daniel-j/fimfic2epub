@@ -60,7 +60,7 @@ class FimFic2Epub extends Emitter {
           return
         }
         if (data.error) {
-          reject(new Error(data.error))
+          reject(new Error(data.error + ' (id: ' + storyId + ')'))
           return
         }
         let story = data.story
@@ -146,7 +146,7 @@ class FimFic2Epub extends Emitter {
       return this.pcache.fetchAll
     }
 
-    this.progress(0, 0, 'Fetching...')
+    this.progress(0, 0, '')
 
     this.pcache.fetchAll = this.fetchMetadata()
       .then(this.fetchChapters.bind(this))
@@ -247,7 +247,7 @@ class FimFic2Epub extends Emitter {
           }))
         }
         p = p.then(() => {
-          this.progress(0, (i + 1) / chapterCount, 'Processed chapter ' + (i + 1) + ' / ' + chapterCount)
+          this.progress(0, (i + 1) / chapterCount, 'Parsed chapter ' + (i + 1) + ' / ' + chapterCount)
           if (chapter.notes) {
             this.hasAuthorNotes = true
             this.chaptersWithNotes.push(i)
@@ -264,7 +264,7 @@ class FimFic2Epub extends Emitter {
   }
 
   fetchRemoteFiles () {
-    if (!this.options.includeExternal) {
+    if (!this.options.includeExternal || this.remoteResources.size === 0) {
       return Promise.resolve()
     }
     if (this.pcache.remoteResources) {
