@@ -57,7 +57,7 @@ const bundleExtensionConfig = {
     concatenateModules: inProduction,
     minimize: inProduction
   },
-  devtool: inProduction ? 'nosources-source-map' : 'source-map',
+  devtool: 'source-map',
   mode: inProduction ? 'production' : 'development'
 }
 
