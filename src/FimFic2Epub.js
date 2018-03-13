@@ -179,7 +179,7 @@ class FimFic2Epub extends Emitter {
     this.pcache.metadata = FimFic2Epub.fetchStoryInfo(this.storyId)
       .then((storyInfo) => {
         this.storyInfo = storyInfo
-        this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
+        this.storyInfo.uuid = 'url:' + this.storyInfo.url
         this.filename = FimFic2Epub.getFilename(this.storyInfo)
         this.storyInfo.chapters.forEach((chapter) => {
           if (chapter.date_modified > this.storyInfo.date_modified) {
