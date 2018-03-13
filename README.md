@@ -30,12 +30,12 @@ Examples
 --------
 ```
 Download with automatic filename:
-$ fimfic2epub 180690
-$ fimfic2epub https://www.fimfiction.net/story/180690/tag-test
+$ fimfic2epub --paragraphs indented --reading-ease 289663
+$ fimfic2epub https://www.fimfiction.net/story/289663/summer-island
 
-Download and save to a specified filename:
-$ fimfic2epub 180690 path/to/file.epub
-$ fimfic2epub 180690 - > path/to/file.epub
+Download and save to a specified dir/filename:
+$ fimfic2epub 289663 path/to/file.epub
+$ fimfic2epub --dir path/to/my/dir 289663 ebook_%id%.epub # %id% gets replaced by the story id
 ```
 
 
