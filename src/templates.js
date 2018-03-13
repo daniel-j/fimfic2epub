@@ -375,27 +375,27 @@ export function createTitlePage (ffc) {
         m('title', ffc.storyInfo.title)
       ]),
       m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('section', [
-        m('.title', [
+        m('header.title', [
           m('div', {className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
           m('.story_name', ffc.storyInfo.title + ' '),
           m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         // m('hr'),
-        m('.tags', [
+        m('section.tags', [
           ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
             [m('div', {className: tag.className}, tag.name), ' ']
           )
         ]),
         m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Story on Fimfiction')),
-        m('br'),
         // m('hr'),
         ffc.storyInfo.prequel ? [m('div', [
+          m('br'),
           'This story is a sequel to ',
           m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
-        ]), m('hr')] : null,
+        ]), m('hr.old')] : null,
         m('#description', tokenContent),
         m('.bottom', [
-          m('div', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
+          m('section', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
             m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()]),
             m('span', ffc.storyInfo.status)
           ]),
@@ -405,7 +405,7 @@ export function createTitlePage (ffc) {
           ffc.options.calculateReadingEase ? infoBox('Reading Ease', calcReadingEase(ffc.storyInfo.chapters).toLocaleString('en-GB')) : null
         ]),
         // m('hr'),
-        m('.tags', [
+        m('section.tags', [
           ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
             [m('div', {className: tag.className}, tag.name), ' ']
           )
