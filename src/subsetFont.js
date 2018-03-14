@@ -10,7 +10,7 @@ async function subsetFont (fontPath, glyphs, options = {}) {
   let fontdata = Buffer.from(fontPath, 'binary')
   let type = fileType(fontdata)
   if (type && type.mime === 'font/ttf') {
-    data = fontdata
+    data = fontdata.buffer
   } else {
     if (!isNode || !options.local) {
       data = await fetch(fontPath, 'arraybuffer')
