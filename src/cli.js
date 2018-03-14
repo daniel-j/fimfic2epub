@@ -32,7 +32,7 @@ if (outputStdout) {
 // use a mock DOM so we can run mithril on the server
 require('mithril/test-utils/browserMock')(global)
 
-const FimFic2Epub = require('./FimFic2Epub')
+const FimFic2Epub = require('./FimFic2Epub').default
 const fs = require('fs')
 const path = require('path')
 
