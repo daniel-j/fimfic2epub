@@ -1,6 +1,7 @@
 {
-  "presets": [
-    "node6"
-  ]
+  "presets": [['env', {
+    "targets": {
+      "node": "current"
+    }
+  }]]
 }
-

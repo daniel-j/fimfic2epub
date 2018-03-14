@@ -7,7 +7,7 @@ let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf
 const bundleExtensionConfig = {
   entry: {
     eventPage: ['./src/eventPage'],
-    fimfic2epub: ['./src/main']
+    fimfic2epub: ['regenerator-runtime/runtime', './src/main']
   },
 
   output: {
@@ -22,8 +22,13 @@ const bundleExtensionConfig = {
         loader: 'babel-loader',
         exclude: /node_modules/,
         query: {
-          sourceMaps: true,
-          presets: ['es2015']
+          presets: [['env', {
+            targets: {
+              browsers: ['chrome 50', 'firefox 47']
+            },
+            modules: false,
+            useBuiltIns: true
+          }]]
         }
       },
       {
@@ -197,19 +202,6 @@ const bundleStaticNpmModuleConfig = {
 
   module: {
     rules: [
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
-        query: {
-          sourceMaps: !inProduction,
-          presets: [['env', {
-            targets: {
-              node: '9.0.0'
-            }
-          }]]
-        }
-      },
       {
         test: /\.styl$/,
         use: ['raw-loader', 'stylus-loader']
