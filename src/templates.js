@@ -346,15 +346,6 @@ function calcWordCount (chapters) {
   }
   return count
 }
-function calcReadingEase (chapters) {
-  let avg = 0
-  for (let i = 0; i < chapters.length; i++) {
-    let ch = chapters[i]
-    avg += ch.readingEase.ease
-  }
-  avg = avg / chapters.length
-  return Math.round(avg * 100) / 100
-}
 
 export function createTitlePage (ffc) {
   const tokenContent = '%%HTML_CONTENT_' + Math.random() + '%%'
@@ -402,7 +393,7 @@ export function createTitlePage (ffc) {
           ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
           infoBox('Last Modified', prettyDate(new Date(ffc.storyInfo.date_modified * 1000))),
           infoBox('Word Count', calcWordCount(ffc.storyInfo.chapters).toLocaleString('en-GB')),
-          ffc.options.calculateReadingEase ? infoBox('Reading Ease', calcReadingEase(ffc.storyInfo.chapters).toLocaleString('en-GB')) : null
+          ffc.options.calculateReadingEase && ffc.readingEase ? infoBox('Reading Ease', (Math.round(ffc.readingEase.ease * 100) / 100).toLocaleString('en-GB')) : null
         ]),
         // m('hr'),
         m('section.tags', [

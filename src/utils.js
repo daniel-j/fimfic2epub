@@ -1,7 +1,7 @@
 
 import htmlToTextModule from 'html-to-text'
 import matchWords from 'match-words'
-import { readingLevel } from 'reading-level'
+import syllable from 'syllable'
 
 export function replaceAsync (str, re, callback) {
   // http://es5.github.io/#x15.5.4.11
@@ -72,6 +72,10 @@ export function htmlToText (html) {
   })
 }
 
+export function sleep (ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export function htmlWordCount (html) {
   let text = htmlToText(html)
 
@@ -82,8 +86,73 @@ export function htmlWordCount (html) {
   return count
 }
 
-export function readingEase (text) {
-  const result = readingLevel(text, 'full')
-  const ease = 206.835 - 1.015 * (result.words / result.sentences) - 84.6 * (result.syllables / result.words)
-  return {ease, gradeLevel: result.unrounded}
+export async function readingEase (text, wakeupInterval = Infinity, progresscb) {
+  const result = {
+    sentences: 0, words: 0, syllables: 0, grade: NaN, ease: NaN
+  }
+
+  if (!/[a-z]/i.test(text)) {
+    return null
+  }
+
+  await sleep(0)
+
+  // sentence tokenizer by Darkentor
+  const tokenSentences = text
+    .replace('\0', '')
+    .replace(/\s+/g, ' ') // Replace all whitespace (including newlines) with a single space
+    .replace(/(mr|mrs|dr|ms|prof|rev|col|cmdr|flt|lt|brgdr|hon|wng|capt|rt|revd|gen|cdre|admrl|herr|hr|frau|alderman|alhaji|brig|cdr|cik|consul|datin|dato|datuk|seri|dhr|dipl|ing|dott|sa|dra|drs|en|encik|eng|eur|exma|sra|exmo|sr|lieut|fr|fraulein|fru|graaf|gravin|grp|hajah|haji|hajim|hra|ir|lcda|lic|maj|mlle|mme|mstr|nti|sri|rva|sig|na|ra|sqn|ldr|srta|wg)\./gi, '$1')
+    .replace(/(((^|\w).*?[^\w\s,]+)(?=\s+\W*[A-Z])|:|;)/g, '$1\0')
+    .split(/\s*\0\s*/)
+
+  if (typeof progresscb === 'function') {
+    progresscb(0)
+  }
+
+  await sleep(0)
+
+  const counts = { syllables: 0, words: 0 }
+  let lastTime = Date.now()
+
+  for (let i = 0; i < tokenSentences.length; i++) {
+    let now = Date.now()
+    if (lastTime + wakeupInterval < now) {
+      lastTime = now
+      if (typeof progresscb === 'function') {
+        progresscb(i / tokenSentences.length)
+      }
+      await sleep(0)
+    }
+    const sentence = tokenSentences[i]
+    // strip all punctuation and numbers from the sentence
+    const words = sentence
+      .replace(/[^\w\s]|_/g, '')
+      .replace(/\s+/g, ' ')
+      .split(' ')
+      .filter(letter => letter)
+
+    counts.syllables += words.reduce((total, word) => total + syllable(word), 0)
+    counts.words += words.length
+  }
+
+  const { words, syllables } = counts
+  const sentences = tokenSentences.length
+  const grade = 0.39 * (words / sentences) + 11.8 * (syllables / words) - 15.59
+  const ease = 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words)
+
+  tokenSentences.length = 0
+
+  if (!ease) {
+    return null
+  }
+
+  Object.assign(result, {
+    sentences, words, syllables, grade, ease
+  })
+
+  if (typeof progresscb === 'function') {
+    progresscb(1)
+  }
+
+  return result
 }

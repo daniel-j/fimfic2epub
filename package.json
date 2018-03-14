@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.7.9",
+  "version": "1.7.11",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
   "repository": {
@@ -36,9 +36,9 @@
     "mithril-node-render": "^2.2.0",
     "node-png": "^0.4.3",
     "pretty-data": "^0.40.0",
-    "reading-level": "0.0.7",
     "request": "^2.85.0",
     "sanitize-filename": "^1.6.0",
+    "syllable": "^3.0.0",
     "twemoji": "^2.5.0",
     "zero-fill": "^2.2.3"
   },

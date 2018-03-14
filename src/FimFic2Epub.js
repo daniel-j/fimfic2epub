@@ -98,7 +98,8 @@ class FimFic2Epub extends Emitter {
       includeExternal: true,
       paragraphStyle: 'spaced',
       joinSubjects: false,
-      calculateReadingEase: false
+      calculateReadingEase: false,
+      readingEaseWakeupInterval: isNode ? 50 : 200 // lower for node, to not slow down thread
     }
 
     this.options = Object.assign(this.defaultOptions, options)
@@ -130,6 +131,7 @@ class FimFic2Epub extends Emitter {
     this.coverFilename = ''
     this.coverType = ''
     this.coverImageDimensions = {width: 0, height: 0}
+    this.readingEase = null
 
     this.hasRemoteResources = {
       titlePage: false
@@ -383,18 +385,30 @@ class FimFic2Epub extends Emitter {
           this.notesHtml[i] = html
         })
       }
-      chain = chain.then(() => {
-        if (!ch.realWordCount) {
-          ch.realWordCount = utils.htmlWordCount(chapter.content)
-        }
-        if (this.options.calculateReadingEase && !ch.readingEase) {
-          let text = utils.htmlToText(chapter.content)
-          text = text.replace(/\s+/g, ' ').trim()
-          ch.readingEase = utils.readingEase(text)
-        }
-        this.progress(0, (i + 1) / this.chapters.length, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
-      }).then(() => new Promise((resolve) => setTimeout(resolve, 20)))
+      chain = chain
+        .then(() => {
+          if (!ch.realWordCount) {
+            ch.realWordCount = utils.htmlWordCount(chapter.content)
+          }
+          this.progress(0, (i + 1) / this.chapters.length, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
+        })
+        .then(() => new Promise((resolve) => setTimeout(resolve, 0)))
     }
+
+    chain = chain.then(async () => {
+      if (this.options.calculateReadingEase && !this.readingEase) {
+        const content = this.chapters.reduce((str, ch) => {
+          return str + utils.htmlToText(ch.content) + '\n\n'
+        }, '')
+        this.progress(0, 0, 'Calculating Flesch reading ease...')
+        this.readingEase = await utils.readingEase(
+          content, this.options.readingEaseSleepInterval,
+          (progress) => {
+            this.progress(0, progress, 'Calculating Flesch reading ease ' + Math.round(progress * 100) + '%')
+          }
+        )
+      }
+    })
 
     return chain
   }
