@@ -98,7 +98,7 @@ class FimFic2Epub extends Emitter {
       includeExternal: true,
       paragraphStyle: 'spaced',
       joinSubjects: false,
-      calculateReadingEase: false,
+      calculateReadingEase: true,
       readingEaseWakeupInterval: isNode ? 50 : 200 // lower for node, to not slow down thread
     }
 

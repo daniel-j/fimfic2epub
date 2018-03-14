@@ -20,7 +20,7 @@ Features
 * Option to not add a title heading for chapters (in case the story has its own)
 * Tweak paragraph style from double-spaced to indented (similar to book typesetting, may not look good on every story)
 * Emoji, icon and webp support (webp images gets converted to png)
-* Calculation the story's Flesch reading ease (disabled by default because it's a slow process)
+* Calculate the story's Flesch reading ease
 * Customize metadata of the generated ebook, such as title, author, subjects and description
 * Command line tool with same features as the web extension
 
@@ -55,12 +55,12 @@ By default the EPUB will be saved in the current working directory with the file
     -a, --author <value>      Set the author of the story
     -c, --no-comments-link    Don't add link to online comments
     -H, --no-headings         Don't add headings to chapters
+    -r, --no-reading-ease     Don't calculate Flesch reading ease
     -e, --no-external         Don't embed external resources, such as images (breaks EPUB spec)
     -n, --no-notes            Don't include author notes
     -i, --notes-index         Create an index with all author notes at the end of the ebook
     -p, --paragraphs <style>  Select a paragraph style <spaced|indented|indentedall|both> (default: spaced)
     -j, --join-subjects       Join dc:subjects to a single value
-    -r, --reading-ease        Calculate Flesch reading ease
     -C, --cover <url>         Set cover image url
     -h, --help                output usage information
 ```
@@ -69,7 +69,7 @@ Examples
 --------
 ```
 Download with automatic filename:
-$ fimfic2epub --paragraphs indented --reading-ease 289663
+$ fimfic2epub 289663
 $ fimfic2epub https://www.fimfiction.net/story/289663/summer-island
 
 Download and save to a specified dir/filename:
