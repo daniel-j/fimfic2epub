@@ -76,7 +76,7 @@ function webpackTask (callback) {
     if (!isStandalone) {
       sequence('pack', callback)
     } else {
-      callback()
+      sequence('binaries', callback)
     }
   })
 }
