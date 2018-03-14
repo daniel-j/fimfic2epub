@@ -18,7 +18,8 @@
   "main": "dist/fimfic2epub.js",
   "files": [
     "dist/",
-    "bin/"
+    "bin/",
+    "LICENSE"
   ],
   "dependencies": {
     "commander": "^2.15.0",
