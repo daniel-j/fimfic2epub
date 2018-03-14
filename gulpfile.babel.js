@@ -27,6 +27,14 @@ const sequence = Sequence.use(gulp)
 
 // const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
+const isStandalone = process.argv.includes('--standalone')
+
+if (isStandalone) {
+  webpackConfig.shift()
+  webpackConfig.shift()
+  webpackConfig.shift()
+}
+
 let watchOpts = {
   readDelay: 500,
   verbose: true,
@@ -65,7 +73,11 @@ function webpackTask (callback) {
       cached: false,
       maxModules: 0
     }))
-    sequence('pack', callback)
+    if (!isStandalone) {
+      sequence('pack', callback)
+    } else {
+      callback()
+    }
   })
 }
 
