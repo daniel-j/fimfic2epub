@@ -14,13 +14,20 @@ const args = require('commander')
   .option('-i, --notes-index', 'Create an index with all author notes at the end of the ebook')
   .option('-p, --paragraphs <style>', 'Select a paragraph style <spaced|indented|indentedall|both>', 'spaced')
   .option('-j, --join-subjects', 'Join dc:subjects to a single value')
-  .option('-r, --reading-ease [wakeup-interval]', 'Calculate Flesch reading ease, optional thread wakeup interval in ms (default: 50)')
+  .option('-r, --reading-ease', 'Calculate Flesch reading ease')
   .option('-C, --cover <url>', 'Set cover image url')
   .parse(process.argv)
 
 if (args.args.length < 1) {
   console.error('Error: No story id/url provided')
   process.exit(1)
+}
+
+const outputStdout = args.args[1] === '-' || args.args[1] === '/dev/stdout'
+
+if (outputStdout) {
+  console.log = console.error
+  console.log('Outputting to stdout')
 }
 
 // use a mock DOM so we can run mithril on the server
@@ -41,24 +48,9 @@ const ffc = new FimFic2Epub(STORY_ID, {
   paragraphStyle: args.paragraphs,
   joinSubjects: !!args.joinSubjects,
   calculateReadingEase: !!args.readingEase,
-  readingEaseWakeupInterval: typeof args.readingEase === 'boolean' ? 50 : +args.readingEase
+  readingEaseWakeupInterval: 800
 })
 ffc.coverUrl = args.cover
-
-const outputStdout = args.args[1] === '-' || args.args[1] === '/dev/stdout'
-
-if (outputStdout) {
-  console.log = console.error
-  console.log('Outputting to stdout')
-}
-
-/*
-ffc.on('progress', (percent, status) => {
-  if (status) {
-    console.log('fimfic2epub: ' + status)
-  }
-})
-*/
 
 ffc.fetchMetadata()
 .then(() => {
