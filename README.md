@@ -1,15 +1,15 @@
 [![NPM](https://nodei.co/npm/fimfic2epub.png?compact=true)](https://www.npmjs.com/package/fimfic2epub)
 
+
 fimfic2epub
 ===========
-
-This is a tool to generate better EPUB ebooks from [fimfiction](https://fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
+This is a tool to generate better EPUB ebooks from [Fimfiction](https://fimfiction.net/) stories. It's also a Chrome/Firefox extension, replacing the default EPUB download option with this tool.
 
 [Screenshot](http://i.imgbox.com/MalEBiuC.png) of the web extension
 
+
 Features
 --------
-
 * The generated ebook is in modern EPUB3 format with fallbacks for older EPUB2 reading systems
 * Improved styling and formatting of content compared to Fimfiction's export options
 * Cover image can be changed from an image file or url
@@ -20,16 +20,17 @@ Features
 * Option to not add a title heading for chapters (in case the story has its own)
 * Tweak paragraph style from double-spaced to indented (similar to book typesetting, may not look good on every story)
 * Emoji, icon and webp support (webp images gets converted to png)
-* Calculate the story's Flesch reading ease
+* Calculate the [Flesch reading ease](https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease) value of the story
 * Customize metadata of the generated ebook, such as title, author, subjects and description
 * Command line tool with same features as the web extension
+
 
 Demo
 ----
 You can have a look at what a generated EPUB looks like [here](http://books.djazz.se/?epub=epub_content%2Fsummer_island). It was generated from the story [Summer Island](https://fimfiction.net/story/289663/summer-island).
 
 
-Usage (browser extension)
+Usage (web extension)
 -----------------
 You can download the Chome extension from [Chrome Web Store](https://chrome.google.com/webstore/detail/fimfic2epub/fiijkoniocipeemlflajmmaecfhfcand) and [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/fimfic2epub/)
 
@@ -80,11 +81,11 @@ $ fimfic2epub --dir path/to/my/dir 289663 ebook_%id%.epub # %id% gets replaced b
 
 Building
 --------
-Make sure [Node.js](https://nodejs.org) is installed. After you've cloned this repository, run `npm install` and `npm run build` to build it. This project uses [gulp](http://gulpjs.com/). Run `npm run dev` for a quicker development build. You can add `watch` to both for automatic rebuilding.
+Make sure [Node.js](https://nodejs.org) is installed. After you've cloned this repository, run `npm install` and `npm run build` to build it. This project uses [gulp](http://gulpjs.com/).
 
 
 Development
 -----------
-Make sure [gulp is installed](https://github.com/gulpjs/gulp/blob/master/docs/getting-started.md).
+When developing the code, you can run `npm run dev watch`. This will rebuild the code quickly and lint it when you save. To just lint, run `npm run dev lint` and to clean, run `npm run dev clean`. To build for production, just run `npm run build`.
 
-When working on the code and testing it in a web browser as an extension, you can run gulp in watch mode: `gulp watch`. This will lint code and build it when you save. To build, just run `gulp` or `npm run build`. To lint, run `gulp lint` and to clean, run `gulp clean`.
+To test the Chrome extension, click Load Unpacked and pick the `extension/` directory. To test the Firefox extension, go to Add-ons and Debug Add-ons. Then Load Temporary Add-on and pick the `extension.xpi` file. To reload them after a rebuild, click the Reload button in Chrome and/or Firefox.
