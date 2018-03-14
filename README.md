@@ -1,5 +1,6 @@
 [![NPM](https://nodei.co/npm/fimfic2epub.png?compact=true)](https://www.npmjs.com/package/fimfic2epub)
 
+![fimfic2epub logo](https://github.com/daniel-j/fimfic2epub/raw/master/assets/fimfic2epub-logo.png)
 
 fimfic2epub
 ===========
@@ -89,3 +90,7 @@ Development
 When developing the code, you can run `npm run dev watch`. This will rebuild the code quickly and lint it when you save. To just lint, run `npm run dev lint` and to clean, run `npm run dev clean`. To build for production, just run `npm run build`.
 
 To test the Chrome extension, click Load Unpacked and pick the `extension/` directory. To test the Firefox extension, go to Add-ons and Debug Add-ons. Then Load Temporary Add-on and pick the `extension.xpi` file. To reload them after a rebuild, click the Reload button in Chrome and/or Firefox.
+
+License
+-------
+[MIT](LICENSE)

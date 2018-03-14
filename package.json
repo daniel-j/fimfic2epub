@@ -1,8 +1,9 @@
 {
   "name": "fimfic2epub",
-  "version": "1.7.13",
+  "version": "1.7.14",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/daniel-j/fimfic2epub.git"
