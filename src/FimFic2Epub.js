@@ -402,7 +402,7 @@ class FimFic2Epub extends Emitter {
         }, '')
         this.progress(0, 0, 'Calculating Flesch reading ease...')
         this.readingEase = await utils.readingEase(
-          content, this.options.readingEaseSleepInterval,
+          content, this.options.readingEaseWakeupInterval,
           (progress) => {
             this.progress(0, progress, 'Calculating Flesch reading ease ' + Math.round(progress * 100) + '%')
           }
