@@ -390,7 +390,7 @@ class FimFic2Epub extends Emitter {
           if (!ch.realWordCount) {
             ch.realWordCount = utils.htmlWordCount(chapter.content)
           }
-          this.progress(0, (i + 1) / this.chapters.length, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
+          this.progress(0, ((i + 1) / this.chapters.length) * 0.99, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
         })
         .then(() => new Promise((resolve) => setTimeout(resolve, 0)))
     }
@@ -404,7 +404,7 @@ class FimFic2Epub extends Emitter {
         this.readingEase = await utils.readingEase(
           content, this.options.readingEaseWakeupInterval,
           (progress) => {
-            this.progress(0, progress, 'Calculating Flesch reading ease ' + Math.round(progress * 100) + '%')
+            this.progress(0, progress * 0.99, 'Calculating Flesch reading ease ' + Math.round(progress * 100) + '%')
           }
         )
       }
