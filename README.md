@@ -40,8 +40,30 @@ You can install the tool by running `npm install -g fimfic2epub`. You can then r
 
 `$ fimfic2epub <story id/url> [<optional filename>]`
 
-By default the EPUB will be saved in the current working directory with the filename `Title by Author.epub`. Run `fimfic2epub --help` to see a list of all flags.
+By default the EPUB will be saved in the current working directory with the filename `Title by Author.epub`. Run `fimfic2epub -h` to see a list of all flags.
 
+```
+  Usage: fimfic2epub [options] <story> [filename]
+
+  Tool to generate improved EPUB ebooks from Fimfiction stories
+
+  Options:
+
+    -V, --version             output the version number
+    -d, --dir <path>          Directory to store ebook in. Is prepended to filename
+    -t, --title <value>       Set the title of the story
+    -a, --author <value>      Set the author of the story
+    -c, --no-comments-link    Don't add link to online comments
+    -H, --no-headings         Don't add headings to chapters
+    -e, --no-external         Don't embed external resources, such as images (breaks EPUB spec)
+    -n, --no-notes            Don't include author notes
+    -i, --notes-index         Create an index with all author notes at the end of the ebook
+    -p, --paragraphs <style>  Select a paragraph style <spaced|indented|indentedall|both> (default: spaced)
+    -j, --join-subjects       Join dc:subjects to a single value
+    -r, --reading-ease        Calculate Flesch reading ease
+    -C, --cover <url>         Set cover image url
+    -h, --help                output usage information
+```
 
 Examples
 --------
