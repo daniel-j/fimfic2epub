@@ -14,6 +14,7 @@ import chmod from 'gulp-chmod'
 
 import jsonedit from 'gulp-json-editor'
 import zip from 'gulp-zip'
+import removeNPMAbsolutePaths from 'removeNPMAbsolutePaths'
 
 // import { execFile, exec } from 'child_process'
 
@@ -24,7 +25,7 @@ import webpackConfig from './webpack.config.babel.js'
 
 const sequence = Sequence.use(gulp)
 
-// const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 const isStandalone = process.argv.includes('--standalone')
 
@@ -60,26 +61,33 @@ function webpackTask (callback) {
     wpCompiler = webpack(webpackConfig)
   }
 
-  // run webpack compiler
-  wpCompiler.run(function (err, stats) {
-    if (err) throw new gutil.PluginError('webpack', err)
-    gutil.log('[webpack]', stats.toString({
-      colors: true,
-      hash: false,
-      version: false,
-      chunks: false,
-      timings: false,
-      modules: false,
-      chunkModules: false,
-      cached: false,
-      maxModules: 0
-    }))
-    if (!isStandalone) {
-      sequence('pack', callback)
-    } else {
-      sequence('binaries', callback)
-    }
-  })
+  let p = Promise.resolve()
+  if (inProduction) {
+    p = removeNPMAbsolutePaths('node_modules')
+  }
+
+  p.then((results) => {
+    // run webpack compiler
+    wpCompiler.run(function (err, stats) {
+      if (err) throw new gutil.PluginError('webpack', err)
+      gutil.log('[webpack]', stats.toString({
+        colors: true,
+        hash: false,
+        version: false,
+        chunks: false,
+        timings: false,
+        modules: false,
+        chunkModules: false,
+        cached: false,
+        maxModules: 0
+      }))
+      if (!isStandalone) {
+        sequence('pack', callback)
+      } else {
+        sequence('binaries', callback)
+      }
+    })
+  }).catch((err) => { throw err })
 }
 
 function convertFontAwesomeVars (contents) {
