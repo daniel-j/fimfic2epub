@@ -1,4 +1,3 @@
-/* global chrome */
 
 import JSZip from 'jszip'
 import escapeStringRegexp from 'escape-string-regexp'
@@ -10,7 +9,7 @@ import isNode from 'detect-node'
 import fileType from 'file-type'
 import isSvg from 'is-svg'
 import sizeOf from 'image-size'
-import Emitter from 'es6-event-emitter'
+import EventEmitter from 'events'
 
 import { cleanMarkup } from './cleanMarkup'
 import fetch from './fetch'
@@ -27,7 +26,7 @@ const entities = new XmlEntities()
 
 const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 
-class FimFic2Epub extends Emitter {
+class FimFic2Epub extends EventEmitter {
   static getStoryId (id) {
     if (isNaN(id)) {
       let url = URL.parse(id, false, true)
@@ -547,7 +546,7 @@ class FimFic2Epub extends Emitter {
     // let partsize = 1 / parts
     // percent = (part / parts) + percent * partsize
     try {
-      this.trigger('progress', percent, status)
+      this.emit('progress', percent, status)
     } catch (err) {
       console.error(err)
     }
@@ -608,13 +607,8 @@ class FimFic2Epub extends Emitter {
     let glyphs = [...this.usedIcons].map((name) => {
       return fontAwesomeCodes[name].charCodeAt(0)
     })
-    let fontPath
-    if (!isNode) {
-      fontPath = chrome.extension.getURL('build/fonts/fontawesome-webfont.ttf')
-    } else {
-      fontPath = require('font-awesome/fonts/fontawesome-webfont.ttf') // resolve the path, see webpack config
-    }
-    this.iconsFont = await subsetFont(fontPath, glyphs, {local: isNode})
+    let fontFile = require('font-awesome/fonts/fontawesome-webfont.ttf')
+    this.iconsFont = await subsetFont(fontFile, glyphs, {local: isNode})
   }
 
   iconsStyle () {

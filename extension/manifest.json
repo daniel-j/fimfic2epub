@@ -28,8 +28,7 @@
 	},
 
 	"web_accessible_resources": [
-		"fimfic2epub-logo.png",
-		"build/fonts/fontawesome-webfont.ttf"
+		"fimfic2epub-logo.png"
 	],
 
 	"permissions": [

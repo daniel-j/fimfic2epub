@@ -1,5 +1,4 @@
 
-import webpack from 'webpack'
 import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 
@@ -30,6 +29,10 @@ const bundleExtensionConfig = {
       {
         test: /\.styl$/,
         use: ['raw-loader', 'stylus-loader']
+      },
+      {
+        test: /\.ttf$/,
+        use: 'binary-loader'
       }
     ]
   },
@@ -50,7 +53,6 @@ const bundleExtensionConfig = {
 
   plugins: [
     // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
-    new webpack.NormalModuleReplacementPlugin(/font-awesome\/fonts\/fontawesome-webfont\.ttf/, './false')
   ],
   performance: {
     hints: false
@@ -92,6 +94,10 @@ const bundleNpmModuleConfig = {
       {
         test: /\.styl$/,
         use: ['raw-loader', 'stylus-loader']
+      },
+      {
+        test: /\.ttf$/,
+        use: 'binary-loader'
       }
     ]
   },
@@ -108,9 +114,7 @@ const bundleNpmModuleConfig = {
     __dirname: false
   },
 
-  externals: [nodeExternals({whitelist: ['es6-event-emitter', /^babel-runtime/]}), {
-    'font-awesome/fonts/fontawesome-webfont.ttf': 'require.resolve(\'font-awesome/fonts/fontawesome-webfont.ttf\')'
-  }],
+  externals: [nodeExternals({whitelist: [/^babel-runtime/, /fontawesome-webfont\.ttf/]})],
 
   plugins: [],
   performance: {
@@ -148,16 +152,12 @@ const bundleNpmBinaryConfig = {
             }
           }]]
         }
-      },
-      {
-        test: /\.styl$/,
-        use: ['raw-loader', 'stylus-loader']
       }
     ]
   },
 
   resolve: {
-    extensions: ['.js', '.json', '.styl'],
+    extensions: ['.js', '.json'],
     modules: [
       path.resolve('./src'),
       'node_modules'
@@ -170,8 +170,7 @@ const bundleNpmBinaryConfig = {
 
   externals: [nodeExternals(), {
     './FimFic2Epub': 'require(\'../dist/fimfic2epub\')',
-    '../package.json': 'require(\'../package.json\')',
-    'font-awesome/fonts/fontawesome-webfont.ttf': 'require.resolve(\'font-awesome/fonts/fontawesome-webfont.ttf\')'
+    '../package.json': 'require(\'../package.json\')'
   }],
 
   plugins: [],

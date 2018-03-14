@@ -7,13 +7,13 @@ import fileType from 'file-type'
 
 async function subsetFont (fontPath, glyphs, options = {}) {
   let data
-  if (!isNode || !options.local) {
-    data = await fetch(fontPath, 'arraybuffer')
+  let fontdata = Buffer.from(fontPath, 'binary')
+  let type = fileType(fontdata)
+  if (type && type.mime === 'font/ttf') {
+    data = fontdata
   } else {
-    let fontdata = Buffer.from(fontPath, 'binary')
-    let type = fileType(fontdata)
-    if (type && type.mime === 'font/ttf') {
-      data = fontdata
+    if (!isNode || !options.local) {
+      data = await fetch(fontPath, 'arraybuffer')
     } else {
       data = await new Promise((resolve, reject) => {
         fs.readFile(fontPath, (err, data) => {

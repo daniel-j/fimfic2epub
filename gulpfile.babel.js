@@ -7,7 +7,6 @@ import Sequence from 'run-sequence'
 import watch from 'gulp-watch'
 import lazypipe from 'lazypipe'
 import filter from 'gulp-filter'
-import merge from 'merge-stream'
 import change from 'gulp-change'
 import rename from 'gulp-rename'
 import banner from 'gulp-banner'
@@ -33,6 +32,8 @@ if (isStandalone) {
   webpackConfig.shift()
   webpackConfig.shift()
   webpackConfig.shift()
+} else {
+  webpackConfig.pop()
 }
 
 let watchOpts = {
@@ -149,9 +150,7 @@ gulp.task('watch', (done) => {
 })
 
 gulp.task('fontawesome', () => {
-  let copy = gulp.src('node_modules/font-awesome/fonts/fontawesome-webfont.ttf')
-    .pipe(gulp.dest('extension/build/fonts/'))
-  let codes = gulp.src('node_modules/font-awesome/scss/_variables.scss')
+  return gulp.src('node_modules/font-awesome/scss/_variables.scss')
     .pipe(change(convertFontAwesomeVars))
     .pipe(rename({
       basename: 'font-awesome-codes',
@@ -159,7 +158,6 @@ gulp.task('fontawesome', () => {
       dirname: ''
     }))
     .pipe(gulp.dest('build/'))
-  return merge(copy, codes)
 })
 gulp.task('pack', ['binaries'], (done) => {
   sequence(['pack:firefox', 'pack:chrome'], done)
