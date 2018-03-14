@@ -1,6 +1,5 @@
 /* global chrome */
 
-import path from 'path'
 import JSZip from 'jszip'
 import escapeStringRegexp from 'escape-string-regexp'
 import zeroFill from 'zero-fill'
@@ -613,12 +612,7 @@ class FimFic2Epub extends Emitter {
     if (!isNode) {
       fontPath = chrome.extension.getURL('build/fonts/fontawesome-webfont.ttf')
     } else {
-      // TODO: Fix better font detection
-      const fs = require('fs')
-      fontPath = path.join(__dirname, '../node_modules/', 'font-awesome/fonts/fontawesome-webfont.ttf')
-      if (!fs.existsSync(fontPath)) {
-        fontPath = path.join(__dirname, '../../', 'font-awesome/fonts/fontawesome-webfont.ttf')
-      }
+      fontPath = require('font-awesome/fonts/fontawesome-webfont.ttf') // resolve the path, see webpack config
     }
     this.iconsFont = await subsetFont(fontPath, glyphs, {local: isNode})
   }

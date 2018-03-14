@@ -8,4 +8,5 @@ extension.zip
 fimfic2epub.safariextension/
 dist/
 build/
+bin/
 *.epub

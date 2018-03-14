@@ -10,6 +10,8 @@ import filter from 'gulp-filter'
 import merge from 'merge-stream'
 import change from 'gulp-change'
 import rename from 'gulp-rename'
+import banner from 'gulp-banner'
+import chmod from 'gulp-chmod'
 
 import jsonedit from 'gulp-json-editor'
 import zip from 'gulp-zip'
@@ -57,7 +59,11 @@ function webpackTask (callback) {
       hash: false,
       version: false,
       chunks: false,
-      chunkModules: false
+      timings: false,
+      modules: false,
+      chunkModules: false,
+      cached: false,
+      maxModules: 0
     }))
     sequence('pack', callback)
   })
@@ -80,6 +86,7 @@ let lintPipe = lazypipe()
 
 // Cleanup task
 gulp.task('clean', () => del([
+  'bin/',
   'build/',
   'extension/build/',
   'dist/',
@@ -97,6 +104,13 @@ gulp.task('version', (done) => {
 
 // Main tasks
 gulp.task('webpack', ['version', 'fontawesome'], webpackTask)
+gulp.task('binaries', ['version'], () => {
+  return gulp.src(['build/fimfic2epub.js', 'build/fimfic2epub-static.js'])
+    .pipe(rename({ extname: '' }))
+    .pipe(banner('#!/usr/bin/env node\n// fimfic2epub ' + packageVersion + '\n'))
+    .pipe(chmod(0o777))
+    .pipe(gulp.dest('bin/'))
+})
 gulp.task('watch:webpack', () => {
   return watch(['src/**/*.js', 'src/**/*.styl', './package.json'], watchOpts, () => {
     return sequence('webpack')
@@ -104,10 +118,10 @@ gulp.task('watch:webpack', () => {
 })
 
 gulp.task('lint', () => {
-  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js', 'bin/fimfic2epub']).pipe(lintPipe())
+  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
-  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js', 'bin/fimfic2epub'], watchOpts, (file) => {
+  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js'], watchOpts, (file) => {
     return gulp.src(file.path).pipe(lintPipe())
   })
 })
@@ -135,7 +149,7 @@ gulp.task('fontawesome', () => {
     .pipe(gulp.dest('build/'))
   return merge(copy, codes)
 })
-gulp.task('pack', (done) => {
+gulp.task('pack', ['binaries'], (done) => {
   sequence(['pack:firefox', 'pack:chrome'], done)
 })
 gulp.task('watch:pack', () => {
