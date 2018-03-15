@@ -49,8 +49,12 @@ let webpackDefines = new webpack.DefinePlugin({
   FIMFIC2EPUB_VERSION: JSON.stringify(packageVersion)
 })
 
+// No need to bloat the build with a list of all tlds...
+let replaceTlds = new webpack.NormalModuleReplacementPlugin(/^tlds$/, '../../src/false')
+
 webpackConfig.forEach((c) => {
   c.plugins.push(webpackDefines)
+  c.plugins.push(replaceTlds)
 })
 
 let wpCompiler = webpack(webpackConfig)

@@ -1,5 +1,6 @@
 
 import htmlToTextModule from 'html-to-text'
+import urlRegex from 'url-regex'
 import matchWords from 'match-words'
 import syllable from 'syllable'
 
@@ -64,20 +65,23 @@ export function webp2png (data) {
   })
 }
 
-export function htmlToText (html) {
-  return htmlToTextModule.fromString(html, {
-    wordwrap: false,
-    ignoreImage: true,
-    ignoreHref: true
-  })
-}
-
 export function sleep (ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+export function htmlToText (html, options = {}) {
+  options = Object.assign({
+    wordwrap: false,
+    ignoreImage: true,
+    ignoreHref: true
+  }, options)
+  return htmlToTextModule.fromString(html, options)
+}
+
 export function htmlWordCount (html) {
+  html = html.replace(/<pre>.*?<\/pre>/g, '') // Ignore codeblocks
   let text = htmlToText(html)
+  text = text.replace(urlRegex(), '') // Remove urls
 
   let count = 0
   try {

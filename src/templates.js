@@ -339,12 +339,7 @@ function infoBox (heading, data) {
 }
 
 function calcWordCount (chapters) {
-  let count = 0
-  for (let i = 0; i < chapters.length; i++) {
-    let ch = chapters[i]
-    count += ch.realWordCount
-  }
-  return count
+  return chapters.reduce((count, ch) => count + ch.realWordCount, 0)
 }
 
 export function createTitlePage (ffc) {

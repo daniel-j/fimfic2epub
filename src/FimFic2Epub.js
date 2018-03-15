@@ -222,6 +222,7 @@ class FimFic2Epub extends EventEmitter {
       let p = Promise.resolve()
       let matchChapter = /<article class="chapter">[\s\S]*?<\/header>([\s\S]*?)<\/article>/g
       for (let ma, i = 0; (ma = matchChapter.exec(html)); i++) {
+        const ch = this.storyInfo.chapters[i]
         let chapterContent = ma[1]
         chapterContent = chapterContent.replace(/<footer>[\s\S]*?<\/footer>/g, '').trim()
 
@@ -237,7 +238,9 @@ class FimFic2Epub extends EventEmitter {
         }
 
         chapterContent = chapterContent.trim().replace(trimWhitespace, '')
-        let chapter = {content: chapterContent, notes: notesContent, notesFirst}
+        const chapter = {content: chapterContent, notes: notesContent, notesFirst}
+        ch.realWordCount = utils.htmlWordCount(chapter.content)
+
         p = p.then(cleanMarkup(chapter.content).then((content) => {
           chapter.content = content
         }))
@@ -253,7 +256,8 @@ class FimFic2Epub extends EventEmitter {
             this.chaptersWithNotes.push(i)
           }
           this.chapters[i] = chapter
-        }).then(() => new Promise((resolve, reject) => setTimeout(resolve, 20)))
+          return utils.sleep(0)
+        })
       }
       return p
     }).then(() => {
@@ -385,12 +389,9 @@ class FimFic2Epub extends EventEmitter {
       }
       chain = chain
         .then(() => {
-          if (!ch.realWordCount) {
-            ch.realWordCount = utils.htmlWordCount(chapter.content)
-          }
           this.progress(0, ((i + 1) / this.chapters.length) * 0.99, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
+          return utils.sleep(0)
         })
-        .then(() => new Promise((resolve) => setTimeout(resolve, 0)))
     }
 
     chain = chain.then(async () => {
