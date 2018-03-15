@@ -434,7 +434,7 @@ export function createTitlePage (ffc) {
         m('.bottom', [
           m('section', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
             m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()]),
-            m('span', ffc.storyInfo.status)
+            ffc.storyInfo.status
           ]),
           ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
           infoBox('Last Modified', prettyDate(new Date(ffc.storyInfo.date_modified * 1000))),
