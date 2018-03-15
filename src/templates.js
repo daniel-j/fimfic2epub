@@ -22,31 +22,46 @@ function prettyDate (d) {
   return d.getDate() + nth(d) + ' ' + months[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear()
 }
 
-function chapterBars (chapters, currentChapter = Infinity, highlightCurrent = false) {
+function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
   if (chapters.length === 1) return null
+  let windowSize = 50
   let wordCounts = []
   let highestWordCount = chapters.reduce((max, ch) => {
     wordCounts.push(ch.realWordCount)
     if (ch.realWordCount > max) return ch.realWordCount
     return max
   }, 0)
+  if (wordCounts.length > windowSize && currentChapter >= 0 && currentChapter < wordCounts.length) {
+    windowSize = 30
+    let start = Math.ceil(Math.max(0, currentChapter - windowSize / 2 + 1))
+    start = Math.min(start, wordCounts.length - windowSize)
+    wordCounts.splice(0, start)
+    wordCounts.length = Math.min(wordCounts.length, windowSize)
+    currentChapter -= start
+  }
   wordCounts = wordCounts.map((c) => c / highestWordCount)
-  const barWidth = 10
-  const barSpacing = 2
-  const barCount = chapters.length
+  let barWidth = 9
+  let barSpacing = 2
+  let rowSpacing = 9
+  const barCount = Math.min(wordCounts.length, windowSize)
+  const rows = Math.floor(wordCounts.length / barCount) + 1
+  const rowHeight = 30 + rowSpacing
   return m('svg.chapterbars', {
-    viewBox: '0 0 ' + barCount * (barWidth + barSpacing) + ' 30',
+    style: {height: rows * 3 + 'em'},
+    viewBox: '0 0 ' + barCount * (barWidth + barSpacing) + ' ' + rowHeight * rows,
     xmlns: NS.SVG,
     fill: 'currentColor'
   }, wordCounts.map((c, i) => {
-    const percent = Math.ceil(c * 100)
-    let opacity = 0.5
+    const x = i % barCount
+    const y = Math.floor(i / barCount)
+    const height = Math.ceil(c * (rowHeight - rowSpacing))
+    let opacity = 0.65
     if (i === currentChapter && highlightCurrent) {
-      opacity = 0.7
+      opacity = 0.85
     } else if (i > currentChapter) {
-      opacity = 0.25
+      opacity = 0.35
     }
-    return m('rect', {x: i * (barWidth + barSpacing), width: barWidth, y: (100 - percent) + '%', height: percent + '%', opacity})
+    return m('rect', {x: x * (barWidth + barSpacing), width: barWidth, y: y * rowHeight + (rowHeight - rowSpacing - height), height, opacity})
   }))
 }
 
@@ -299,7 +314,7 @@ export function createNav (ffc) {
         m('nav.invisible', {'epub:type': 'toc'}, m('ol', list)),
         m('h3', 'Contents'),
         m('ul#toc.hidden', prettyList),
-        ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, -1) : null
+        ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters) : null
       ]))
     ])
     , {strict: true}).then((navDocument) => {
