@@ -129,6 +129,7 @@ let dialog = {
     this.author = prop('')
     this.description = prop('')
     this.subjects = prop([])
+    this.typogrify = prop(ffc.options.typogrify)
     this.addCommentsLink = prop(ffc.options.addCommentsLink)
     this.includeAuthorNotes = prop(ffc.options.includeAuthorNotes)
     this.useAuthorNotesIndex = prop(ffc.options.useAuthorNotesIndex)
@@ -250,6 +251,7 @@ let dialog = {
             ], ctrl.paragraphStyle()))
           )),
           m('tr', m('td.label', ''), m('td', {colspan: 2},
+            m(checkbox, {checked: ctrl.typogrify(), onchange: m.withAttr('checked', ctrl.typogrify)}, 'Apply typographic fixes (smartypants)'),
             m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),
@@ -311,6 +313,7 @@ function createEpub (model) {
   ffc.setTitle(model.title())
   ffc.setAuthorName(model.author())
   ffc.storyInfo.short_description = model.description()
+  ffc.options.typogrify = model.typogrify()
   ffc.options.addCommentsLink = model.addCommentsLink()
   ffc.options.includeAuthorNotes = model.includeAuthorNotes()
   ffc.options.useAuthorNotesIndex = model.useAuthorNotesIndex()

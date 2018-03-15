@@ -6,6 +6,7 @@ const args = require('commander')
   .option('-d, --dir <path>', 'Directory to store ebook in. Is prepended to filename')
   .option('-t, --title <value>', 'Set the title of the story')
   .option('-a, --author <value>', 'Set the author of the story')
+  .option('-T, --no-typogrify', 'Disable typographic fixes (smartypants)')
   .option('-c, --no-comments-link', 'Don\'t add link to online comments')
   .option('-H, --no-headings', 'Don\'t add headings to chapters')
   .option('-r, --no-reading-ease', 'Don\'t calculate Flesch reading ease')
@@ -39,6 +40,7 @@ const path = require('path')
 const STORY_ID = args.args[0]
 
 const ffc = new FimFic2Epub(STORY_ID, {
+  typogrify: !!args.typogrify,
   addCommentsLink: !!args.commentsLink,
   includeAuthorNotes: !!args.notes,
   useAuthorNotesIndex: !!args.notesIndex,
