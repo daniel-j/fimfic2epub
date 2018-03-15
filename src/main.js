@@ -229,7 +229,7 @@ let dialog = {
   view (vnode) {
     let ctrl = vnode.state
     return m('.drop-down-pop-up-container', {oncreate: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', {style: {'min-width': '700px'}}, [
-      m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
+      m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB (v' + FIMFIC2EPUB_VERSION + ')', m('a.close_button', {onclick: closeDialog})),
       m('.drop-down-pop-up-content', [
         ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('table.properties', [
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'General settings'))),
@@ -322,6 +322,8 @@ function createEpub (model) {
   ffc.options.calculateReadingEase = model.calculateReadingEase()
   redraw()
 
+  chrome.storage.sync.set({ffcOptions: ffc.options, version: FIMFIC2EPUB_VERSION})
+
   chain
     .then(ffc.fetchAll.bind(ffc))
     .then(ffc.build.bind(ffc))
@@ -338,16 +340,24 @@ function createEpub (model) {
 }
 
 function openStory (id) {
-  if (!ffc) {
-    ffc = new FimFic2Epub(id)
-    ffc.on('progress', onProgress)
-  } else if (ffc.storyId !== id) {
-    ffc.off('progress', onProgress)
-    closeDialog()
-    ffc = new FimFic2Epub(id)
-    ffc.on('progress', onProgress)
-  }
-  openDialog()
+  chrome.storage.sync.get(['ffcOptions', 'version'], function (result) {
+    let options = result.ffcOptions
+    // Reset options on new version
+    if (result.version !== FIMFIC2EPUB_VERSION) {
+      options = {}
+    }
+
+    if (!ffc) {
+      ffc = new FimFic2Epub(id, options)
+      ffc.on('progress', onProgress)
+    } else if (ffc.storyId !== id) {
+      ffc.off('progress', onProgress)
+      closeDialog()
+      ffc = new FimFic2Epub(id, options)
+      ffc.on('progress', onProgress)
+    }
+    openDialog()
+  })
 }
 
 function onProgress (percent, status) {

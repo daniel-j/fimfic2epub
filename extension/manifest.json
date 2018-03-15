@@ -33,6 +33,7 @@
 
 	"permissions": [
 		"http://*/*",
-		"https://*/*"
+		"https://*/*",
+		"storage"
 	]
 }
