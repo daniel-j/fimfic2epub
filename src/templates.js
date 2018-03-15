@@ -22,8 +22,36 @@ function prettyDate (d) {
   return d.getDate() + nth(d) + ' ' + months[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear()
 }
 
-export function createChapter (ch) {
-  let {content, notes, notesFirst, title, link, linkNotes} = ch
+function chapterBars (chapters, currentChapter = Infinity, highlightCurrent = false) {
+  if (chapters.length === 1) return null
+  let wordCounts = []
+  let highestWordCount = chapters.reduce((max, ch) => {
+    wordCounts.push(ch.realWordCount)
+    if (ch.realWordCount > max) return ch.realWordCount
+    return max
+  }, 0)
+  wordCounts = wordCounts.map((c) => c / highestWordCount)
+  const barWidth = 10
+  const barSpacing = 2
+  const barCount = chapters.length
+  return m('svg.chapterbars', {
+    viewBox: '0 0 ' + barCount * (barWidth + barSpacing) + ' 30',
+    xmlns: NS.SVG,
+    fill: 'currentColor'
+  }, wordCounts.map((c, i) => {
+    const percent = Math.ceil(c * 100)
+    let opacity = 0.5
+    if (i === currentChapter && highlightCurrent) {
+      opacity = 0.7
+    } else if (i > currentChapter) {
+      opacity = 0.25
+    }
+    return m('rect', {x: i * (barWidth + barSpacing), width: barWidth, y: (100 - percent) + '%', height: percent + '%', opacity})
+  }))
+}
+
+export function createChapter (ffc, ch, isNotesChapter) {
+  let {content, notes, notesFirst, title, link, linkNotes, index} = ch
 
   let sections = [
     m.trust(content || ''),
@@ -49,14 +77,19 @@ export function createChapter (ch) {
         ]),
         m('body', {'epub:type': 'bodymatter chapter'}, m('section', [
           title ? m('.chapter-title', [
-            m('h1', title),
+            !isNotesChapter ? m('aside.info',
+              m('span', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : ''),
+              m('span', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words')
+            ) : null,
+            m('header', m('h1', title)),
             m('hr.old')
           ]) : null,
           tokenContent,
           (link || linkNotes) ? m('p.double', {style: 'text-align: center; clear: both;'},
             link ? m('a.chaptercomments', {href: link + '#comment_list'}, 'Read chapter comments online') : null,
             linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null
-          ) : null
+          ) : null,
+          !isNotesChapter && ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, index) : null
         ]))
       ])
       , {strict: true}),
@@ -263,9 +296,10 @@ export function createNav (ffc) {
         m('title', 'Contents')
       ]),
       m('body', {'epub:type': 'frontmatter toc'}, m('section', [
+        m('nav.invisible', {'epub:type': 'toc'}, m('ol', list)),
         m('h3', 'Contents'),
         m('ul#toc.hidden', prettyList),
-        m('nav.invisible', {'epub:type': 'toc'}, m('ol', list))
+        ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, -1) : null
       ]))
     ])
     , {strict: true}).then((navDocument) => {
@@ -330,16 +364,33 @@ export function createCoverPage (ffc) {
     })
 }
 
-function infoBox (heading, data) {
-  return m('.infobox', m('.wrap', [
+function infoBox (heading, data, title) {
+  return m('.infobox', {title}, m('.wrap', [
     m('span.heading', heading),
     m('br'),
     m('span.data', data)
   ]))
 }
 
-function calcWordCount (chapters) {
-  return chapters.reduce((count, ch) => count + ch.realWordCount, 0)
+function calcReadingTime (ffc, wordCount = 0) {
+  const wpm = ffc.options.wordsPerMinute
+  let time = (wordCount || ffc.totalWordCount) / wpm
+  let value = 0
+  let unit = ''
+  if (time < 1) {
+    value = Math.round(time * 60)
+    unit = 'second'
+  } else if (time < 60) {
+    value = Math.round(time)
+    unit = 'minute'
+  } else if (time < 60 * 24) {
+    value = Math.round((time / 60) * 10) / 10
+    unit = 'hour'
+  } else {
+    value = Math.round(time / 60)
+    unit = 'hour'
+  }
+  return value.toLocaleString('en-GB') + ' ' + unit + (value !== 1 ? 's' : '')
 }
 
 export function createTitlePage (ffc) {
@@ -387,7 +438,8 @@ export function createTitlePage (ffc) {
           ]),
           ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
           infoBox('Last Modified', prettyDate(new Date(ffc.storyInfo.date_modified * 1000))),
-          infoBox('Word Count', calcWordCount(ffc.storyInfo.chapters).toLocaleString('en-GB')),
+          ffc.totalWordCount ? infoBox('Word Count', ffc.totalWordCount.toLocaleString('en-GB')) : null,
+          ffc.options.wordsPerMinute ? infoBox('Time to Read', calcReadingTime(ffc), 'Estimated with ' + Math.round(ffc.options.wordsPerMinute) + ' words per minute') : null,
           ffc.options.calculateReadingEase && ffc.readingEase ? infoBox('Reading Ease', (Math.round(ffc.readingEase.ease * 100) / 100).toLocaleString('en-GB')) : null
         ]),
         // m('hr'),

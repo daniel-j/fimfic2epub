@@ -137,6 +137,8 @@ let dialog = {
     this.joinSubjects = prop(ffc.options.joinSubjects)
     this.paragraphStyle = prop(ffc.options.paragraphStyle)
     this.calculateReadingEase = prop(ffc.options.calculateReadingEase)
+    this.addChapterBars = prop(ffc.options.addChapterBars)
+    this.wordsPerMinute = prop(ffc.options.wordsPerMinute)
 
     this.onOpen = (vnode) => {
       this.el(vnode.dom)
@@ -150,7 +152,7 @@ let dialog = {
         this.description(htmlToText(ffc.storyInfo.description) || ffc.storyInfo.short_description)
         this.subjects(ffc.subjects.slice(0))
         redraw(true)
-        this.center()
+        // this.center()
         ffc.fetchChapters().then(() => {
           ffcProgress(-1)
           redraw()
@@ -216,7 +218,7 @@ let dialog = {
       let rect = this.el().firstChild.getBoundingClientRect()
       this.move(
         Math.max(document.documentElement.scrollLeft, (window.innerWidth / 2) - (rect.width / 2) + document.documentElement.scrollLeft),
-        Math.max(document.documentElement.scrollTop, (window.innerHeight / 2) - (rect.height / 2) + document.documentElement.scrollTop)
+        Math.max(document.documentElement.scrollTop, 100 + document.documentElement.scrollTop)
       )
     }
 
@@ -228,7 +230,7 @@ let dialog = {
 
   view (vnode) {
     let ctrl = vnode.state
-    return m('.drop-down-pop-up-container', {oncreate: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', {style: {'min-width': '700px'}}, [
+    return m('.drop-down-pop-up-container', {oncreate: ctrl.onOpen.bind(ctrl)}, m('.drop-down-pop-up', {style: {'min-width': '720px'}}, [
       m('h1', {onmousedown: ctrl.ondown}, m('i.fa.fa-book'), 'Export to EPUB', m('a.close_button', {onclick: closeDialog})),
       m('.drop-down-pop-up-content', [
         ctrl.isLoading() ? m('div', {style: 'text-align:center;'}, m('i.fa.fa-spin.fa-spinner', {style: 'font-size:50px; margin:20px; color:#777;'})) : m('table.properties', [
@@ -250,13 +252,18 @@ let dialog = {
             ], ctrl.paragraphStyle()))
           )),
           m('tr', m('td.label', ''), m('td', {colspan: 2},
-            m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings'),
+            m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings, with chapter word count and time to read'),
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),
             m(checkbox, {checked: ctrl.useAuthorNotesIndex(), onchange: m.withAttr('checked', ctrl.useAuthorNotesIndex), disabled: !ctrl.includeAuthorNotes()}, 'Put all notes at the end of the ebook'),
             m(checkbox, {checked: ctrl.calculateReadingEase(), onchange: m.withAttr('checked', ctrl.calculateReadingEase)}, 'Calculate Flesch reading ease'),
+            m(checkbox, {checked: ctrl.addChapterBars(), onchange: m.withAttr('checked', ctrl.addChapterBars)}, 'Show reading progress and chapter lengths as bars'),
             m(checkbox, {checked: ctrl.includeExternal(), onchange: m.withAttr('checked', ctrl.includeExternal)}, 'Download & include remote content (embed images)'),
-            m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; color: #777;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.')
+            m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; opacity: 0.6;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.')
+          )),
+          m('tr', m('td.label', 'Words per minute'), m('td', {colspan: 2},
+            m('input', {type: 'number', min: 0, step: 1, value: ctrl.wordsPerMinute(), onchange: m.withAttr('value', ctrl.wordsPerMinute), placeholder: '200 (default)', style: {width: '140px', float: 'left', marginRight: '.75rem', marginTop: '.35rem', position: 'relative', zIndex: 1}}),
+            m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; opacity: 0.6;'}, 'This is used to estimate the time it takes to read the story. Take a test to find out your reading speed.', m('br'), 'Set to 0 to disable.')
           )),
 
           m('tr', m('td.section_header', {colspan: 3}, m('b', 'Metadata customization'))),
@@ -320,6 +327,10 @@ function createEpub (model) {
   ffc.subjects = model.subjects()
   ffc.options.joinSubjects = model.joinSubjects()
   ffc.options.calculateReadingEase = model.calculateReadingEase()
+  ffc.options.addChapterBars = model.addChapterBars()
+  if (model.wordsPerMinute() === '') ffc.options.wordsPerMinute = 200
+  else ffc.options.wordsPerMinute = parseInt(model.wordsPerMinute(), 10) || 0
+  model.wordsPerMinute(ffc.options.wordsPerMinute)
   redraw()
 
   chain
