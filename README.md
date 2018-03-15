@@ -59,12 +59,14 @@ By default the EPUB will be saved in the current working directory with the file
     -a, --author <value>      Set the author of the story
     -c, --no-comments-link    Don't add link to online comments
     -H, --no-headings         Don't add headings to chapters
+    -b, --no-bars             Don't add chapter bars to show reading progress
     -r, --no-reading-ease     Don't calculate Flesch reading ease
     -e, --no-external         Don't embed external resources, such as images (breaks EPUB spec)
     -n, --no-notes            Don't include author notes
     -i, --notes-index         Create an index with all author notes at the end of the ebook
     -p, --paragraphs <style>  Select a paragraph style <spaced|indented|indentedall|both> (default: spaced)
     -j, --join-subjects       Join dc:subjects to a single value
+    -w, --wpm <number>        Words per minute. Set to 0 to disable reading time estimations (default: 200)
     -C, --cover <url>         Set cover image url
     -h, --help                output usage information
 ```

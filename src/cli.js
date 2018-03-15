@@ -9,12 +9,14 @@ const args = require('commander')
   .option('-T, --no-typogrify', 'Disable typographic fixes (smartypants)')
   .option('-c, --no-comments-link', 'Don\'t add link to online comments')
   .option('-H, --no-headings', 'Don\'t add headings to chapters')
+  .option('-b, --no-bars', 'Don\'t add chapter bars to show reading progress')
   .option('-r, --no-reading-ease', 'Don\'t calculate Flesch reading ease')
   .option('-e, --no-external', 'Don\'t embed external resources, such as images (breaks EPUB spec)')
   .option('-n, --no-notes', 'Don\'t include author notes')
   .option('-i, --notes-index', 'Create an index with all author notes at the end of the ebook')
   .option('-p, --paragraphs <style>', 'Select a paragraph style <spaced|indented|indentedall|both>', 'spaced')
   .option('-j, --join-subjects', 'Join dc:subjects to a single value')
+  .option('-w, --wpm <number>', 'Words per minute. Set to 0 to disable reading time estimations', parseInt, 200)
   .option('-C, --cover <url>', 'Set cover image url')
   .parse(process.argv)
 
@@ -50,7 +52,9 @@ const ffc = new FimFic2Epub(STORY_ID, {
   paragraphStyle: args.paragraphs,
   joinSubjects: !!args.joinSubjects,
   calculateReadingEase: !!args.readingEase,
-  readingEaseWakeupInterval: 800
+  readingEaseWakeupInterval: 800,
+  wordsPerMinute: args.wpm,
+  addChapterBars: !!args.bars
 })
 ffc.coverUrl = args.cover
 

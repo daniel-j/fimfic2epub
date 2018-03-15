@@ -99,7 +99,9 @@ class FimFic2Epub extends EventEmitter {
       paragraphStyle: 'spaced',
       joinSubjects: false,
       calculateReadingEase: true,
-      readingEaseWakeupInterval: isNode ? 50 : 200 // lower for node, to not slow down thread
+      readingEaseWakeupInterval: isNode ? 50 : 200, // lower for node, to not slow down thread
+      wordsPerMinute: 200, // 0 to disable
+      addChapterBars: true
     }
 
     this.options = Object.assign(this.defaultOptions, options)
@@ -181,7 +183,7 @@ class FimFic2Epub extends EventEmitter {
     this.pcache.metadata = FimFic2Epub.fetchStoryInfo(this.storyId)
       .then((storyInfo) => {
         this.storyInfo = storyInfo
-        this.storyInfo.uuid = 'url:' + this.storyInfo.url
+        this.storyInfo.uuid = 'urn:fimfiction:' + this.storyInfo.id
         this.filename = FimFic2Epub.getFilename(this.storyInfo)
         this.storyInfo.chapters.forEach((chapter) => {
           if (chapter.date_modified > this.storyInfo.date_modified) {
@@ -224,6 +226,7 @@ class FimFic2Epub extends EventEmitter {
       let p = Promise.resolve()
       let matchChapter = /<article class="chapter">[\s\S]*?<\/header>([\s\S]*?)<\/article>/g
       for (let ma, i = 0; (ma = matchChapter.exec(html)); i++) {
+        const ch = this.storyInfo.chapters[i]
         let chapterContent = ma[1]
         chapterContent = chapterContent.replace(/<footer>[\s\S]*?<\/footer>/g, '').trim()
 
@@ -239,7 +242,9 @@ class FimFic2Epub extends EventEmitter {
         }
 
         chapterContent = chapterContent.trim().replace(trimWhitespace, '')
-        let chapter = {content: chapterContent, notes: notesContent, notesFirst}
+        const chapter = {content: chapterContent, notes: notesContent, notesFirst}
+        ch.realWordCount = utils.htmlWordCount(chapter.content)
+
         p = p.then(cleanMarkup(chapter.content).then((content) => {
           chapter.content = content
         }))
@@ -255,10 +260,12 @@ class FimFic2Epub extends EventEmitter {
             this.chaptersWithNotes.push(i)
           }
           this.chapters[i] = chapter
-        }).then(() => new Promise((resolve, reject) => setTimeout(resolve, 20)))
+          return utils.sleep(0)
+        })
       }
       return p
     }).then(() => {
+      this.totalWordCount = this.storyInfo.chapters.reduce((count, ch) => count + ch.realWordCount, 0)
       this.pcache.chapters = null
     })
 
@@ -367,37 +374,35 @@ class FimFic2Epub extends EventEmitter {
       let chapter = this.chapters[i]
       let content = chapter.content
       if (this.options.typogrify) {
-        content = smartypantsu(content.replace(/&quot;/g, '"'), 'qde')
+        content = smartypantsu(content.replace(/&quot;|”|“/g, '"').replace(/\.\.+/g, '...'), 'qde')
       }
 
-      chain = chain.then(template.createChapter.bind(null, {
+      chain = chain.then(template.createChapter.bind(null, this, {
         title: this.options.addChapterHeadings ? ch.title : null,
         link: this.options.addCommentsLink ? ch.link : null,
         linkNotes: this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes ? 'note_' + zeroFill(3, i + 1) + '.xhtml' : null,
         content: content,
         notes: !this.options.useAuthorNotesIndex ? chapter.notes : '',
-        notesFirst: chapter.notesFirst
+        notesFirst: chapter.notesFirst,
+        index: i
       })).then((html) => {
         this.findRemoteResources('ch_' + zeroFill(3, i + 1), {chapter: i}, html)
         this.chaptersHtml[i] = html
       })
       if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes) {
-        chain = chain.then(template.createChapter.bind(null, {
+        chain = chain.then(template.createChapter.bind(null, this, {
           title: 'Author\'s Note: ' + ch.title,
           content: chapter.notes
-        })).then((html) => {
+        }, true)).then((html) => {
           this.findRemoteResources('note_' + zeroFill(3, i + 1), {note: i}, html)
           this.notesHtml[i] = html
         })
       }
       chain = chain
         .then(() => {
-          if (!ch.realWordCount) {
-            ch.realWordCount = utils.htmlWordCount(chapter.content)
-          }
           this.progress(0, ((i + 1) / this.chapters.length) * 0.99, 'Processed chapter ' + (i + 1) + ' / ' + this.chapters.length)
+          return utils.sleep(0)
         })
-        .then(() => new Promise((resolve) => setTimeout(resolve, 0)))
     }
 
     chain = chain.then(async () => {
@@ -485,6 +490,7 @@ class FimFic2Epub extends EventEmitter {
     if (this.cachedFile) {
       return Promise.resolve(this.cachedFile)
     }
+
     this.progress(0, 0, 'Compressing...')
 
     let lastPercent = -1
@@ -517,6 +523,10 @@ class FimFic2Epub extends EventEmitter {
     if (!this.zip) {
       return null
     }
+    this.progress(0, 0, 'Compressing...')
+
+    let lastPercent = -1
+
     return this.zip
       .generateNodeStream({
         type: 'nodebuffer',
@@ -524,7 +534,14 @@ class FimFic2Epub extends EventEmitter {
         mimeType: 'application/epub+zip',
         compression: 'DEFLATE',
         compressionOptions: {level: 9}
-      }, onUpdate)
+      }, (metadata) => {
+        if (onUpdate) onUpdate(metadata)
+        let currentPercent = Math.round(metadata.percent / 20) * 20
+        if (lastPercent !== currentPercent) {
+          lastPercent = currentPercent
+          this.progress(0, currentPercent / 100, 'Compressing...')
+        }
+      })
   }
 
   setTitle (title) {

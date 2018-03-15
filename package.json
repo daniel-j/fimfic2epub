@@ -42,6 +42,7 @@
     "smartypants": "0.0.5",
     "syllable": "^3.0.0",
     "twemoji": "^2.5.0",
+    "url-regex": "^4.1.1",
     "zero-fill": "^2.2.3"
   },
   "devDependencies": {
