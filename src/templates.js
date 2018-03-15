@@ -238,14 +238,14 @@ export function createNav (ffc) {
     m('li', m('a', {href: 'Text/title.xhtml'}, 'Title Page')),
     ffc.storyInfo.chapters.length > 1 || (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? m('li', m('a', {href: 'nav.xhtml'}, 'Contents')) : null
   ].concat(ffc.storyInfo.chapters.map((ch, num) =>
-    m('li', [
-      m('a.leftalign', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
+    m('li.leftalign', [
+      m('a', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
     ])
   ))
   let prettyList = ffc.storyInfo.chapters.map((ch, num) =>
-    m('.item', [
+    m('li.item', [
       m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB'))),
-      m('a.leftalign', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title),
+      m('a', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title),
       m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000))])
     ])
   )
@@ -264,7 +264,7 @@ export function createNav (ffc) {
       ]),
       m('body', {'epub:type': 'frontmatter toc'}, m('section', [
         m('h3', 'Contents'),
-        m('#toc.hidden', prettyList),
+        m('ul#toc.hidden', prettyList),
         m('nav.invisible', {'epub:type': 'toc'}, m('ol', list))
       ]))
     ])
@@ -363,8 +363,8 @@ export function createTitlePage (ffc) {
       m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('section', [
         m('header.title', [
           m('div', {className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
-          m('.story_name', ffc.storyInfo.title + ' '),
-          m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
+          m('section.story_name', ffc.storyInfo.title + ' '),
+          m('section.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         // m('hr'),
         m('section.tags', [
