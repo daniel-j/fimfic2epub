@@ -33,6 +33,7 @@ if (outputStdout) {
 // use a mock DOM so we can run mithril on the server
 require('mithril/test-utils/browserMock')(global)
 
+const htmlToText = require('./utils').htmlToText
 const FimFic2Epub = require('./FimFic2Epub').default
 const fs = require('fs')
 const path = require('path')
@@ -61,6 +62,7 @@ ffc.fetchMetadata()
   if (args.author) {
     ffc.setAuthorName(args.author)
   }
+  ffc.storyInfo.short_description = htmlToText(ffc.storyInfo.description)
 })
 .then(ffc.fetchAll.bind(ffc))
 .then(ffc.build.bind(ffc))
