@@ -263,7 +263,7 @@ let dialog = {
           m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Description'), m('td', {colspan: 2}, m('textarea', {oncreate: ({dom}) => autosize(dom), onchange: ctrl.setDescription}, ctrl.description()))),
           m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Categories'), m('td', {colspan: 2},
             m('textarea', {rows: 2, oncreate: ({dom}) => autosize(dom), onchange: ctrl.setSubjects}, ctrl.subjects().join('\n')),
-            m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories and separate with commas (for iBooks only)')
+            m(checkbox, {checked: ctrl.joinSubjects(), onchange: m.withAttr('checked', ctrl.joinSubjects)}, 'Join categories and separate with commas')
           ))
         ]),
         m('.drop-down-pop-up-footer', [
