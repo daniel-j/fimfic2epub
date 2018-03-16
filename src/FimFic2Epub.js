@@ -789,6 +789,7 @@ class FimFic2Epub extends EventEmitter {
   }
 
   replaceRemoteResources () {
+    if (this.remoteResources.size === 0) return
     if (!this.options.includeExternal) {
       this.remoteResources.forEach((r, url) => {
         if (r.originalUrl && r.where) {
