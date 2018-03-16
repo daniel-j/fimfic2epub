@@ -11,6 +11,7 @@ import isSvg from 'is-svg'
 import sizeOf from 'image-size'
 import EventEmitter from 'events'
 import typogr from 'typogr'
+import { buf as crc32 } from 'crc-32'
 
 import { cleanMarkup } from './cleanMarkup'
 import fetch from './fetch'
@@ -283,6 +284,8 @@ class FimFic2Epub extends EventEmitter {
       return Promise.resolve()
     }
 
+    let checksums = new Map()
+
     this.progress(0, 0, 'Fetching remote files...')
     this.pcache.remoteResources = new Promise((resolve, reject) => {
       let iter = this.remoteResources.entries()
@@ -326,26 +329,33 @@ class FimFic2Epub extends EventEmitter {
             }
           }
           if (info) {
-            if (info.mime === 'image/webp') {
-              data = await utils.webp2png(isNode ? data : new Uint8Array(data))
-              info = fileType(data)
+            let checksum = crc32(isNode ? data : new Uint8Array(data))
+            if (checksums.has(checksum)) {
+              let sameFile = this.remoteResources.get(checksums.get(checksum))
+              r.dest = sameFile.dest
+              r.filename = sameFile.dest
+              r.type = sameFile.type
+              r.data = sameFile.data
+            } else {
+              checksums.set(checksum, url)
+              if (info.mime === 'image/webp') {
+                data = await utils.webp2png(isNode ? data : new Uint8Array(data))
+                info = fileType(data)
+              }
+              let type = info.mime
+              r.type = type
+              let isImage = type.startsWith('image/')
+              let folder = isImage ? 'Images' : 'Misc'
+              let dest = folder + '/*.' + info.ext
+              r.dest = dest.replace('*', r.filename)
+              r.data = data
             }
-            let type = info.mime
-            r.type = type
-            let isImage = type.startsWith('image/')
-            let folder = isImage ? 'Images' : 'Misc'
-            let dest = folder + '/*.' + info.ext
-            r.dest = dest.replace('*', r.filename)
-            r.data = data
           }
           next(r)
-        }).catch((err) => { console.error(err) })
+        }).catch((err) => { console.error(err); next(r) })
       }
 
-      // concurrent downloads!
-      recursive()
-      recursive()
-      recursive()
+      // no concurrent downloads!
       recursive()
     }).then(() => {
       this.pcache.remoteResources = null
@@ -475,11 +485,14 @@ class FimFic2Epub extends EventEmitter {
       (paragraphsCss[this.options.paragraphStyle] || '')
       , 'utf8'))
 
+    let remoteDestCache = new Set()
     this.remoteResources.forEach((r) => {
-      if (r.dest) {
+      if (r.dest && !remoteDestCache.has(r.dest)) {
         this.zip.file('OEBPS/' + r.dest, r.data)
+        remoteDestCache.add(r.dest)
       }
     })
+    remoteDestCache.clear()
   }
 
   // for node, resolve a Buffer, in browser resolve a Blob
@@ -810,8 +823,8 @@ class FimFic2Epub extends EventEmitter {
       })
     } else {
       this.remoteResources.forEach((r, url) => {
-        let dest = '../' + r.dest
         if (r.dest && r.originalUrl && r.where) {
+          let dest = '../' + r.dest
           let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
           for (var i = 0; i < r.where.length; i++) {
             let w = r.where[i]
@@ -823,6 +836,8 @@ class FimFic2Epub extends EventEmitter {
               this.pages.title = this.pages.title.replace(ourl, dest)
             }
           }
+        } else {
+          console.log('bad remote', r, url)
         }
       })
     }

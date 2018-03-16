@@ -43,8 +43,10 @@ function fetchBackground (url, responseType) {
   return new Promise((resolve, reject) => {
     if (typeof chrome !== 'undefined' && chrome.runtime.sendMessage) {
       chrome.runtime.sendMessage(url, function (objurl) {
-        resolve(fetch(objurl, responseType))
-        URL.revokeObjectURL(objurl)
+        resolve(fetch(objurl, responseType).then((data) => {
+          URL.revokeObjectURL(objurl)
+          return data
+        }))
       })
     } else if (typeof safari !== 'undefined') {
       safariQueue[url] = {cb: resolve, responseType: responseType}
@@ -57,16 +59,10 @@ function fetchBackground (url, responseType) {
 
 export default function fetchRemote (url, responseType) {
   if (url.startsWith('//')) {
-    url = 'https:' + url
+    url = 'http:' + url
   }
-  if (!isNode && document.location.protocol === 'https:' && url.startsWith('http:')) {
+  if (!isNode) {
     return fetchBackground(url, responseType)
   }
-  return fetch(url, responseType).then((data) => {
-    if (!data) {
-      return fetchBackground(url, responseType)
-    } else {
-      return Promise.resolve(data)
-    }
-  })
+  return fetch(url, responseType)
 }

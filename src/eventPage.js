@@ -19,7 +19,9 @@ if (typeof safari !== 'undefined') {
   onMessage.addListener(function (request, sender, sendResponse) {
     if (typeof request === 'string') {
       fetch(request, 'blob').then((blob) => {
-        sendResponse(URL.createObjectURL(blob))
+        let ourl = URL.createObjectURL(blob)
+        console.log('Fetched', request)
+        sendResponse(ourl)
       })
       // required for async
       return true
