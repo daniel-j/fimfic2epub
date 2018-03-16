@@ -23,7 +23,7 @@ function prettyDate (d) {
 }
 
 function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
-  if (chapters.length === 1) return null
+  if (chapters.length <= 1) return null
   let windowSize = 50
   let wordCounts = []
   let highestWordCount = chapters.reduce((max, ch) => {
@@ -138,6 +138,7 @@ function sortSpineItems (items) {
 export function createOpf (ffc) {
   let remotes = []
   // let remoteCounter = 0
+  let remoteCache = new Set()
   ffc.remoteResources.forEach((r, url) => {
     // remoteCounter++
     if (!ffc.options.includeExternal) {
@@ -165,11 +166,14 @@ export function createOpf (ffc) {
     if (!r.dest) {
       return
     }
+    // only add each file once
+    if (remoteCache.has(r.dest)) return
+    remoteCache.add(r.dest)
     remotes.push(m('item', {id: r.filename, href: r.dest, 'media-type': r.type}))
   })
 
   let manifestChapters = ffc.storyInfo.chapters.map((ch, num) =>
-    m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ch.remote ? 'remote-resources' : null})
+    m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ((ch.remote ? 'remote-resources' : '') + (ffc.options.addChapterBars ? ' svg' : '')).trim() || null})
   )
   let spineChapters = ffc.storyInfo.chapters.map((ch, num) =>
     m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
@@ -211,7 +215,7 @@ export function createOpf (ffc) {
       m('manifest', [
         ffc.coverImage ? m('item', {id: 'cover', href: ffc.coverFilename, 'media-type': ffc.coverType, properties: 'cover-image'}) : null,
         m('item', {id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml'}),
-        m('item', {id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav'}),
+        m('item', {id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav' + (ffc.options.addChapterBars && ffc.storyInfo.chapters.length > 1 ? ' svg' : '')}),
         ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? m('item', {id: 'notesnav', 'href': 'notesnav.xhtml', 'media-type': 'application/xhtml+xml'}) : null,
 
         m('item', {id: 'style', href: 'Styles/style.css', 'media-type': 'text/css'}),
@@ -246,10 +250,11 @@ export function createOpf (ffc) {
 }
 
 function navPoints (list) {
+  let playOrder = 1
   let arr = []
   for (let i = 0; i < list.length; i++) {
     if (!list[i]) continue
-    arr.push(m('navPoint', {id: 'navPoint-' + (i + 1), playOrder: i + 1}, [
+    arr.push(m('navPoint', {id: 'navPoint-' + (i + 1), playOrder: playOrder++}, [
       m('navLabel', m('text', list[i][0])),
       m('content', {src: list[i][1]})
     ]))
