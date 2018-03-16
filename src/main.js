@@ -253,7 +253,7 @@ let dialog = {
             ], ctrl.paragraphStyle()))
           )),
           m('tr', m('td.label', ''), m('td', {colspan: 2},
-            m(checkbox, {checked: ctrl.typogrify(), onchange: m.withAttr('checked', ctrl.typogrify)}, 'Apply typographic fixes (smartypants)'),
+            m(checkbox, {checked: ctrl.typogrify(), onchange: m.withAttr('checked', ctrl.typogrify)}, 'Apply typographic fixes (smart quotes, dashes etc.)'),
             m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings, with chapter word count and time to read'),
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),

@@ -10,7 +10,7 @@ import fileType from 'file-type'
 import isSvg from 'is-svg'
 import sizeOf from 'image-size'
 import EventEmitter from 'events'
-import { smartypantsu } from 'smartypants'
+import typogr from 'typogr'
 
 import { cleanMarkup } from './cleanMarkup'
 import fetch from './fetch'
@@ -90,7 +90,7 @@ class FimFic2Epub extends EventEmitter {
     this.storyId = FimFic2Epub.getStoryId(storyId)
 
     this.defaultOptions = {
-      typogrify: true,
+      typogrify: false,
       addCommentsLink: true,
       includeAuthorNotes: true,
       useAuthorNotesIndex: false,
@@ -374,7 +374,7 @@ class FimFic2Epub extends EventEmitter {
       let chapter = this.chapters[i]
       let content = chapter.content
       if (this.options.typogrify) {
-        content = smartypantsu(content.replace(/&quot;|”|“/g, '"').replace(/\.\.+/g, '...'), 'qde')
+        content = typogr(content.replace(/&quot;/ig, '"').replace(/\.\.\.+/ig, '...')).chain().widont().smartypants().ord().value()
       }
 
       chain = chain.then(template.createChapter.bind(null, this, {
