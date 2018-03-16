@@ -57,7 +57,7 @@ By default the EPUB will be saved in the current working directory with the file
     -d, --dir <path>          Directory to store ebook in. Is prepended to filename
     -t, --title <value>       Set the title of the story
     -a, --author <value>      Set the author of the story
-    -T, --no-typogrify        Disable typographic fixes (smartypants)
+    -T, --typogrify           Enable typographic fixes (smart quotes, dashes, ellipsis, ordinal)
     -c, --no-comments-link    Don't add link to online comments
     -H, --no-headings         Don't add headings to chapters
     -b, --no-bars             Don't add chapter bars to show reading progress
