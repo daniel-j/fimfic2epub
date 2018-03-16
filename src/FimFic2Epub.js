@@ -384,7 +384,7 @@ class FimFic2Epub extends EventEmitter {
       let chapter = this.chapters[i]
       let content = chapter.content
       if (this.options.typogrify) {
-        content = typogr(content.replace(/&quot;/ig, '"').replace(/\.\.\.+/ig, '...')).chain().widont().smartypants().ord().value()
+        content = typogr(content.replace(/&quot;/ig, '"').replace(/\.\.\.+/ig, '...')).chain().widont().smartypants().ord().value().replace(/&nbsp;/ig, '&#160;')
       }
 
       chain = chain.then(template.createChapter.bind(null, this, {
