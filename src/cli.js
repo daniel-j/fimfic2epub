@@ -36,7 +36,7 @@ if (outputStdout) {
 require('mithril/test-utils/browserMock')(global)
 
 const htmlToText = require('./utils').htmlToText
-const FimFic2Epub = require('./FimFic2Epub').default
+const FimFic2Epub = require('./FimFic2Epub')
 const fs = require('fs')
 const path = require('path')
 

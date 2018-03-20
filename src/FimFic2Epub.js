@@ -844,4 +844,4 @@ class FimFic2Epub extends EventEmitter {
   }
 }
 
-export default FimFic2Epub
+module.exports = FimFic2Epub
