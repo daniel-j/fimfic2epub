@@ -203,6 +203,19 @@ const bundleStaticNpmModuleConfig = {
   module: {
     rules: [
       {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        exclude: /node_modules/,
+        query: {
+          sourceMaps: !inProduction,
+          presets: [['env', {
+            targets: {
+              node: 'current'
+            }
+          }]]
+        }
+      },
+      {
         test: /\.styl$/,
         use: ['raw-loader', 'stylus-loader']
       },
