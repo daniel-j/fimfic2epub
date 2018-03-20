@@ -95,19 +95,20 @@ export async function readingEase (text, wakeupInterval = Infinity, progresscb) 
     sentences: 0, words: 0, syllables: 0, grade: NaN, ease: NaN
   }
 
+  // sentence tokenizer by Darkentor
+  const tokenSentences = text
+    .replace('\0', '')
+    .replace(/\s+/g, ' ') // Replace all whitespace (including newlines) with a single space
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip diacritics since JS's \w group and explicit [a-z]|[A-Z] don't account for them
+    .replace(/(mr|mrs|dr|ms|prof|rev|col|cmdr|flt|lt|brgdr|hon|wng|capt|rt|revd|gen|cdre|admrl|herr|hr|frau|alderman|alhaji|brig|cdr|cik|consul|datin|dato|datuk|seri|dhr|dipl|ing|dott|sa|dra|drs|en|encik|eng|eur|exma|sra|exmo|sr|lieut|fr|fraulein|fru|graaf|gravin|grp|hajah|haji|hajim|hra|ir|lcda|lic|maj|mlle|mme|mstr|nti|sri|rva|sig|na|ra|sqn|ldr|srta|wg|co|esq|inc|iou|ltd|mdlle|messers|messrs|mlles|mm|mmes|mt|p\.s|pvt|st|viz)\./gi, '$1')
+    .replace(/(((^|\w).*?[^\w\s,]+)(?=\s+\W*[A-Z])|:|;)/g, '$1\0')
+    .split(/\s*\0\s*/)
+
   if (!/[a-z]/i.test(text)) {
     return null
   }
 
   await sleep(0)
-
-  // sentence tokenizer by Darkentor
-  const tokenSentences = text
-    .replace('\0', '')
-    .replace(/\s+/g, ' ') // Replace all whitespace (including newlines) with a single space
-    .replace(/(mr|mrs|dr|ms|prof|rev|col|cmdr|flt|lt|brgdr|hon|wng|capt|rt|revd|gen|cdre|admrl|herr|hr|frau|alderman|alhaji|brig|cdr|cik|consul|datin|dato|datuk|seri|dhr|dipl|ing|dott|sa|dra|drs|en|encik|eng|eur|exma|sra|exmo|sr|lieut|fr|fraulein|fru|graaf|gravin|grp|hajah|haji|hajim|hra|ir|lcda|lic|maj|mlle|mme|mstr|nti|sri|rva|sig|na|ra|sqn|ldr|srta|wg)\./gi, '$1')
-    .replace(/(((^|\w).*?[^\w\s,]+)(?=\s+\W*[A-Z])|:|;)/g, '$1\0')
-    .split(/\s*\0\s*/)
 
   if (typeof progresscb === 'function') {
     progresscb(0)
