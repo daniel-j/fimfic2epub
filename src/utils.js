@@ -3,6 +3,8 @@ import htmlToTextModule from 'html-to-text'
 import urlRegex from 'url-regex'
 import matchWords from 'match-words'
 import syllable from 'syllable'
+import typogr from 'typogr'
+import { unicode } from './constants'
 
 export function replaceAsync (str, re, callback) {
   // http://es5.github.io/#x15.5.4.11
@@ -160,4 +162,146 @@ export async function readingEase (text, wakeupInterval = Infinity, progresscb) 
   }
 
   return result
+}
+
+export function typogrify (content) {
+  content = typogr(content.replace(/&quot;/ig, '"').replace(/\.\.\.+/ig, '...')).chain().smartypants().ord().value()
+  content = content.replace(/&nbsp;/ig, unicode.NO_BREAK_SPACE) // non-breaking space
+  content = content.replace(/&#8217;/ig, '’').replace(/&#8216;/ig, '‘') // curly single quotation marks
+  content = content.replace(/&#8220;/ig, '“').replace(/&#8221;/ig, '”') // curly double quotation marks
+  content = content.replace(/&#8230;/ig, '…') // ellipsis
+  content = content.replace(/&#8211;/ig, '–').replace(/&#8212;/ig, '—') // en and em dash
+
+  /*
+   * The following is from Standard Ebooks’ typogrify
+   * https://github.com/standardebooks/tools/blob/master/typogrify
+   */
+
+  // Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
+  // content = content.replace(/—”([a-z])/ig, '—“$1')
+  // content = content.replace(/—’([a-z])/ig, '—‘$1')
+  // content = content.replace(/-“<\/p>/ig, '—”</p>')
+  content = content.replace(/[‘’]”<\/p>/ig, '’' + unicode.HAIR_SPACE + '”</p>')
+
+  let inSkippedTag = false
+  let closeMatch
+  const reSkipTags = /<(\/)?(style|pre|code|kbd|script|math|title)[^>]*>/i
+
+  content = typogr.tokenize(content).map(({type, txt}) => {
+    if (type === 'tag') {
+      closeMatch = reSkipTags.exec(txt)
+      if (closeMatch && closeMatch[1] === undefined) {
+        inSkippedTag = true
+      } else {
+        inSkippedTag = false
+      }
+    } else if (!inSkippedTag) {
+      // Remove spaces between en and em dashes
+      // Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
+      txt = txt.replace(/([^.\s])\s*([–—])\s*/g, '$1$2')
+
+      // First, remove stray word joiners
+      txt = txt.replace(new RegExp(unicode.WORD_JOINER, 'g'), '')
+
+      // Some older texts use the ,— construct; remove that archaichism
+      txt = txt.replace(/,—/g, '—')
+
+      // Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
+      // txt = txt.replace(new RegExp('([^\\s' + unicode.WORD_JOINER + unicode.NO_BREAK_SPACE + unicode.HAIR_SPACE + '])([—⸻])', 'ig'), '$1' + unicode.WORD_JOINER + '$2')
+
+      // Add en dashes between numbers
+      txt = txt.replace(/([0-9]+)-([0-9]+)/g, '$1–$2')
+
+      // Add a word joiner on both sides of en dashes
+      txt = txt.replace(new RegExp(unicode.WORD_JOINER + '?–' + unicode.WORD_JOINER + '?', 'g'), unicode.WORD_JOINER + '–' + unicode.WORD_JOINER)
+
+      // Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
+      txt = txt.replace(/\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+/g, '$1.' + unicode.NO_BREAK_SPACE)
+      txt = txt.replace(/\bNo\.\s+([0-9]+)/g, 'No.' + unicode.NO_BREAK_SPACE + '$1')
+
+      // Fix common abbreviatons
+      txt = txt.replace(/(\s)‘([an])’(\s)/ig, '$1’$2’$3')
+
+      // Years
+      // txt = txt.replace(/‘([0-9]{2,}[^a-zA-Z0-9’])/ig, '’$1')
+
+      txt = txt.replace(/‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on)\b/g, '’$1')
+
+      // txt = txt.replace(/\b‘e\b/g, '’e')
+      // txt = txt.replace(/\b‘([Ee])r\b/g, '’$1r')
+      txt = txt.replace(/\b‘([Ee])re\b/g, '’$1re')
+      // txt = txt.replace(/\b‘([Aa])ppen\b/g, '’$1ppen')
+      txt = txt.replace(/\b‘([Aa])ven\b/g, '’$1ven') // 'aven't
+
+      // nth (as in nth degree)
+      txt = txt.replace(/\bn-?th\b/g, '<i>n</i>th')
+
+      // Remove double spaces that use NO_BREAK_SPACE for spacing
+      txt = txt.replace(new RegExp(unicode.NO_BREAK_SPACE + '[' + unicode.NO_BREAK_SPACE + ' ]+', 'g'), ' ')
+      txt = txt.replace(new RegExp(' [' + unicode.NO_BREAK_SPACE + ' ]+', 'g'), ' ')
+
+      // Put spacing next to close quotes
+      txt = txt.replace(new RegExp('“[\\s' + unicode.NO_BREAK_SPACE + ']*‘', 'ig'), '“' + unicode.HAIR_SPACE + '‘')
+      txt = txt.replace(new RegExp('’[\\s' + unicode.NO_BREAK_SPACE + ']*”', 'ig'), '’' + unicode.HAIR_SPACE + '”')
+      txt = txt.replace(new RegExp('“[\\s' + unicode.NO_BREAK_SPACE + ']*’', 'ig'), '“' + unicode.HAIR_SPACE + '’')
+      txt = txt.replace(new RegExp('‘[\\s' + unicode.NO_BREAK_SPACE + ']*“', 'ig'), '‘' + unicode.HAIR_SPACE + '“')
+
+      // We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
+      txt = txt.replace(new RegExp('”[\\s' + unicode.NO_BREAK_SPACE + ']*’([^a-zA-Z])', 'ig'), '”' + unicode.HAIR_SPACE + '’$1')
+
+      // Fix ellipses spacing
+      txt = txt.replace(/\s*\.\s*\.\s*\.\s*/ig, '…')
+      txt = txt.replace(new RegExp('[\\s' + unicode.NO_BREAK_SPACE + ']?…[\\s' + unicode.NO_BREAK_SPACE + ']?\\.', 'ig'), '.' + unicode.HAIR_SPACE + '…')
+      txt = txt.replace(new RegExp('[\\s' + unicode.NO_BREAK_SPACE + ']?…[\\s' + unicode.NO_BREAK_SPACE + ']?', 'ig'), unicode.HAIR_SPACE + '… ')
+
+      // Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
+      // txt = txt.replace(/([0-9])\s+([a-z]{1,3}\.)/ig, '$1' + unicode.NO_BREAK_SPACE + '$2')
+
+      // Add non-breaking spaces between Arabic numbers and AM/PM
+      // txt = txt.replace(/([0-9])\s+([ap])\.m\./ig, '$1' + unicode.NO_BREAK_SPACE + '$2.m.')
+
+      // Fractions
+      // txt = txt.replace(/1\/4/g, '¼')
+      // txt = txt.replace(/1\/2/g, '½')
+      // txt = txt.replace(/3\/4/g, '¾')
+      // txt = txt.replace(/1\/3/g, '⅓')
+      // txt = txt.replace(/2\/3/g, '⅔')
+      // txt = txt.replace(/1\/5/g, '⅕')
+      // txt = txt.replace(/2\/5/g, '⅖')
+      // txt = txt.replace(/3\/5/g, '⅗')
+      // txt = txt.replace(/4\/5/g, '⅘')
+      // txt = txt.replace(/1\/6/g, '⅙')
+      // txt = txt.replace(/5\/6/g, '⅚')
+      // txt = txt.replace(/1\/8/g, '⅛')
+      // txt = txt.replace(/3\/8/g, '⅜')
+      // txt = txt.replace(/5\/8/g, '⅝')
+      // txt = txt.replace(/7\/8/g, '⅞')
+
+      // Remove spaces between whole numbers and fractions
+      // txt = txt.replace(/([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, '$1$2')
+
+      // Use the Unicode Minus glyph (U+2212) for negative numbers
+      // txt = txt.replace(/([\s])-([0-9,]+)/g, '$1−$2')
+    }
+    return txt
+  }).join('')
+
+  // content = content.replace(new RegExp('<p([^>]*?)>' + unicode.HAIR_SPACE + '…', 'ig'), '<p$1>…')
+
+  // Remove spaces between opening tags and ellipses
+  // content = content.replace(new RegExp('(<[a-z0-9]+[^<]+?>)[\\s' + unicode.NO_BREAK_SPACE + ']+?…', 'ig'), '$1…')
+
+  // Remove spaces between closing tags and ellipses
+  // content = content.replace(new RegExp('…[\\s' + unicode.NO_BREAK_SPACE + ']?(</[a-z0-9]+>)', 'ig'), '…$1')
+  // content = content.replace(new RegExp('…[\\s' + unicode.NO_BREAK_SPACE + ']+([\\)”’])', 'ig'), '…$1')
+  // content = content.replace(new RegExp('([\\(“‘])[\\s' + unicode.NO_BREAK_SPACE + ']+…', 'ig'), '$1…')
+  // content = content.replace(new RegExp('…[\\s' + unicode.NO_BREAK_SPACE + ']?([\\!\\?\\.\\;\\,])', 'ig'), '…' + unicode.HAIR_SPACE + '$1')
+  // content = content.replace(new RegExp('([\\!\\?\\.\\;”’])[\\s' + unicode.NO_BREAK_SPACE + ']?…', 'ig'), '$1' + unicode.HAIR_SPACE + '…')
+  // content = content.replace(new RegExp('\\,[\\s' + unicode.NO_BREAK_SPACE + ']?…', 'ig'), ',' + unicode.HAIR_SPACE + '…')
+
+  content = content.replace(new RegExp(unicode.NO_BREAK_SPACE, 'g'), '[NBSP &#160;]')
+  content = content.replace(new RegExp(unicode.HAIR_SPACE, 'g'), '[HAIR SPACE &#8202;]')
+  content = content.replace(new RegExp(unicode.WORD_JOINER, 'g'), '[WORD JOINER]')
+
+  return content
 }

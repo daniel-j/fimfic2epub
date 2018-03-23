@@ -28,4 +28,13 @@ export const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
   </rootfiles>
 </container>
 `
+
+export const unicode = {
+  NO_BREAK_SPACE: '\u00a0',
+  WORD_JOINER: '\u2060',
+  HAIR_SPACE: '\u200a',
+  ZERO_WIDTH_SPACE: '\ufeff',
+  SHY_HYPHEN: '\u00ad'
+}
+
 export const youtubeKey = 'AIzaSyCF1taix0lTr7-e_XBZazIXfAr8IvxTJhA'

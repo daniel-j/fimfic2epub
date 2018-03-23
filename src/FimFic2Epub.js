@@ -10,7 +10,6 @@ import fileType from 'file-type'
 import isSvg from 'is-svg'
 import sizeOf from 'image-size'
 import EventEmitter from 'events'
-import typogr from 'typogr'
 import { buf as crc32 } from 'crc-32'
 
 import { cleanMarkup } from './cleanMarkup'
@@ -383,8 +382,9 @@ class FimFic2Epub extends EventEmitter {
       let ch = this.storyInfo.chapters[i]
       let chapter = this.chapters[i]
       let content = chapter.content
+
       if (this.options.typogrify) {
-        content = typogr(content.replace(/&quot;/ig, '"').replace(/\.\.\.+/ig, '...')).chain().widont().smartypants().ord().value().replace(/&nbsp;/ig, '&#160;')
+        content = utils.typogrify(content)
       }
 
       chain = chain.then(template.createChapter.bind(null, this, {
