@@ -53,6 +53,24 @@ em em {
   font-style: normal;
 }
 
+.smcp {
+  font-variant: small-caps;
+}
+@supports not (font-variant-caps: small-caps) {
+  .smcp {
+    font-variant: normal;
+    -webkit-font-feature-settings: 'smcp', 'onum';
+    font-feature-settings: 'smcp', 'onum';
+  }
+}
+@supports (font-variant-caps: small-caps) {
+  .smcp {
+    font-variant: normal;
+    font-variant-caps: small-caps;
+    font-variant-numeric: oldstyle-nums;
+  }
+}
+
 .chapter-title {
   padding-top: 0.5em;
   margin-bottom: 1.5em;

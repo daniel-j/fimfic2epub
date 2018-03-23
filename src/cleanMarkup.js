@@ -18,18 +18,19 @@ export async function cleanMarkup (html) {
   html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
 
   // replace HTML entities with decimal entities
-  html = html.replace(/\xA0/g, '&#160;')
-  html = html.replace(/&nbsp;/g, '&#160;')
-  html = html.replace(/&emsp;/g, '&#8195;')
+  html = html.replace(/\xA0/ig, '&#160;')
+  html = html.replace(/&nbsp;/ig, '&#160;')
+  html = html.replace(/&emsp;/ig, '&#8195;')
 
   // fix some tags
-  html = html.replace(/<u>/g, '<span style="text-decoration: underline">')
-  html = html.replace(/<\/u>/g, '</span>')
-  html = html.replace(/<s>/g, '<span style="text-decoration: line-through">')
-  html = html.replace(/<\/s>/g, '</span>')
+  html = html.replace(/<u>/ig, '<span style="text-decoration: underline">')
+  html = html.replace(/<\/u>/ig, '</span>')
+  html = html.replace(/<s>/ig, '<span style="text-decoration: line-through">')
+  html = html.replace(/<\/s>/ig, '</span>')
+  html = html.replace(/<span style="font-variant-caps:small-caps">/ig, '<span class="smcp">')
 
-  html = html.replace(/<p>\s*/g, '<p>')
-  html = html.replace(/\s*<\/p>/g, '</p>')
+  html = html.replace(/<p>\s*/ig, '<p>')
+  html = html.replace(/\s*<\/p>/ig, '</p>')
 
   // html = fixParagraphIndent(html)
 
