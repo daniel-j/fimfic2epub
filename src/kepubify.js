@@ -45,7 +45,7 @@ function textToSpans (node, text, state) {
   for (let i = 0; i < tokenSentences.length; i++) {
     let s = tokenSentences[i]
     if (s.trim().length === 0) {
-      if (i-1 >= 0) tokenSentences[i-1] += s
+      if (i - 1 >= 0) tokenSentences[i - 1] += s
       tokenSentences.splice(i, 1)
       i--
     }

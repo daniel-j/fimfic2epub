@@ -263,7 +263,7 @@ let dialog = {
             m(checkbox, {checked: ctrl.addChapterBars(), onchange: m.withAttr('checked', ctrl.addChapterBars)}, 'Show reading progress and chapter lengths as bars'),
             m(checkbox, {checked: ctrl.includeExternal(), onchange: m.withAttr('checked', ctrl.includeExternal)}, 'Download & include remote content (embed images)'),
             m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; opacity: 0.6;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.'),
-            m(checkbox, {checked: ctrl.kepubify(), onchange: m.withAttr('checked', ctrl.kepubify)}, 'Export as Kobo EPUB, this adds some Kobo-specific div/span tags.'),
+            m(checkbox, {checked: ctrl.kepubify(), onchange: m.withAttr('checked', ctrl.kepubify)}, 'Export as Kobo EPUB, this adds some Kobo-specific div/span tags.')
           )),
           m('tr', m('td.label', 'Words per minute'), m('td', {colspan: 2},
             m('input', {type: 'number', min: 0, step: 1, value: ctrl.wordsPerMinute(), onchange: m.withAttr('value', ctrl.wordsPerMinute), placeholder: '200 (default)', style: {width: '140px', float: 'left', marginRight: '.75rem', marginTop: '.35rem', position: 'relative', zIndex: 1}}),
