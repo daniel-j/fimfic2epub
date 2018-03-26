@@ -93,8 +93,8 @@ export function createChapter (ffc, ch, isNotesChapter) {
         m('body', {'epub:type': 'bodymatter chapter'}, m('section', [
           title ? m('.chapter-title', [
             !isNotesChapter ? m('aside.info',
-              m('span', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : ''),
-              m('span', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words')
+              m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : ''),
+              m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words')
             ) : null,
             m('header', m('h1', title)),
             m('hr.old')
@@ -305,7 +305,7 @@ export function createNav (ffc) {
   )
   if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
     list.push(m('li', m('a', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
-    prettyList.push(m('.item.double', m('a.leftalign', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
+    prettyList.push(m('li.item.double', m('a', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
   }
 
   return render(
@@ -454,7 +454,7 @@ export function createTitlePage (ffc) {
         m('#description', tokenContent),
         m('.bottom', [
           m('section', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
-            m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()]),
+            m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()], ' '),
             ffc.storyInfo.status
           ]),
           ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
