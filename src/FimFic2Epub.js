@@ -245,11 +245,14 @@ class FimFic2Epub extends EventEmitter {
         const chapter = {content: chapterContent, notes: notesContent, notesFirst}
         ch.realWordCount = utils.htmlWordCount(chapter.content)
 
-        p = p.then(cleanMarkup(chapter.content).then((content) => {
+        p = p.then(() => cleanMarkup(chapter.content).then((content) => {
           chapter.content = content
         }))
-        if (notesContent) {
-          p = p.then(cleanMarkup(chapter.notes).then((notes) => {
+        if (chapter.notes) {
+          p = p.then(() => cleanMarkup(notesContent).then((notes) => {
+            if (!notes) {
+              console.log('error notes:', i, notesContent)
+            }
             chapter.notes = notes
           }))
         }

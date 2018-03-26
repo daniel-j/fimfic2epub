@@ -62,13 +62,15 @@ export async function cleanMarkup (html) {
     return head + url + tail
   })
 
-  let cache = new Map()
+  const cache = new Map()
+  const query = new Map()
   let completeCount = 0
 
   let matchYouTube = /<p><a class="embed" href="https:\/\/www\.youtube\.com\/watch\?v=(.*?)">.*?<\/a><\/p>/g
   for (let ma; (ma = matchYouTube.exec(html));) {
-    let youtubeId = ma[1]
+    let youtubeId = ma[1].match(/^[^&]+/)[0]
     cache.set(youtubeId, null)
+    query.set(entities.decode(ma[1]), youtubeId)
   }
 
   let matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
@@ -99,24 +101,26 @@ export async function cleanMarkup (html) {
       })
       if (completeCount === cache.size || data.length === 0) {
         html = await replaceAsync(html, matchYouTube, replaceYouTube)
-        return html
       }
+      return html
     })
   }
 
-  function replaceYouTube (match, id) {
-    let youtubeId = id
+  function replaceYouTube (match, queryString) {
+    queryString = entities.decode(queryString)
+    let youtubeId = query.get(queryString)
     let thumbnail = 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
-    let youtubeUrl = 'https://youtube.com/watch?v=' + youtubeId
+    let youtubeUrl = 'https://youtube.com/watch?v=' + queryString
     let title = 'Youtube Video'
     let caption = ''
     let data = cache.get(youtubeId)
+
     if (data) {
       thumbnail = (data.thumbnails.standard || data.thumbnails.high || data.thumbnails.medium || data.thumbnails.default).url
       title = data.title
       caption = data.title + ' on YouTube'
     } else {
-      return Promise.resolve('')
+      return Promise.resolve(match)
     }
     return render(m('figure.youtube', [
       m('a', {href: youtubeUrl, rel: 'nofollow'},
