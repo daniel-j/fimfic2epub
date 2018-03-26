@@ -4,7 +4,7 @@
 import FimFic2Epub from './FimFic2Epub'
 import m from 'mithril'
 import prop from 'mithril/stream'
-import saveAs from 'file-saver'
+import { saveAs } from 'file-saver'
 import autosize from 'autosize'
 import { htmlToText } from './utils'
 
