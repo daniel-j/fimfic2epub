@@ -439,11 +439,9 @@ export function createTitlePage (ffc) {
           m('section.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         // m('hr'),
-        m('section.tags', [
-          ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
-            [m('div', {className: tag.className}, tag.name), ' ']
-          )
-        ]),
+        m('section.tags', ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
+          [m('span.tagbox', m('span', {className: tag.className}, tag.name))]
+        )),
         m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Story on Fimfiction')),
         // m('hr'),
         ffc.storyInfo.prequel ? [m('div', [
@@ -464,11 +462,9 @@ export function createTitlePage (ffc) {
           ffc.options.calculateReadingEase && ffc.readingEase ? infoBox('Reading Ease', (Math.round(ffc.readingEase.ease * 100) / 100).toLocaleString('en-GB')) : null
         ]),
         // m('hr'),
-        m('section.tags', [
-          ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
-            [m('div', {className: tag.className}, tag.name), ' ']
-          )
-        ])
+        m('section.tags', ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
+          [m('span.tagbox', m('span', {className: tag.className}, tag.name))]
+        ))
       ]))
     ])
     , {strict: true}).then((titlePage) => {

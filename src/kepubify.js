@@ -55,7 +55,7 @@ function textToSpans (node, text, state) {
     const span = createSpan(state.paragraph, state.segment++)
     span.text = sentence
     return span
-  }).filter(el => el)
+  })
 }
 
 function addSpansToNode (node, parent, state) {
