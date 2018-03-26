@@ -25,6 +25,7 @@
     "commander": "^2.15.1",
     "crc-32": "^1.2.0",
     "detect-node": "^2.0.3",
+    "elementtree": "^0.1.7",
     "escape-string-regexp": "^1.0.5",
     "file-type": "^7.2.0",
     "fonteditor-core": "^1.0.2",
