@@ -18,6 +18,7 @@ import fetchRemote from './fetchRemote'
 import * as template from './templates'
 import { styleCss, coverstyleCss, titlestyleCss, iconsCss, navstyleCss, paragraphsCss } from './styles'
 import * as utils from './utils'
+import kepubify from './kepubify'
 import subsetFont from './subsetFont'
 import fontAwesomeCodes from '../build/font-awesome-codes.json'
 
@@ -97,6 +98,7 @@ class FimFic2Epub extends EventEmitter {
       addChapterHeadings: true,
       includeExternal: true,
       paragraphStyle: 'spaced',
+      kepubify: false,
       joinSubjects: false,
       calculateReadingEase: true,
       readingEaseWakeupInterval: isNode ? 50 : 200, // lower for node, to not slow down thread
@@ -374,6 +376,13 @@ class FimFic2Epub extends EventEmitter {
     if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && this.hasAuthorNotes) {
       this.pages.notesnav = await template.createNotesNav(this)
     }
+    if (this.options.kepubify) {
+      this.pages.nav = kepubify(this.pages.nav)
+      this.pages.title = kepubify(this.pages.title)
+      if (this.pages.notesnav) {
+        this.pages.notesnav = kepubify(this.pages.notesnav)
+      }
+    }
   }
 
   buildChapters () {
@@ -400,6 +409,9 @@ class FimFic2Epub extends EventEmitter {
         index: i
       })).then((html) => {
         this.findRemoteResources('ch_' + zeroFill(3, i + 1), {chapter: i}, html)
+        if (this.options.kepubify) {
+          html = kepubify(html)
+        }
         this.chaptersHtml[i] = html
       })
       if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes) {
@@ -409,6 +421,9 @@ class FimFic2Epub extends EventEmitter {
           index: i
         }, true)).then((html) => {
           this.findRemoteResources('note_' + zeroFill(3, i + 1), {note: i}, html)
+          if (this.options.kepubify) {
+            html = kepubify(html)
+          }
           this.notesHtml[i] = html
         })
       }

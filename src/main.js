@@ -135,6 +135,7 @@ let dialog = {
     this.useAuthorNotesIndex = prop(ffc.options.useAuthorNotesIndex)
     this.addChapterHeadings = prop(ffc.options.addChapterHeadings)
     this.includeExternal = prop(ffc.options.includeExternal)
+    this.kepubify = prop(ffc.options.kepubify)
     this.joinSubjects = prop(ffc.options.joinSubjects)
     this.paragraphStyle = prop(ffc.options.paragraphStyle)
     this.calculateReadingEase = prop(ffc.options.calculateReadingEase)
@@ -261,7 +262,8 @@ let dialog = {
             m(checkbox, {checked: ctrl.calculateReadingEase(), onchange: m.withAttr('checked', ctrl.calculateReadingEase)}, 'Calculate Flesch reading ease'),
             m(checkbox, {checked: ctrl.addChapterBars(), onchange: m.withAttr('checked', ctrl.addChapterBars)}, 'Show reading progress and chapter lengths as bars'),
             m(checkbox, {checked: ctrl.includeExternal(), onchange: m.withAttr('checked', ctrl.includeExternal)}, 'Download & include remote content (embed images)'),
-            m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; opacity: 0.6;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.')
+            m('div', {style: 'font-size: 0.9em; line-height: 1em; margin-top: 4px; margin-bottom: 6px; opacity: 0.6;'}, 'Note: Disabling this creates invalid EPUBs and requires internet access to see remote content. Only cover image will be embedded.'),
+            m(checkbox, {checked: ctrl.kepubify(), onchange: m.withAttr('checked', ctrl.kepubify)}, 'Export as Kobo EPUB, this adds some Kobo-specific div/span tags.'),
           )),
           m('tr', m('td.label', 'Words per minute'), m('td', {colspan: 2},
             m('input', {type: 'number', min: 0, step: 1, value: ctrl.wordsPerMinute(), onchange: m.withAttr('value', ctrl.wordsPerMinute), placeholder: '200 (default)', style: {width: '140px', float: 'left', marginRight: '.75rem', marginTop: '.35rem', position: 'relative', zIndex: 1}}),
@@ -276,7 +278,7 @@ let dialog = {
           ))
         ]),
         m('.drop-down-pop-up-footer', [
-          m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1, style: 'float: right'}, 'Download EPUB'),
+          m('button.styled_button', {onclick: ctrl.createEpub, disabled: ffcProgress() >= 0 && ffcProgress() < 1, style: 'float: right'}, 'Download ' + (ctrl.kepubify() ? 'Kobo EPUB' : 'EPUB')),
           ffcProgress() >= 0 ? m('.rating_container',
             m('.rating-bar', {style: {background: 'rgba(0, 0, 0, 0.2)', 'margin-right': '5px'}}, m('.like-bar', {style: {width: Math.max(0, ffcProgress()) * 100 + '%'}})),
             ' ',
@@ -327,6 +329,7 @@ function createEpub (model) {
   ffc.options.addChapterHeadings = model.addChapterHeadings()
   ffc.options.includeExternal = model.includeExternal()
   ffc.options.paragraphStyle = model.paragraphStyle()
+  ffc.options.kepubify = model.kepubify()
   ffc.subjects = model.subjects()
   ffc.options.joinSubjects = model.joinSubjects()
   ffc.options.calculateReadingEase = model.calculateReadingEase()
@@ -348,7 +351,11 @@ function createEpub (model) {
           alert('Add .epub to the filename of the downloaded file')
         })
       } else {
-        saveAs(file, ffc.filename)
+        let filename = ffc.filename
+        if (ffc.options.kepubify) {
+          filename = filename.replace(/\.epub$/, '.kepub.epub')
+        }
+        saveAs(file, filename)
       }
     })
 }

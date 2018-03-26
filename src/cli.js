@@ -15,6 +15,7 @@ const args = require('commander')
   .option('-n, --no-notes', 'Don\'t include author notes')
   .option('-i, --notes-index', 'Create an index with all author notes at the end of the ebook')
   .option('-p, --paragraphs <style>', 'Select a paragraph style <spaced|indented|indentedall|both>', 'spaced')
+  .option('-k, --kepubify', 'Add extra <span> elements for Kobo EPUB (KEPUB) format')
   .option('-j, --join-subjects', 'Join dc:subjects to a single value')
   .option('-w, --wpm <number>', 'Words per minute. Set to 0 to disable reading time estimations', parseInt, 200)
   .option('-C, --cover <url>', 'Set cover image url')
@@ -50,6 +51,7 @@ const ffc = new FimFic2Epub(STORY_ID, {
   addChapterHeadings: !!args.headings,
   includeExternal: !!args.external,
   paragraphStyle: args.paragraphs,
+  kepubify: !!args.kepubify,
   joinSubjects: !!args.joinSubjects,
   calculateReadingEase: !!args.readingEase,
   readingEaseWakeupInterval: 800,
@@ -71,7 +73,11 @@ ffc.fetchMetadata()
 .then(ffc.fetchAll.bind(ffc))
 .then(ffc.build.bind(ffc))
 .then(() => {
-  let filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || ffc.filename
+  let filename = ffc.filename
+  if (ffc.options.kepubify) {
+    filename = filename.replace(/\.epub$/, '.kepub.epub')
+  }
+  filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || filename
   let stream
 
   if (args.dir) {

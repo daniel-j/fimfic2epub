@@ -66,6 +66,7 @@ By default the EPUB will be saved in the current working directory with the file
     -n, --no-notes            Don't include author notes
     -i, --notes-index         Create an index with all author notes at the end of the ebook
     -p, --paragraphs <style>  Select a paragraph style <spaced|indented|indentedall|both> (default: spaced)
+    -k, --kepubify            Add extra <span> elements for Kobo EPUB (KEPUB) format
     -j, --join-subjects       Join dc:subjects to a single value
     -w, --wpm <number>        Words per minute. Set to 0 to disable reading time estimations (default: 200)
     -C, --cover <url>         Set cover image url
