@@ -173,14 +173,10 @@ export function typogrify (content) {
   content = content.replace(/&#8211;/ig, '–').replace(/&#8212;/ig, '—') // en and em dash
 
   /*
-   * The following is from Standard Ebooks’ typogrify
+   * Some of the following is from Standard Ebooks’ typogrify tool:
    * https://github.com/standardebooks/tools/blob/master/typogrify
    */
 
-  // Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
-  // content = content.replace(/—”([a-z])/ig, '—“$1')
-  // content = content.replace(/—’([a-z])/ig, '—‘$1')
-  // content = content.replace(/-“<\/p>/ig, '—”</p>')
   content = content.replace(/[‘’]”<\/p>/ig, '’' + unicode.HAIR_SPACE + '”</p>')
 
   let inSkippedTag = false
@@ -255,33 +251,35 @@ export function typogrify (content) {
       txt = txt.replace(new RegExp('[\\s' + unicode.NO_BREAK_SPACE + ']?…[\\s' + unicode.NO_BREAK_SPACE + ']?', 'ig'), unicode.HAIR_SPACE + '… ')
 
       // Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-      // txt = txt.replace(/([0-9])\s+([a-z]{1,3}\.)/ig, '$1' + unicode.NO_BREAK_SPACE + '$2')
+      txt = txt.replace(/([0-9])\s+([a-z]{1,3}\.)/ig, '$1' + unicode.NO_BREAK_SPACE + '$2')
 
       // Add non-breaking spaces between Arabic numbers and AM/PM
-      // txt = txt.replace(/([0-9])\s+([ap])\.m\./ig, '$1' + unicode.NO_BREAK_SPACE + '$2.m.')
+      txt = txt.replace(/([0-9])\s+([ap])\.?m\./ig, '$1' + unicode.NO_BREAK_SPACE + '$2.m.')
 
       // Fractions
-      // txt = txt.replace(/1\/4/g, '¼')
-      // txt = txt.replace(/1\/2/g, '½')
-      // txt = txt.replace(/3\/4/g, '¾')
-      // txt = txt.replace(/1\/3/g, '⅓')
-      // txt = txt.replace(/2\/3/g, '⅔')
-      // txt = txt.replace(/1\/5/g, '⅕')
-      // txt = txt.replace(/2\/5/g, '⅖')
-      // txt = txt.replace(/3\/5/g, '⅗')
-      // txt = txt.replace(/4\/5/g, '⅘')
-      // txt = txt.replace(/1\/6/g, '⅙')
-      // txt = txt.replace(/5\/6/g, '⅚')
-      // txt = txt.replace(/1\/8/g, '⅛')
-      // txt = txt.replace(/3\/8/g, '⅜')
-      // txt = txt.replace(/5\/8/g, '⅝')
-      // txt = txt.replace(/7\/8/g, '⅞')
+      txt = txt.replace(/1\/4/g, '¼')
+      txt = txt.replace(/1\/2/g, '½')
+      txt = txt.replace(/3\/4/g, '¾')
+      txt = txt.replace(/1\/3/g, '⅓')
+      txt = txt.replace(/2\/3/g, '⅔')
+      txt = txt.replace(/1\/5/g, '⅕')
+      txt = txt.replace(/2\/5/g, '⅖')
+      txt = txt.replace(/3\/5/g, '⅗')
+      txt = txt.replace(/4\/5/g, '⅘')
+      txt = txt.replace(/1\/6/g, '⅙')
+      txt = txt.replace(/5\/6/g, '⅚')
+      txt = txt.replace(/1\/8/g, '⅛')
+      txt = txt.replace(/3\/8/g, '⅜')
+      txt = txt.replace(/5\/8/g, '⅝')
+      txt = txt.replace(/7\/8/g, '⅞')
 
       // Remove spaces between whole numbers and fractions
-      // txt = txt.replace(/([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, '$1$2')
+      txt = txt.replace(/([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, '$1$2')
 
       // Use the Unicode Minus glyph (U+2212) for negative numbers
-      // txt = txt.replace(/([\s])-([0-9,]+)/g, '$1−$2')
+      txt = txt.replace(/([\s])-([0-9,]+)/g, '$1−$2')
+
+      txt = txt.replace(new RegExp(unicode.NO_BREAK_SPACE, 'ig'), '&#160;') // non-breaking space entity
     }
     return txt
   }).join('')
