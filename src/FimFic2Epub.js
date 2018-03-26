@@ -405,7 +405,8 @@ class FimFic2Epub extends EventEmitter {
       if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes) {
         chain = chain.then(template.createChapter.bind(null, this, {
           title: 'Author\'s Note: ' + ch.title,
-          content: chapter.notes
+          content: chapter.notes,
+          index: i
         }, true)).then((html) => {
           this.findRemoteResources('note_' + zeroFill(3, i + 1), {note: i}, html)
           this.notesHtml[i] = html

@@ -100,9 +100,10 @@ export function createChapter (ffc, ch, isNotesChapter) {
             m('hr.old')
           ]) : null,
           tokenContent,
-          (link || linkNotes) ? m('p.double', {style: 'text-align: center; clear: both;'},
+          (link || linkNotes || isNotesChapter) ? m('p.double', {style: 'text-align: center; clear: both;'},
             link ? m('a.chaptercomments', {href: link + '#comment_list'}, 'Read chapter comments online') : null,
-            linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null
+            linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null,
+            isNotesChapter ? m('a.chaptercomments', {href: './chapter_' + zeroFill(3, index + 1) + '.xhtml'}, 'Read chapter') : null
           ) : null,
           !isNotesChapter && ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, index) : null
         ]))
