@@ -84,14 +84,14 @@ export function createChapter (ffc, ch, isNotesChapter) {
 
   return Promise.all([
     render(
-      m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
+      m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
         m('head', [
           m('meta', {charset: 'utf-8'}),
           m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
           m('title', title)
         ]),
-        m('body', {'epub:type': 'bodymatter chapter'}, m('section', [
-          title ? m('.chapter-title', [
+        m('body', {'epub:type': 'bodymatter chapter'}, m('div', [
+          ffc.options.addChapterHeadings || !linkNotes ? m('.chapter-title', [
             !isNotesChapter ? m('aside.info',
               m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : ''),
               m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words')
@@ -309,14 +309,14 @@ export function createNav (ffc) {
   }
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css'}),
         m('title', 'Contents')
       ]),
-      m('body', {'epub:type': 'frontmatter toc'}, m('section', [
+      m('body', {'epub:type': 'frontmatter toc'}, m('div', [
         m('nav.invisible', {'epub:type': 'toc'}, m('ol', list)),
         m('h3', 'Contents'),
         m('ul#toc.hidden', prettyList),
@@ -336,14 +336,14 @@ export function createNotesNav (ffc) {
   })
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css'}),
         m('title', 'Author\'s Notes')
       ]),
-      m('body#navpage', {'epub:type': 'frontmatter toc'}, m('section', [
+      m('body#navpage', {'epub:type': 'frontmatter toc'}, m('div', [
         m('h3', 'Author\'s Notes'),
         m('#toc', list)
       ]))
@@ -371,7 +371,7 @@ export function createCoverPage (ffc) {
   }
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
       m('head', [
         ffc.coverImage ? m('meta', {name: 'viewport', content: 'width=' + width + ', height=' + height}) : null,
         m('title', 'Cover'),
@@ -425,21 +425,21 @@ export function createTitlePage (ffc) {
   }
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS}, [
+    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
       m('head', [
         m('meta', {charset: 'utf-8'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
         m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/titlestyle.css'}),
         m('title', ffc.storyInfo.title)
       ]),
-      m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('section', [
+      m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('div', [
         m('header.title', [
           m('div', {className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
-          m('section.story_name', ffc.storyInfo.title + ' '),
-          m('section.author', ['by ', m('b', ffc.storyInfo.author.name)])
+          m('.story_name', ffc.storyInfo.title + ' '),
+          m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         // m('hr'),
-        m('section.tags', ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
+        m('.tags', ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
           [m('span.tagbox', m('span', {className: tag.className}, tag.name))]
         )),
         m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Story on Fimfiction')),
@@ -451,7 +451,7 @@ export function createTitlePage (ffc) {
         ]), m('hr.old')] : null,
         m('#description', tokenContent),
         m('.bottom', [
-          m('section', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
+          m('div', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
             m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()], ' '),
             ffc.storyInfo.status
           ]),
@@ -462,7 +462,7 @@ export function createTitlePage (ffc) {
           ffc.options.calculateReadingEase && ffc.readingEase ? infoBox('Reading Ease', (Math.round(ffc.readingEase.ease * 100) / 100).toLocaleString('en-GB')) : null
         ]),
         // m('hr'),
-        m('section.tags', ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
+        m('.tags', ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
           [m('span.tagbox', m('span', {className: tag.className}, tag.name))]
         ))
       ]))

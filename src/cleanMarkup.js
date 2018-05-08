@@ -15,12 +15,15 @@ export async function cleanMarkup (html) {
     return Promise.resolve('')
   }
 
+  html = html.normalize('NFC') // normalize unicode
+
   html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
 
   // replace HTML entities with decimal entities
-  html = html.replace(/\xA0/ig, '&#160;')
+  html = html.replace(/\xA0/g, '&#160;')
   html = html.replace(/&nbsp;/ig, '&#160;')
   html = html.replace(/&emsp;/ig, '&#8195;')
+  html = html.replace(/\u007F/g, '') // remove invalid token
 
   // fix some tags
   html = html.replace(/<u>/ig, '<span style="text-decoration: underline">')
@@ -40,12 +43,9 @@ export async function cleanMarkup (html) {
   html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-right:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:left;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="left_insert">')
   html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="right_insert">')
 
-  /*
-  let imageEmbed = /<img data-src="(.*?)" class="user_image" src="(.*?)" data-lightbox\/>/g
-  html = await replaceAsync(html, imageEmbed, (match, originalUrl, cdnUrl) => {
-    return render(m('img', {src: entities.decode(cdnUrl), alt: 'Image'}), {strict: true})
-  })
-  */
+  // add alt attributes to images that don't have them
+  let imageEmbed = /<img src="(.*?)" \/>/g
+  html = await replaceAsync(html, imageEmbed, (match, src) => render(m('img', {src: entities.decode(src), alt: 'Image'}), {strict: true}))
 
   // Fix links pointing to pages on fimfiction
   // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
