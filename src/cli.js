@@ -61,47 +61,47 @@ const ffc = new FimFic2Epub(STORY_ID, {
 ffc.coverUrl = args.cover
 
 ffc.fetchMetadata()
-.then(() => {
-  if (args.title) {
-    ffc.setTitle(args.title)
-  }
-  if (args.author) {
-    ffc.setAuthorName(args.author)
-  }
-  ffc.storyInfo.short_description = htmlToText(ffc.storyInfo.description)
-})
-.then(ffc.fetchAll.bind(ffc))
-.then(ffc.build.bind(ffc))
-.then(() => {
-  let filename = ffc.filename
-  if (ffc.options.kepubify) {
-    filename = filename.replace(/\.epub$/, '.kepub.epub')
-  }
-  filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || filename
-  let stream
-
-  if (args.dir) {
-    filename = path.join(args.dir, filename)
-  }
-
-  if (outputStdout) {
-    stream = process.stdout
-  } else {
-    stream = fs.createWriteStream(filename)
-  }
-  ffc.streamFile(null)
-  .pipe(stream)
-  .on('finish', () => {
-    if (!outputStdout) {
-      console.log('Saved story as ' + filename)
+  .then(() => {
+    if (args.title) {
+      ffc.setTitle(args.title)
     }
+    if (args.author) {
+      ffc.setAuthorName(args.author)
+    }
+    ffc.storyInfo.short_description = htmlToText(ffc.storyInfo.description)
   })
-})
-.catch((err) => {
-  if (err && err.stack) {
-    console.error(err.stack)
-  } else {
-    console.error('Error: ' + (err || 'Unknown error'))
-  }
-  process.exit(1)
-})
+  .then(ffc.fetchAll.bind(ffc))
+  .then(ffc.build.bind(ffc))
+  .then(() => {
+    let filename = ffc.filename
+    if (ffc.options.kepubify) {
+      filename = filename.replace(/\.epub$/, '.kepub.epub')
+    }
+    filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || filename
+    let stream
+
+    if (args.dir) {
+      filename = path.join(args.dir, filename)
+    }
+
+    if (outputStdout) {
+      stream = process.stdout
+    } else {
+      stream = fs.createWriteStream(filename)
+    }
+    ffc.streamFile(null)
+      .pipe(stream)
+      .on('finish', () => {
+        if (!outputStdout) {
+          console.log('Saved story as ' + filename)
+        }
+      })
+  })
+  .catch((err) => {
+    if (err && err.stack) {
+      console.error(err.stack)
+    } else {
+      console.error('Error: ' + (err || 'Unknown error'))
+    }
+    process.exit(1)
+  })

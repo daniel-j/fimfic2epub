@@ -245,9 +245,9 @@ export function createOpf (ffc) {
       ])
     ])
     , {strict: true}).then((contentOpf) => {
-      contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(contentOpf)
-      return contentOpf
-    })
+    contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(contentOpf)
+    return contentOpf
+  })
 }
 
 function navPoints (list) {
@@ -281,9 +281,9 @@ export function createNcx (ffc) {
       ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'notesnav.xhtml']] : null)))
     ])
     , {strict: true}).then((tocNcx) => {
-      tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(tocNcx)
-      return tocNcx
-    })
+    tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(tocNcx)
+    return tocNcx
+  })
 }
 
 export function createNav (ffc) {
@@ -324,9 +324,9 @@ export function createNav (ffc) {
       ]))
     ])
     , {strict: true}).then((navDocument) => {
-      navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
-      return navDocument
-    })
+    navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
+    return navDocument
+  })
 }
 
 export function createNotesNav (ffc) {
@@ -349,9 +349,9 @@ export function createNotesNav (ffc) {
       ]))
     ])
     , {strict: true}).then((navDocument) => {
-      navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
-      return navDocument
-    })
+    navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
+    return navDocument
+  })
 }
 
 export function createCoverPage (ffc) {
@@ -380,9 +380,9 @@ export function createCoverPage (ffc) {
       m('body#coverpage', {'epub:type': 'frontmatter cover'}, body)
     ])
     , {strict: true}).then((coverPage) => {
-      coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
-      return coverPage
-    })
+    coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
+    return coverPage
+  })
 }
 
 function infoBox (heading, data, title) {
@@ -468,8 +468,8 @@ export function createTitlePage (ffc) {
       ]))
     ])
     , {strict: true}).then((titlePage) => {
-      titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + titlePage
-      titlePage = titlePage.replace(tokenContent, '\n' + ffc.storyInfo.description + '\n')
-      return titlePage
-    })
+    titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + titlePage
+    titlePage = titlePage.replace(tokenContent, '\n' + ffc.storyInfo.description + '\n')
+    return titlePage
+  })
 }
