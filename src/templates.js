@@ -66,7 +66,7 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
 }
 
 export function createChapter (ffc, ch, isNotesChapter) {
-  let {content, notes, notesFirst, title, link, linkNotes, index} = ch
+  let {content, notes, notesFirst, title, link, linkNotes, index, addHeadings} = ch
 
   let sections = [
     m.trust(content || ''),
@@ -91,7 +91,7 @@ export function createChapter (ffc, ch, isNotesChapter) {
           m('title', title)
         ]),
         m('body', {'epub:type': 'bodymatter chapter'}, m('div', [
-          ffc.options.addChapterHeadings || !linkNotes ? m('.chapter-title', [
+          addHeadings ? m('.chapter-title', [
             !isNotesChapter ? m('aside.info',
               m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : ''),
               m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words')
@@ -435,8 +435,8 @@ export function createTitlePage (ffc) {
       m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('div', [
         m('header.title', [
           m('div', {className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
-          m('.story_name', ffc.storyInfo.title + ' '),
-          m('.author', ['by ', m('b', ffc.storyInfo.author.name)])
+          m('span.story_name', ffc.storyInfo.title + ' '),
+          m('span.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         // m('hr'),
         m('.tags', ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
@@ -451,11 +451,11 @@ export function createTitlePage (ffc) {
         ]), m('hr.old')] : null,
         m('#description', tokenContent),
         m('.bottom', [
-          m('div', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
+          m('section', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
             m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()], ' '),
             ffc.storyInfo.status
           ]),
-          ffc.storyInfo.publishDate && infoBox('First Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
+          ffc.storyInfo.publishDate && infoBox('Published', prettyDate(new Date(ffc.storyInfo.publishDate * 1000))),
           infoBox('Last Modified', prettyDate(new Date(ffc.storyInfo.date_modified * 1000))),
           ffc.totalWordCount ? infoBox('Word Count', ffc.totalWordCount.toLocaleString('en-GB')) : null,
           ffc.options.wordsPerMinute ? infoBox('Time to Read', calcReadingTime(ffc), 'Estimated with ' + Math.round(ffc.options.wordsPerMinute) + ' words per minute') : null,

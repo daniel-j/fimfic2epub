@@ -401,6 +401,7 @@ class FimFic2Epub extends EventEmitter {
 
       chain = chain.then(template.createChapter.bind(null, this, {
         title: ch.title,
+        addHeadings: this.options.addChapterHeadings,
         link: this.options.addCommentsLink ? ch.link : null,
         linkNotes: this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes ? 'note_' + zeroFill(3, i + 1) + '.xhtml' : null,
         content: content,
@@ -417,6 +418,7 @@ class FimFic2Epub extends EventEmitter {
       if (this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes) {
         chain = chain.then(template.createChapter.bind(null, this, {
           title: 'Author\'s Note: ' + ch.title,
+          addHeadings: true,
           content: chapter.notes,
           index: i
         }, true)).then((html) => {
