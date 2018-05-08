@@ -639,7 +639,7 @@ class FimFic2Epub extends EventEmitter {
   }
 
   async findIcons () {
-    let matchIcon = /<i class="fa fa-fw fa-(.*?)"(><\/i|\/)>/g
+    let matchIcon = /<i class="fa fa-fw fa-(.*?)"/g
     this.usedIcons.clear()
 
     const scan = (html) => {
