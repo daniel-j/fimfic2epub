@@ -8,7 +8,10 @@ export default function kepubify (html) {
   const body = tree.find('./body')
   addDivs(body)
   const state = {paragraph: 0, segment: 0}
-  body.getchildren().forEach((child) => addSpansToNode(child, body, state))
+  body.getchildren().forEach((child) => {
+    fixupTree(child, body)
+    addSpansToNode(child, body, state)
+  })
   return '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + tree.write({
     xml_declaration: false
   })
@@ -33,7 +36,7 @@ function createSpan (paragraph, segment) {
   return span
 }
 
-function textToSpans (node, text, state) {
+function textToSentences (text) {
   const tokenSentences = text
     .replace('\0', '')
     .replace(/\s+/g, ' ') // Replace all whitespace (including newlines) with a single space
@@ -52,45 +55,62 @@ function textToSpans (node, text, state) {
   }
 
   return tokenSentences.map((sentence, i) => {
-    const span = createSpan(state.paragraph, state.segment++)
-    span.text = sentence
-    return span
+    // const span = createSpan(state.paragraph, state.segment++)
+    // span.text = sentence
+    return sentence
+  })
+}
+
+// Makes text nodes of .text and .tail as children
+function fixupTree (node, parent) {
+  if (node.tag !== '#') {
+    if (node.text && !node.tag.match(specialTags)) {
+      let el = et.Element('#')
+      el.text = node.text
+      node._children.unshift(el)
+      delete node.text
+    }
+    if (node.tail) {
+      let el = et.Element('#')
+      el.text = node.tail
+      let pos = parent._children.indexOf(node) + 1
+      parent._children.splice(pos, 0, el)
+      delete node.tail
+    }
+  }
+  node._children.slice(0).forEach((child) => {
+    fixupTree(child, node)
   })
 }
 
 function addSpansToNode (node, parent, state) {
-  let nodePosition = parent.getchildren().indexOf(node)
+  // text node
+  if (node.tag === '#') {
+    state.segment++
+
+    let sentences = textToSentences(node.text)
+    let pos
+
+    sentences.forEach((sentence) => {
+      let span = createSpan(state.paragraph, state.segment++)
+      span.text = sentence
+
+      // insert the span before the text node
+      pos = parent._children.indexOf(node)
+      parent._children.splice(pos, 0, span)
+    })
+
+    // remove the text node
+    pos = parent._children.indexOf(node)
+    parent._children.splice(pos, 1)
+  }
 
   if (node.tag.match(paragraphTags)) {
-    state.paragraph++
     state.segment = 0
+    state.paragraph++
   }
 
-  if (node.tag.match(specialTags)) {
-    const span = createSpan(state.paragraph, state.segment++)
-    span.append(node)
-    parent.getchildren().splice(nodePosition, 1, span)
-  } else {
-    let prependNodes = []
-
-    if (node.text) {
-      prependNodes = textToSpans(node, node.text, state)
-      node.text = null
-    }
-
-    node.getchildren().forEach((child) => {
-      addSpansToNode(child, node, state)
-    })
-
-    prependNodes.forEach((span, i) => {
-      node.getchildren().splice(i, 0, span)
-    })
-  }
-  if (node.tail) {
-    nodePosition = parent.getchildren().indexOf(node)
-    textToSpans(node, node.tail, state).forEach((span, i) => {
-      parent.getchildren().splice(nodePosition + 1 + i, 0, span)
-    })
-    node.tail = null
-  }
+  node.getchildren().slice(0).forEach((child) => {
+    addSpansToNode(child, node, state)
+  })
 }
