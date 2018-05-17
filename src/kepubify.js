@@ -38,7 +38,7 @@ function createSpan (paragraph, segment) {
 
 function textToSentences (text) {
   const tokenSentences = text
-    .replace('\0', '')
+    .replace(/\0+/g, '')
     .replace(/\s+/g, ' ') // Replace all whitespace (including newlines) with a single space
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip diacritics since JS's \w group and explicit [a-z]|[A-Z] don't account for them
     .replace(/(mr|mrs|dr|ms|prof|rev|col|cmdr|flt|lt|brgdr|hon|wng|capt|rt|revd|gen|cdre|admrl|herr|hr|frau|alderman|alhaji|brig|cdr|cik|consul|datin|dato|datuk|seri|dhr|dipl|ing|dott|sa|dra|drs|en|encik|eng|eur|exma|sra|exmo|sr|lieut|fr|fraulein|fru|graaf|gravin|grp|hajah|haji|hajim|hra|ir|lcda|lic|maj|mlle|mme|mstr|nti|sri|rva|sig|na|ra|sqn|ldr|srta|wg|co|esq|inc|iou|ltd|mdlle|messers|messrs|mlles|mm|mmes|mt|p\.s|pvt|st|viz)\./gi, '$1')
@@ -54,11 +54,7 @@ function textToSentences (text) {
     }
   }
 
-  return tokenSentences.map((sentence, i) => {
-    // const span = createSpan(state.paragraph, state.segment++)
-    // span.text = sentence
-    return sentence
-  })
+  return tokenSentences
 }
 
 // Makes text nodes of .text and .tail as children
