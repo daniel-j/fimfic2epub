@@ -297,9 +297,9 @@ export function typogrify (content) {
   // content = content.replace(new RegExp('([\\!\\?\\.\\;”’])[\\s' + unicode.NO_BREAK_SPACE + ']?…', 'ig'), '$1' + unicode.HAIR_SPACE + '…')
   // content = content.replace(new RegExp('\\,[\\s' + unicode.NO_BREAK_SPACE + ']?…', 'ig'), ',' + unicode.HAIR_SPACE + '…')
 
-  content = content.replace(new RegExp(unicode.NO_BREAK_SPACE, 'g'), '[NBSP &#160;]')
-  content = content.replace(new RegExp(unicode.HAIR_SPACE, 'g'), '[HAIR SPACE &#8202;]')
-  content = content.replace(new RegExp(unicode.WORD_JOINER, 'g'), '[WORD JOINER]')
+  content = content.replace(new RegExp(unicode.NO_BREAK_SPACE, 'g'), '&#160;')
+  content = content.replace(new RegExp(unicode.HAIR_SPACE, 'g'), '&#8202;')
+  content = content.replace(new RegExp(unicode.WORD_JOINER, 'g'), '&#8288;')
 
   return content
 }
