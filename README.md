@@ -53,24 +53,26 @@ By default the EPUB will be saved in the current working directory with the file
 
   Options:
 
-    -V, --version             output the version number
-    -d, --dir <path>          Directory to store ebook in. Is prepended to filename
-    -t, --title <value>       Set the title of the story
-    -a, --author <value>      Set the author of the story
-    -T, --typogrify           Enable typographic fixes (smart quotes, dashes, ellipsis, ordinal)
-    -c, --no-comments-link    Don't add link to online comments
-    -H, --no-headings         Don't add headings to chapters
-    -b, --no-bars             Don't add chapter bars to show reading progress
-    -r, --no-reading-ease     Don't calculate Flesch reading ease
-    -e, --no-external         Don't embed external resources, such as images (breaks EPUB spec)
-    -n, --no-notes            Don't include author notes
-    -i, --notes-index         Create an index with all author notes at the end of the ebook
-    -p, --paragraphs <style>  Select a paragraph style <spaced|indented|indentedall|both> (default: spaced)
-    -k, --kepubify            Add extra <span> elements for Kobo EPUB (KEPUB) format
-    -j, --join-subjects       Join dc:subjects to a single value
-    -w, --wpm <number>        Words per minute. Set to 0 to disable reading time estimations (default: 200)
-    -C, --cover <url>         Set cover image url
-    -h, --help                output usage information
+    -V, --version                output the version number
+    -d, --dir <path>             Directory to store ebook in. Is prepended to filename
+    -t, --title <value>          Set the title of the story
+    -a, --author <value>         Set the author of the story
+    -T, --typogrify              Enable typographic fixes (smart quotes, dashes, ellipsis, ordinal)
+    -c, --no-comments-link       Don't add link to online comments
+    -H, --no-headings            Don't add headings to chapters (includes chapter title, duration and word count)
+    -W, --no-chapter-word-count  Don't add word count to chapter headings
+    -D, --no-chapter-duration    Don't add time to read to chapter headings
+    -b, --no-bars                Don't add chapter bars to show reading progress
+    -r, --no-reading-ease        Don't calculate Flesch reading ease
+    -e, --no-external            Don't embed external resources, such as images (breaks EPUB spec)
+    -n, --no-notes               Don't include author notes
+    -i, --notes-index            Create an index with all author notes at the end of the ebook
+    -p, --paragraphs <style>     Select a paragraph style <spaced|indented|indentedall|both> (default: spaced)
+    -k, --kepubify               Add extra <span> elements for Kobo EPUB (KEPUB) format
+    -j, --join-subjects          Join dc:subjects to a single value
+    -w, --wpm <number>           Words per minute. Set to 0 to disable reading time estimations (default: 200)
+    -C, --cover <url>            Set cover image url
+    -h, --help                   output usage information
 ```
 
 Examples

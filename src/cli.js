@@ -8,7 +8,9 @@ const args = require('commander')
   .option('-a, --author <value>', 'Set the author of the story')
   .option('-T, --typogrify', 'Enable typographic fixes (smart quotes, dashes, ellipsis, ordinal)')
   .option('-c, --no-comments-link', 'Don\'t add link to online comments')
-  .option('-H, --no-headings', 'Don\'t add headings to chapters')
+  .option('-H, --no-headings', 'Don\'t add headings to chapters (includes chapter title, duration and word count)')
+  .option('-W, --no-chapter-word-count', 'Don\'t add word count to chapter headings')
+  .option('-D, --no-chapter-duration', 'Don\'t add time to read to chapter headings')
   .option('-b, --no-bars', 'Don\'t add chapter bars to show reading progress')
   .option('-r, --no-reading-ease', 'Don\'t calculate Flesch reading ease')
   .option('-e, --no-external', 'Don\'t embed external resources, such as images (breaks EPUB spec)')
@@ -33,7 +35,7 @@ if (outputStdout) {
   console.log('Outputting to stdout')
 }
 
-// use a mock DOM so we can run mithril on the server
+// use a mock DOM so we can run mithril in nodejs
 require('mithril/test-utils/browserMock')(global)
 
 const htmlToText = require('./utils').htmlToText
@@ -48,7 +50,9 @@ const ffc = new FimFic2Epub(STORY_ID, {
   addCommentsLink: !!args.commentsLink,
   includeAuthorNotes: !!args.notes,
   useAuthorNotesIndex: !!args.notesIndex,
-  addChapterHeadings: !!args.headings,
+  showChapterHeadings: !!args.headings,
+  showChapterWordCount: !!args.chapterWordCount,
+  showChapterDuration: !!args.chapterDuration,
   includeExternal: !!args.external,
   paragraphStyle: args.paragraphs,
   kepubify: !!args.kepubify,

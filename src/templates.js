@@ -66,7 +66,7 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
 }
 
 export function createChapter (ffc, ch, isNotesChapter) {
-  let {content, notes, notesFirst, title, link, linkNotes, index, addHeadings} = ch
+  let {content, notes, notesFirst, title, link, linkNotes, index, showHeadings, showDuration, showWordCount} = ch
 
   let sections = [
     m.trust(content || ''),
@@ -91,10 +91,10 @@ export function createChapter (ffc, ch, isNotesChapter) {
           m('title', title)
         ]),
         m('body', {'epub:type': 'bodymatter chapter'}, m('div', [
-          addHeadings ? m('.chapter-title', [
-            !isNotesChapter ? m('aside.info',
-              m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : ''),
-              m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words')
+          showHeadings ? m('.chapter-title', [
+            !isNotesChapter && (showDuration || showWordCount) ? m('aside.info',
+              showDuration ? m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : '') : null,
+              showWordCount ? m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words') : null
             ) : null,
             m('header', m('h1', title)),
             m('hr.old')

@@ -133,7 +133,9 @@ let dialog = {
     this.addCommentsLink = prop(ffc.options.addCommentsLink)
     this.includeAuthorNotes = prop(ffc.options.includeAuthorNotes)
     this.useAuthorNotesIndex = prop(ffc.options.useAuthorNotesIndex)
-    this.addChapterHeadings = prop(ffc.options.addChapterHeadings)
+    this.showChapterHeadings = prop(ffc.options.showChapterHeadings)
+    this.showChapterWordCount = prop(ffc.options.showChapterWordCount)
+    this.showChapterDuration = prop(ffc.options.showChapterDuration)
     this.includeExternal = prop(ffc.options.includeExternal)
     this.kepubify = prop(ffc.options.kepubify)
     this.joinSubjects = prop(ffc.options.joinSubjects)
@@ -253,9 +255,11 @@ let dialog = {
               ['indentedall', 'Indent all paragraphs including the first (Modified Traditional)']
             ], ctrl.paragraphStyle()))
           )),
-          m('tr', m('td.label', ''), m('td', {colspan: 2},
+          m('tr', m('td.label', {style: 'vertical-align: top;'}, 'Options'), m('td', {colspan: 2},
             m(checkbox, {checked: ctrl.typogrify(), onchange: m.withAttr('checked', ctrl.typogrify)}, 'Apply typographic fixes (smart quotes, dashes etc.)'),
-            m(checkbox, {checked: ctrl.addChapterHeadings(), onchange: m.withAttr('checked', ctrl.addChapterHeadings)}, 'Add chapter headings, with chapter word count and time to read'),
+            m(checkbox, {checked: ctrl.showChapterHeadings(), onchange: m.withAttr('checked', ctrl.showChapterHeadings)}, 'Add chapter headings'),
+            m(checkbox, {checked: ctrl.showChapterWordCount(), onchange: m.withAttr('checked', ctrl.showChapterWordCount), disabled: !ctrl.showChapterHeadings()}, 'Include word count in chapter heading'),
+            m(checkbox, {checked: ctrl.showChapterDuration(), onchange: m.withAttr('checked', ctrl.showChapterDuration), disabled: !ctrl.showChapterHeadings()}, 'Include time to read in chapter heading'),
             m(checkbox, {checked: ctrl.addCommentsLink(), onchange: m.withAttr('checked', ctrl.addCommentsLink)}, 'Add link to online comments (at the end of chapters)'),
             m(checkbox, {checked: ctrl.includeAuthorNotes(), onchange: m.withAttr('checked', ctrl.includeAuthorNotes)}, 'Include author\'s notes'),
             m(checkbox, {checked: ctrl.useAuthorNotesIndex(), onchange: m.withAttr('checked', ctrl.useAuthorNotesIndex), disabled: !ctrl.includeAuthorNotes()}, 'Put all notes at the end of the ebook'),
@@ -326,7 +330,9 @@ function createEpub (model) {
   ffc.options.addCommentsLink = model.addCommentsLink()
   ffc.options.includeAuthorNotes = model.includeAuthorNotes()
   ffc.options.useAuthorNotesIndex = model.useAuthorNotesIndex()
-  ffc.options.addChapterHeadings = model.addChapterHeadings()
+  ffc.options.showChapterHeadings = model.showChapterHeadings()
+  ffc.options.showChapterWordCount = model.showChapterWordCount()
+  ffc.options.showChapterDuration = model.showChapterDuration()
   ffc.options.includeExternal = model.includeExternal()
   ffc.options.paragraphStyle = model.paragraphStyle()
   ffc.options.kepubify = model.kepubify()
