@@ -51,12 +51,8 @@ export async function cleanMarkup (html) {
   // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
   let matchLink = /(<a .?href=")(.+?)(".+?>)/g
   html = html.replace(matchLink, (match, head, url, tail) => {
-    if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http') {
-      if (url.substring(0, 1) === '/') {
-        url = 'https://fimfiction.net' + entities.decode(url)
-      } else {
-        // do something else
-      }
+    if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http' && url.substring(0, 1) === '/') {
+      url = 'https://fimfiction.net' + url
     }
 
     return head + url + tail
