@@ -1,13 +1,18 @@
 
-const styleCss = require('./style/style')
-const coverstyleCss = require('./style/coverstyle')
-const titlestyleCss = require('./style/titlestyle')
-const navstyleCss = require('./style/navstyle')
-const iconsCss = require('./style/icons')
+import styleCss from './style/style'
+import coverstyleCss from './style/coverstyle'
+import titlestyleCss from './style/titlestyle'
+import navstyleCss from './style/navstyle'
+import iconsCss from './style/icons'
+
+import paragraphsSpaced from './style/paragraphs-spaced'
+import paragraphsIndented from './style/paragraphs-indented'
+import paragraphsIndentAll from './style/paragraphs-indentedall'
+
 const paragraphsCss = {
-  spaced: require('./style/paragraphs-spaced'),
-  indented: require('./style/paragraphs-indented'),
-  indentedall: require('./style/paragraphs-indentedall')
+  spaced: paragraphsSpaced,
+  indented: paragraphsIndented,
+  indentedall: paragraphsIndentAll
 }
 
 paragraphsCss.both = paragraphsCss.indented + '\n' + paragraphsCss.spaced

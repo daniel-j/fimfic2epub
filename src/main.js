@@ -167,8 +167,12 @@ let dialog = {
     }
 
     this.setCoverFile = (e) => {
-      this.coverUrl('')
-      this.coverFile(e.target.files ? e.target.files[0] : null)
+      let el = e.dom || e.target
+      if (el.target) {
+        this.coverUrl('')
+      }
+      this.coverFile(el.files ? el.files[0] : null)
+      console.log('files:', el.files)
     }
 
     this.setSubjects = function () {
@@ -243,7 +247,7 @@ let dialog = {
           m('tr', m('td.label', 'Author'), m('td', {colspan: 2}, m('input', {type: 'text', value: ctrl.author(), onchange: m.withAttr('value', ctrl.author)}))),
           m('tr', m('td.label', 'Custom cover image'),
             m('td',
-              ctrl.checkboxCoverUrl() ? m('input', {type: 'url', placeholder: 'Image URL', onchange: m.withAttr('value', ctrl.coverUrl)}) : m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile})
+              ctrl.checkboxCoverUrl() ? m('input', {type: 'url', placeholder: 'Image URL', onchange: m.withAttr('value', ctrl.coverUrl)}) : m('input', {type: 'file', accept: 'image/*', onchange: ctrl.setCoverFile, onupdate: ctrl.setCoverFile})
             ),
             m('td', {style: 'width: 1px'}, m(checkbox, {checked: ctrl.checkboxCoverUrl(), onchange: m.withAttr('checked', ctrl.checkboxCoverUrl)}, 'Use image URL'))
           ),
@@ -320,7 +324,9 @@ function createEpub (model) {
   } else if (model.coverFile()) {
     chain = chain
       .then(() => blobToArrayBuffer(model.coverFile()))
-      .then(ffc.setCoverImage.bind(ffc))
+      .then((buf) => {
+        ffc.setCoverImage(buf)
+      }).catch((err) => console.error(err))
   }
 
   ffc.setTitle(model.title())

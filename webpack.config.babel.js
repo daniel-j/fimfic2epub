@@ -19,16 +19,17 @@ const bundleExtensionConfig = {
     rules: [
       {
         test: /\.js$/,
-        loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
-          presets: [['env', {
-            targets: {
-              browsers: ['chrome 50', 'firefox 47']
-            },
-            modules: false,
-            useBuiltIns: true
-          }]]
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: [['@babel/env', {
+              targets: {
+                browsers: ['chrome 50', 'firefox 47']
+              },
+              modules: false
+            }]]
+          }
         }
       },
       {
@@ -85,15 +86,17 @@ const bundleNpmModuleConfig = {
     rules: [
       {
         test: /\.js$/,
-        loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
-          sourceMaps: !inProduction,
-          presets: [['env', {
-            targets: {
-              node: '8.0.0'
-            }
-          }]]
+        use: {
+          loader: 'babel-loader',
+          options: {
+            sourceMaps: !inProduction,
+            presets: [['@babel/env', {
+              targets: {
+                node: '8.0.0'
+              }
+            }]]
+          }
         }
       },
       {
@@ -108,7 +111,7 @@ const bundleNpmModuleConfig = {
   },
 
   resolve: {
-    extensions: ['.js', '.json', '.styl'],
+    extensions: ['.js', '.json', '.styl', '.node'],
     modules: [
       path.resolve('./src'),
       'node_modules'
@@ -147,22 +150,24 @@ const bundleNpmBinaryConfig = {
     rules: [
       {
         test: /\.js$/,
-        loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
-          sourceMaps: !inProduction,
-          presets: [['env', {
-            targets: {
-              node: '8.0.0'
-            }
-          }]]
+        use: {
+          loader: 'babel-loader',
+          options: {
+            sourceMaps: !inProduction,
+            presets: [['@babel/env', {
+              targets: {
+                node: '8.0.0'
+              }
+            }]]
+          }
         }
       }
     ]
   },
 
   resolve: {
-    extensions: ['.js', '.json'],
+    extensions: ['.js', '.json', '.node'],
     modules: [
       path.resolve('./src'),
       'node_modules'
@@ -204,15 +209,17 @@ const bundleStaticNpmModuleConfig = {
     rules: [
       {
         test: /\.js$/,
-        loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
-          sourceMaps: !inProduction,
-          presets: [['env', {
-            targets: {
-              node: 'current'
-            }
-          }]]
+        use: {
+          loader: 'babel-loader',
+          options: {
+            sourceMaps: !inProduction,
+            presets: [['@babel/env', {
+              targets: {
+                node: 'current'
+              }
+            }]]
+          }
         }
       },
       {
@@ -227,7 +234,7 @@ const bundleStaticNpmModuleConfig = {
   },
 
   resolve: {
-    extensions: ['.js', '.json', '.styl'],
+    extensions: ['.js', '.json', '.styl', '.node'],
     modules: [
       path.resolve('./bin'),
       'node_modules'

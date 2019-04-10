@@ -466,7 +466,7 @@ class FimFic2Epub extends EventEmitter {
 
     this.zip = new JSZip()
 
-    this.zip.file('mimetype', 'application/epub+zip')
+    this.zip.file('mimetype', 'application/epub+zip', {compression: 'STORE'})
     this.zip.file('META-INF/container.xml', containerXml)
 
     this.zip.file('OEBPS/content.opf', Buffer.from(await template.createOpf(this), 'utf8'))
@@ -591,7 +591,7 @@ class FimFic2Epub extends EventEmitter {
     this.filename = FimFic2Epub.getFilename(this.storyInfo)
   }
   setCoverImage (buffer) {
-    buffer = isNode ? buffer : new Uint8Array(buffer)
+    buffer = isNode ? buffer : Buffer.from(new Uint8Array(buffer))
     let info = fileType(buffer)
     if (!info || !info.mime.startsWith('image/')) {
       throw new Error('Invalid image')
@@ -869,4 +869,4 @@ class FimFic2Epub extends EventEmitter {
   }
 }
 
-module.exports = FimFic2Epub
+export default FimFic2Epub
