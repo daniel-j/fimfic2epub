@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.7.35",
+  "version": "1.7.36",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
   "license": "MIT",
@@ -22,6 +22,7 @@
     "LICENSE"
   ],
   "dependencies": {
+    "canvas": "^2.4.1",
     "commander": "^2.20.0",
     "crc-32": "^1.2.0",
     "detect-node": "^2.0.4",

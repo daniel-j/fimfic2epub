@@ -474,6 +474,7 @@ class FimFic2Epub extends EventEmitter {
     if (this.coverImage) {
       this.zip.file('OEBPS/' + this.coverFilename, Buffer.from(this.coverImage))
     }
+
     this.zip.file('OEBPS/Text/cover.xhtml', Buffer.from(this.pages.cover, 'utf8'))
     this.zip.file('OEBPS/Styles/coverstyle.css', Buffer.from(coverstyleCss, 'utf8'))
 
@@ -686,13 +687,57 @@ class FimFic2Epub extends EventEmitter {
     if (this.pcache.coverImage) {
       return this.pcache.coverImage
     }
+
     if (this.coverImage) {
       return Promise.resolve(this.coverImage)
     }
     this.coverImage = null
     let url = this.coverUrl || this.storyInfo.full_image
     if (!url) {
-      return Promise.resolve(null)
+      console.warn('Story has no image. Generating one...')
+      let canvas
+      if (isNode) {
+        canvas = require('canvas').createCanvas(1080, 1440)
+      } else {
+        canvas = document.createElement('canvas')
+        canvas.width = 1080
+        canvas.height = 1440
+      }
+      let ctx = canvas.getContext('2d')
+      ctx.fillStyle = 'white'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      ctx.fillStyle = 'black'
+      ctx.textAlign = 'center'
+      ctx.strokeStyle = 'black'
+
+      ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40)
+      ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24)
+
+      let title = this.storyInfo.title
+      let author = this.storyInfo.author.name
+
+      let fontSize = 150
+      let width
+      do {
+        ctx.font = "bold " + fontSize + "px sans-serif"
+        width = ctx.measureText(title).width
+        fontSize -= 5
+      } while (width > canvas.width * 0.85)
+
+      ctx.fillText(title, canvas.width / 2, canvas.height * 0.2)
+      fontSize = 75
+      do {
+        ctx.font = fontSize + "px sans-serif"
+        width = ctx.measureText(author).width
+        fontSize -= 5
+      } while (width > canvas.width * 0.7)
+
+      ctx.fillText(author, canvas.width / 2, canvas.height * 0.9)
+
+      this.setCoverImage(Buffer.from(canvas.toDataURL('image/jpeg').split(',')[1], 'base64'))
+
+      return Promise.resolve(this.coverImage)
     }
 
     this.progress(0, 0, 'Fetching cover image...')
@@ -717,8 +762,9 @@ class FimFic2Epub extends EventEmitter {
       } else {
         return null
       }
-    }).then(() => {
+    }).then((data) => {
       this.pcache.coverImage = null
+      return data
     })
     return this.pcache.coverImage
   }
