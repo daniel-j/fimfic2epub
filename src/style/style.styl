@@ -12,8 +12,18 @@ body {
   background-color: white;
   color: black;
   text-align: justify;
-  hyphens: auto;
+
   -epub-hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+
+  font-kerning: normal;
+  font-variant: common-ligatures lining-nums;
+  -webkit-font-feature-settings: "kern", "liga", "clig", "lnum";
+  font-feature-settings: "kern", "liga", "clig", "lnum";
+
 }
 
 a, u {
@@ -24,6 +34,19 @@ p {
   margin-top: 0;
   margin-bottom: 0;
   text-indent: 0;
+
+  -epub-hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+
+  -webkit-hyphenate-limit-before: 3;
+  -webkit-hyphenate-limit-after: 2;
+  -ms-hyphenate-limit-chars: 6 3 2;
+  hyphenate-limit-chars: 6 3 2;
+  -webkit-hyphenate-limit-lines: 2;
+  hyphenate-limit-lines: 2;
 
   &.double {
     margin-top: 1em;
@@ -42,8 +65,12 @@ div p {
 
 h1, h2, h3, h4, h5, h6, header {
   text-align: left !important;
-  hyphens: none;
+  adobe-hyphenate: none;
   -epub-hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
 }
 
 em {
@@ -256,6 +283,7 @@ code {
 }
 pre {
   margin: 1em 0;
+  -epub-hyphens: none;
   -webkit-hyphens: none;
   -moz-hyphens: none;
   -ms-hyphens: none;
