@@ -134,7 +134,7 @@ gulp.task('fontawesome', () => {
 })
 
 gulp.task('binaries', gulp.series('version', function binariesTask () {
-  return gulp.src(['build/fimfic2epub.js', 'build/fimfic2epub-static.js'])
+  return gulp.src(['build/fimfic2epub.js'])
     .pipe(rename({ extname: '' }))
     .pipe(banner('#!/usr/bin/env node\n// fimfic2epub ' + packageVersion + '\n'))
     .pipe(chmod(0o777))
@@ -176,7 +176,7 @@ gulp.task('pack:chrome', gulp.series('version', function packChrome () {
     .pipe(zip('extension.zip'))
     .pipe(gulp.dest('./'))
 }))
-gulp.task('pack', gulp.parallel('pack:firefox', 'pack:chrome'))
+gulp.task('pack', gulp.parallel('binaries', 'pack:firefox', 'pack:chrome'))
 
 // Main tasks
 gulp.task('webpack', gulp.series(gulp.parallel('version', 'fontawesome'), webpackTask, isStandalone ? 'binaries' : 'pack'))
