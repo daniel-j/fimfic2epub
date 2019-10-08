@@ -19,7 +19,7 @@ import removeNPMAbsolutePaths from 'removeNPMAbsolutePaths'
 // script
 import standard from 'gulp-standard'
 import webpack from 'webpack'
-import webpackConfig from './webpack.config.babel.js'
+import webpackConfig from './webpack.config.js'
 
 const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
@@ -186,10 +186,10 @@ gulp.task('watch:webpack', () => {
 })
 
 gulp.task('lint', () => {
-  return lintPipe(gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js']))
+  return lintPipe(gulp.src(['gulpfile.babel.js', 'webpack.config.js', 'src/**/*.js']))
 })
 gulp.task('watch:lint', () => {
-  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js'], watchOpts, (file) => {
+  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.js'], watchOpts, (file) => {
     return lintPipe(gulp.src(file.path))
   })
 })
