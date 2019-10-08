@@ -31,9 +31,9 @@ const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 class FimFic2Epub extends EventEmitter {
   static getStoryId (id) {
     if (isNaN(id)) {
-      let url = URL(id)
+      const url = URL(id)
       if (url.hostname === 'www.fimfiction.net' || url.hostname === 'fimfiction.net') {
-        let m = url.pathname.match(/^\/story\/(\d+)/)
+        const m = url.pathname.match(/^\/story\/(\d+)/)
         if (m) {
           id = m[1]
         }
@@ -49,7 +49,7 @@ class FimFic2Epub extends EventEmitter {
   static fetchStoryInfo (storyId, raw = false) {
     return new Promise((resolve, reject) => {
       storyId = FimFic2Epub.getStoryId(storyId)
-      let url = '/api/story.php?story=' + storyId
+      const url = '/api/story.php?story=' + storyId
       fetch(url).then((content) => {
         let data
         try {
@@ -63,7 +63,7 @@ class FimFic2Epub extends EventEmitter {
           reject(new Error(data.error + ' (id: ' + storyId + ')'))
           return
         }
-        let story = data.story
+        const story = data.story
         if (raw) {
           resolve(story)
           return
@@ -223,20 +223,20 @@ class FimFic2Epub extends EventEmitter {
 
     this.progress(0, 0, 'Fetching chapters...')
 
-    let chapterCount = this.storyInfo.chapters.length
-    let url = 'https://fimfiction.net/story/download/' + this.storyInfo.id + '/html'
+    const chapterCount = this.storyInfo.chapters.length
+    const url = 'https://fimfiction.net/story/download/' + this.storyInfo.id + '/html'
 
     this.pcache.chapters = fetch(url).then((html) => {
       let p = Promise.resolve()
-      let matchChapter = /<article class="chapter">[\s\S]*?<\/header>([\s\S]*?)<\/article>/g
+      const matchChapter = /<article class="chapter">[\s\S]*?<\/header>([\s\S]*?)<\/article>/g
       for (let ma, i = 0; (ma = matchChapter.exec(html)); i++) {
         const ch = this.storyInfo.chapters[i]
         let chapterContent = ma[1]
         chapterContent = chapterContent.replace(/<footer>[\s\S]*?<\/footer>/g, '').trim()
 
-        let authorNotesPos = chapterContent.indexOf('<aside ')
+        const authorNotesPos = chapterContent.indexOf('<aside ')
         let notesContent = ''
-        let notesFirst = authorNotesPos === 0
+        const notesFirst = authorNotesPos === 0
         if (authorNotesPos !== -1) {
           chapterContent = chapterContent.replace(/<aside class="authors-note">([\s\S]*?)<\/aside>/, (match, content, pos) => {
             content = content.replace(/<header><h1>.*?<\/h1><\/header>/, '')
@@ -290,14 +290,14 @@ class FimFic2Epub extends EventEmitter {
       return Promise.resolve()
     }
 
-    let checksums = new Map()
+    const checksums = new Map()
 
     this.progress(0, 0, 'Fetching remote files...')
     this.pcache.remoteResources = new Promise((resolve, reject) => {
-      let iter = this.remoteResources.entries()
+      const iter = this.remoteResources.entries()
       let completeCount = 0
 
-      let next = (r) => {
+      const next = (r) => {
         completeCount++
         if (r.data) {
           this.progress(0, completeCount / this.remoteResources.size, 'Fetched remote file ' + completeCount + ' / ' + this.remoteResources.size)
@@ -307,7 +307,7 @@ class FimFic2Epub extends EventEmitter {
         recursive()
       }
 
-      let recursive = () => {
+      const recursive = () => {
         let r = iter.next().value
         if (!r) {
           if (completeCount === this.remoteResources.size) {
@@ -315,7 +315,7 @@ class FimFic2Epub extends EventEmitter {
           }
           return
         }
-        let url = r[0]
+        const url = r[0]
         r = r[1]
         if (r.data) {
           next(r)
@@ -335,9 +335,9 @@ class FimFic2Epub extends EventEmitter {
             }
           }
           if (info) {
-            let checksum = crc32(isNode ? data : new Uint8Array(data))
+            const checksum = crc32(isNode ? data : new Uint8Array(data))
             if (checksums.has(checksum)) {
-              let sameFile = this.remoteResources.get(checksums.get(checksum))
+              const sameFile = this.remoteResources.get(checksums.get(checksum))
               r.dest = sameFile.dest
               r.filename = sameFile.dest
               r.type = sameFile.type
@@ -348,11 +348,11 @@ class FimFic2Epub extends EventEmitter {
                 data = await utils.webp2png(isNode ? data : new Uint8Array(data))
                 info = fileType(data)
               }
-              let type = info.mime
+              const type = info.mime
               r.type = type
-              let isImage = type.startsWith('image/')
-              let folder = isImage ? 'Images' : 'Misc'
-              let dest = folder + '/*.' + info.ext
+              const isImage = type.startsWith('image/')
+              const folder = isImage ? 'Images' : 'Misc'
+              const dest = folder + '/*.' + info.ext
               r.dest = dest.replace('*', r.filename)
               r.data = data
             }
@@ -393,8 +393,8 @@ class FimFic2Epub extends EventEmitter {
     this.notesHtml.length = 0
 
     for (let i = 0; i < this.chapters.length; i++) {
-      let ch = this.storyInfo.chapters[i]
-      let chapter = this.chapters[i]
+      const ch = this.storyInfo.chapters[i]
+      const chapter = this.chapters[i]
       let content = chapter.content
 
       if (this.options.typogrify) {
@@ -486,8 +486,8 @@ class FimFic2Epub extends EventEmitter {
     this.zip.file('OEBPS/Styles/navstyle.css', Buffer.from(navstyleCss, 'utf8'))
 
     for (let i = 0; i < this.chapters.length; i++) {
-      let filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
-      let html = this.chaptersHtml[i]
+      const filename = 'OEBPS/Text/chapter_' + zeroFill(3, i + 1) + '.xhtml'
+      const html = this.chaptersHtml[i]
       this.zip.file(filename, Buffer.from(html, 'utf8'))
     }
 
@@ -496,8 +496,8 @@ class FimFic2Epub extends EventEmitter {
 
       for (let i = 0; i < this.chapters.length; i++) {
         if (!this.chapters[i].notes) continue
-        let filename = 'OEBPS/Text/note_' + zeroFill(3, i + 1) + '.xhtml'
-        let html = this.notesHtml[i]
+        const filename = 'OEBPS/Text/note_' + zeroFill(3, i + 1) + '.xhtml'
+        const html = this.notesHtml[i]
         this.zip.file(filename, Buffer.from(html, 'utf8'))
       }
     }
@@ -511,7 +511,7 @@ class FimFic2Epub extends EventEmitter {
       (paragraphsCss[this.options.paragraphStyle] || '')
       , 'utf8'))
 
-    let remoteDestCache = new Set()
+    const remoteDestCache = new Set()
     this.remoteResources.forEach((r) => {
       if (r.dest && !remoteDestCache.has(r.dest)) {
         this.zip.file('OEBPS/' + r.dest, r.data)
@@ -541,7 +541,7 @@ class FimFic2Epub extends EventEmitter {
         compression: 'DEFLATE',
         compressionOptions: { level: 9 }
       }, (metadata) => { // onUpdate
-        let currentPercent = Math.round(metadata.percent / 10) * 10
+        const currentPercent = Math.round(metadata.percent / 10) * 10
         if (lastPercent !== currentPercent) {
           lastPercent = currentPercent
           this.progress(0, currentPercent / 100, 'Compressing...')
@@ -575,7 +575,7 @@ class FimFic2Epub extends EventEmitter {
         compressionOptions: { level: 9 }
       }, (metadata) => {
         if (onUpdate) onUpdate(metadata)
-        let currentPercent = Math.round(metadata.percent / 20) * 20
+        const currentPercent = Math.round(metadata.percent / 20) * 20
         if (lastPercent !== currentPercent) {
           lastPercent = currentPercent
           this.progress(0, currentPercent / 100, 'Compressing...')
@@ -587,13 +587,15 @@ class FimFic2Epub extends EventEmitter {
     this.storyInfo.title = title.trim()
     this.filename = FimFic2Epub.getFilename(this.storyInfo)
   }
+
   setAuthorName (name) {
     this.storyInfo.author.name = name.trim()
     this.filename = FimFic2Epub.getFilename(this.storyInfo)
   }
+
   setCoverImage (buffer) {
     buffer = isNode ? buffer : Buffer.from(new Uint8Array(buffer))
-    let info = fileType(buffer)
+    const info = fileType(buffer)
     if (!info || !info.mime.startsWith('image/')) {
       throw new Error('Invalid image')
     }
@@ -620,21 +622,21 @@ class FimFic2Epub extends EventEmitter {
 
   findRemoteResources (prefix, where, html) {
     let remoteCounter = 1
-    let matchUrl = /<img.*?src="([^">]*\/([^">]*?))".*?>/g
-    let emoticonUrl = /static\.fimfiction\.net\/images\/emoticons\/([a-z_]*)\.[a-z]*$/
+    const matchUrl = /<img.*?src="([^">]*\/([^">]*?))".*?>/g
+    const emoticonUrl = /static\.fimfiction\.net\/images\/emoticons\/([a-z_]*)\.[a-z]*$/
 
     for (let ma; (ma = matchUrl.exec(html));) {
-      let url = ma[1]
-      let cleanurl = entities.decode(url)
+      const url = ma[1]
+      const cleanurl = entities.decode(url)
       if (this.remoteResources.has(cleanurl)) {
-        let r = this.remoteResources.get(cleanurl)
+        const r = this.remoteResources.get(cleanurl)
         if (r.where.indexOf(where) === -1) {
           r.where.push(where)
         }
         continue
       }
       let filename = prefix + '_' + remoteCounter
-      let emoticon = url.match(emoticonUrl)
+      const emoticon = url.match(emoticonUrl)
       if (emoticon) {
         filename = 'emoticon_' + emoticon[1]
       }
@@ -644,7 +646,7 @@ class FimFic2Epub extends EventEmitter {
   }
 
   async findIcons () {
-    let matchIcon = /<i class="fa fa-fw fa-(.*?)"/g
+    const matchIcon = /<i class="fa fa-fw fa-(.*?)"/g
     this.usedIcons.clear()
 
     const scan = (html) => {
@@ -667,10 +669,10 @@ class FimFic2Epub extends EventEmitter {
       return
     }
 
-    let glyphs = [...this.usedIcons].map((name) => {
+    const glyphs = [...this.usedIcons].map((name) => {
       return fontAwesomeCodes[name].charCodeAt(0)
     })
-    let fontFile = require('font-awesome/fonts/fontawesome-webfont.ttf')
+    const fontFile = require('font-awesome/fonts/fontawesome-webfont.ttf')
     this.iconsFont = await subsetFont(fontFile, glyphs, { local: isNode })
   }
 
@@ -692,7 +694,7 @@ class FimFic2Epub extends EventEmitter {
       return Promise.resolve(this.coverImage)
     }
     this.coverImage = null
-    let url = this.coverUrl || this.storyInfo.full_image
+    const url = this.coverUrl || this.storyInfo.full_image
     if (!url) {
       console.warn('Story has no image. Generating one...')
       let canvas
@@ -703,7 +705,7 @@ class FimFic2Epub extends EventEmitter {
         canvas.width = 1080
         canvas.height = 1440
       }
-      let ctx = canvas.getContext('2d')
+      const ctx = canvas.getContext('2d')
       ctx.fillStyle = 'white'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -714,8 +716,8 @@ class FimFic2Epub extends EventEmitter {
       ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40)
       ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24)
 
-      let title = this.storyInfo.title
-      let author = this.storyInfo.author.name
+      const title = this.storyInfo.title
+      const author = this.storyInfo.author.name
 
       let fontSize = 150
       let width
@@ -744,14 +746,14 @@ class FimFic2Epub extends EventEmitter {
 
     this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then((data) => {
       data = isNode ? data : new Uint8Array(data)
-      let info = fileType(data)
+      const info = fileType(data)
       if (info) {
-        let type = info.mime
-        let isImage = type.startsWith('image/')
+        const type = info.mime
+        const isImage = type.startsWith('image/')
         if (!isImage) {
           return null
         }
-        let filename = 'Images/cover.' + info.ext
+        const filename = 'Images/cover.' + info.ext
         this.coverFilename = filename
         this.coverType = type
 
@@ -771,7 +773,7 @@ class FimFic2Epub extends EventEmitter {
 
   fetchTitlePage () {
     let viewMature = true
-    let isStoryMature = this.storyInfo.content_rating === 2
+    const isStoryMature = this.storyInfo.content_rating === 2
     if (!isNode) {
       viewMature = document.cookie.split('; ').includes('view_mature=true')
       if (!viewMature && isStoryMature) {
@@ -796,19 +798,19 @@ class FimFic2Epub extends EventEmitter {
     startTagsPos += html.substring(startTagsPos).indexOf('<ul class="story-tags">') + 23
     let tagsHtml = html.substring(startTagsPos)
 
-    let endTagsPos = tagsHtml.indexOf('</ul>')
+    const endTagsPos = tagsHtml.indexOf('</ul>')
     tagsHtml = tagsHtml.substring(0, endTagsPos)
 
-    let tags = []
+    const tags = []
     let c
     tags.byImage = {}
     this.subjects.length = 0
     this.subjects.push('Fimfiction')
     this.subjects.push(this.storyInfo.content_rating_text)
 
-    let matchTag = /<a href="([^"]*?)" class="([^"]*?)" title="[^"]*?" data-tag="([^"]*?)".*?>(.*?)<\/a>/g
+    const matchTag = /<a href="([^"]*?)" class="([^"]*?)" title="[^"]*?" data-tag="([^"]*?)".*?>(.*?)<\/a>/g
     for (;(c = matchTag.exec(tagsHtml));) {
-      let cat = {
+      const cat = {
         url: 'https://fimfiction.net' + c[1],
         className: 'story-tag ' + c[2],
         name: entities.decode(c[4]),
@@ -831,12 +833,12 @@ class FimFic2Epub extends EventEmitter {
       html = html.substring(html.indexOf('<hr />') + 6)
     }
 
-    let endDescPos = html.indexOf('</span>\n')
-    let description = html.substring(0, endDescPos).trim()
+    const endDescPos = html.indexOf('</span>\n')
+    const description = html.substring(0, endDescPos).trim()
     this.description = description
 
     html = html.substring(endDescPos + 7)
-    let extraPos = html.indexOf('<div class="extra_story_data">')
+    const extraPos = html.indexOf('<div class="extra_story_data">')
     html = html.substring(extraPos + 30)
 
     ma = html.match(/<span class="approved-date">.*?data-time="(.*?)".*?<\/span>/)
@@ -848,7 +850,7 @@ class FimFic2Epub extends EventEmitter {
   }
 
   parseChapterPage (html) {
-    let trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
+    const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 
     let authorNotesPos = html.indexOf('<div class="authors-note"')
     let authorNotes = ''
@@ -860,10 +862,10 @@ class FimFic2Epub extends EventEmitter {
       authorNotes = authorNotes.replace(trimWhitespace, '')
     }
 
-    let chapterPos = html.indexOf('<div class="bbcode">')
+    const chapterPos = html.indexOf('<div class="bbcode">')
     let chapter = html.substring(chapterPos + 20)
 
-    let pos = chapter.indexOf('\t\t</div>\n\t</div>\t\t\n\t\t\t\t\t</div>\n')
+    const pos = chapter.indexOf('\t\t</div>\n\t</div>\t\t\n\t\t\t\t\t</div>\n')
 
     chapter = chapter.substring(0, pos).trim()
 
@@ -877,9 +879,9 @@ class FimFic2Epub extends EventEmitter {
     if (!this.options.includeExternal) {
       this.remoteResources.forEach((r, url) => {
         if (r.originalUrl && r.where) {
-          let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
+          const ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
           for (var i = 0; i < r.where.length; i++) {
-            let w = r.where[i]
+            const w = r.where[i]
             if (typeof w === 'number') {
               if (ourl.test(this.chapters[w])) {
                 this.storyInfo.chapters[w].remote = true
@@ -895,10 +897,10 @@ class FimFic2Epub extends EventEmitter {
     } else {
       this.remoteResources.forEach((r, url) => {
         if (r.dest && r.originalUrl && r.where) {
-          let dest = '../' + r.dest
-          let ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
+          const dest = '../' + r.dest
+          const ourl = new RegExp(escapeStringRegexp(r.originalUrl), 'g')
           for (var i = 0; i < r.where.length; i++) {
-            let w = r.where[i]
+            const w = r.where[i]
             if (typeof w === 'object' && w.chapter !== undefined && this.chaptersHtml[w.chapter]) {
               this.chaptersHtml[w.chapter] = this.chaptersHtml[w.chapter].replace(ourl, dest)
             } else if (typeof w === 'object' && w.note !== undefined && this.notesHtml[w.note]) {

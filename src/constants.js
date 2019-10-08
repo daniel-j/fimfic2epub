@@ -10,13 +10,13 @@ export const NS = {
 }
 
 export const tidyOptions = {
-  'indent': 'auto',
+  indent: 'auto',
   'numeric-entities': 'yes',
   'output-xhtml': 'yes',
   'alt-text': 'Image',
-  'wrap': '0',
-  'quiet': 'yes',
-  'newline': 'LF',
+  wrap: '0',
+  quiet: 'yes',
+  newline: 'LF',
   'tidy-mark': 'no',
   'show-body-only': 'auto'
 }

@@ -39,7 +39,6 @@ if (outputStdout) {
 const mock = require('mithril/test-utils/browserMock')(global)
 global.requestAnimationFrame = mock.requestAnimationFrame
 
-
 const htmlToText = require('./utils').htmlToText
 const FimFic2Epub = require('./FimFic2Epub').default
 const fs = require('fs')

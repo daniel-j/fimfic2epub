@@ -33,7 +33,7 @@ if (isStandalone) {
   webpackConfig.pop()
 }
 
-let watchOpts = {
+const watchOpts = {
   readDelay: 500,
   verbose: true,
   read: false
@@ -41,12 +41,12 @@ let watchOpts = {
 
 let packageVersion = require('./package.json').version
 
-let webpackDefines = new webpack.DefinePlugin({
+const webpackDefines = new webpack.DefinePlugin({
   FIMFIC2EPUB_VERSION: JSON.stringify(packageVersion)
 })
 
 // No need to bloat the build with a list of all tlds...
-let replaceTlds = new webpack.NormalModuleReplacementPlugin(/^tlds$/, '../../src/false')
+const replaceTlds = new webpack.NormalModuleReplacementPlugin(/^tlds$/, '../../src/false')
 
 webpackConfig.forEach((c) => {
   c.plugins.push(webpackDefines)
@@ -89,8 +89,8 @@ function webpackTask () {
 }
 
 function convertFontAwesomeVars (contents) {
-  let vars = {}
-  let matchVar = /\$fa-var-(.*?): "\\(.*?)";/g
+  const vars = {}
+  const matchVar = /\$fa-var-(.*?): "\\(.*?)";/g
   let ma
   for (;(ma = matchVar.exec(contents));) {
     vars[ma[1]] = String.fromCharCode(parseInt(ma[2], 16))

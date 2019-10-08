@@ -11,9 +11,9 @@ function fetchNode (url, responseType) {
       url: url,
       encoding: responseType ? null : 'utf8',
       headers: {
-        'referer': 'https://fimfiction.net/',
-        'cookie': 'view_mature=true',
-        'accept': '*/*'
+        referer: 'https://fimfiction.net/',
+        cookie: 'view_mature=true',
+        accept: '*/*'
       }
     }, (error, response, body) => {
       if (error) {
@@ -46,7 +46,7 @@ export default function fetch (url, responseType) {
         cache: 'default',
         redirect: 'follow',
         headers: {
-          'accept': '*/*' // Fix for not getting webp images from Fimfiction
+          accept: '*/*' // Fix for not getting webp images from Fimfiction
         },
         referrer: window.location.origin
       }).then((response) => {
@@ -61,7 +61,7 @@ export default function fetch (url, responseType) {
         reject(new Error('Error fetching ' + url + ' (' + err + ')'))
       })
     } else {
-      let x = new XMLHttpRequest()
+      const x = new XMLHttpRequest()
       x.withCredentials = true
       x.setRequestHeader('accept', '*/*') // Fix for not getting webp images from Fimfiction
       x.open('get', url, true)

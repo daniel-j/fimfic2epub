@@ -8,15 +8,15 @@ import { saveAs } from 'file-saver'
 import autosize from 'autosize'
 import { htmlToText } from './utils'
 
-m.withAttr = function(attrName, callback, context) {
-	return function(e) {
-		callback.call(context || this, attrName in e.currentTarget ? e.currentTarget[attrName] : e.currentTarget.getAttribute(attrName))
-	}
+m.withAttr = function (attrName, callback, context) {
+  return function (e) {
+    callback.call(context || this, attrName in e.currentTarget ? e.currentTarget[attrName] : e.currentTarget.getAttribute(attrName))
+  }
 }
 
 function blobToDataURL (blob) {
   return new Promise((resolve, reject) => {
-    let fr = new FileReader()
+    const fr = new FileReader()
     fr.onloadend = function (e) { resolve(fr.result) }
     fr.readAsDataURL(blob)
   })
@@ -24,7 +24,7 @@ function blobToDataURL (blob) {
 
 function blobToArrayBuffer (blob) {
   return new Promise((resolve, reject) => {
-    let fr = new FileReader()
+    const fr = new FileReader()
     fr.onloadend = function (e) { resolve(fr.result) }
     fr.readAsArrayBuffer(blob)
   })
@@ -37,23 +37,23 @@ try {
   pageStoryId = document.location.pathname.match(/^\/story\/(\d*)/)[1]
 } catch (e) {}
 
-let logoUrl = chrome.extension.getURL('fimfic2epub-logo.png')
+const logoUrl = chrome.extension.getURL('fimfic2epub-logo.png')
 let ffc
-let stories = document.querySelectorAll('.story_container')
+const stories = document.querySelectorAll('.story_container')
 
 stories.forEach((story) => {
-  let id = story.dataset.story
+  const id = story.dataset.story
   function epubClick (e) {
     e.preventDefault()
     openStory(id)
   }
 
-  let epubButtons = story.querySelectorAll('.drop-down ul li a[title="Download Story (.epub)"]')
+  const epubButtons = story.querySelectorAll('.drop-down ul li a[title="Download Story (.epub)"]')
   if (epubButtons.length === 0) return
   for (let i = 0; i < epubButtons.length; i++) {
     epubButtons[i].addEventListener('click', epubClick, false)
   }
-  let logo = new Image()
+  const logo = new Image()
   logo.className = 'fimfic2epub-logo'
   logo.title = 'Download EPUB with fimfic2epub'
   logo.src = logoUrl
@@ -61,17 +61,17 @@ stories.forEach((story) => {
   logo.addEventListener('click', epubClick, false)
 })
 
-let cards = document.querySelectorAll('.story-card-container')
+const cards = document.querySelectorAll('.story-card-container')
 cards.forEach((card) => {
   let id
-  let classes = card.className.split(' ')
+  const classes = card.className.split(' ')
   for (let i = 0; i < classes.length && !id; i++) {
-    let c = classes[i]
+    const c = classes[i]
     id = c.substring(21)
   }
   if (!id) return
-  let flip = card.querySelector('a.card-flip')
-  let epubButton = card.querySelector('a[title="Download .ePub"]')
+  const flip = card.querySelector('a.card-flip')
+  const epubButton = card.querySelector('a[title="Download .ePub"]')
   if (!epubButton) return
   epubButton.addEventListener('click', function (e) {
     e.preventDefault()
@@ -84,7 +84,7 @@ const dialogContainer = document.createElement('div')
 dialogContainer.id = 'epubDialogContainer'
 document.body.appendChild(dialogContainer)
 
-let checkbox = {
+const checkbox = {
   view: function ({ attrs, children }) {
     return m('label.toggleable-switch', [
       m('input', Object.assign({
@@ -113,10 +113,10 @@ function redraw (arg) {
   }
 }
 
-let ffcProgress = prop(0)
-let ffcStatus = prop('')
+const ffcProgress = prop(0)
+const ffcStatus = prop('')
 
-let dialog = {
+const dialog = {
   oninit () {
     const ctrl = this
 
@@ -173,7 +173,7 @@ let dialog = {
     }
 
     this.setCoverFile = (e) => {
-      let el = e.dom || e.target
+      const el = e.dom || e.target
       if (el.target) {
         this.coverUrl('')
       }
@@ -182,7 +182,7 @@ let dialog = {
 
     this.setSubjects = function () {
       // 'this' is the textarea
-      let set = new Set()
+      const set = new Set()
       ctrl.subjects(this.value.split('\n').map((s) => s.trim()).filter((s) => {
         if (!s) return false
         if (set.has(s)) return false
@@ -200,16 +200,16 @@ let dialog = {
     }
 
     this.ondown = (e) => {
-      let rect = this.el().firstChild.getBoundingClientRect()
-      let offset = { x: e.pageX - rect.left - document.documentElement.scrollLeft, y: e.pageY - rect.top - document.documentElement.scrollTop }
+      const rect = this.el().firstChild.getBoundingClientRect()
+      const offset = { x: e.pageX - rect.left - document.documentElement.scrollLeft, y: e.pageY - rect.top - document.documentElement.scrollTop }
       this.dragging(true)
-      let onmove = (e) => {
+      const onmove = (e) => {
         e.preventDefault()
         if (this.dragging()) {
           this.move(e.pageX - offset.x, e.pageY - offset.y)
         }
       }
-      let onup = () => {
+      const onup = () => {
         this.dragging(false)
         window.removeEventListener('mousemove', onmove)
         window.removeEventListener('mouseup', onup)
@@ -219,8 +219,8 @@ let dialog = {
     }
 
     this.move = (xpos, ypos) => {
-      let bc = document.querySelector('.body_container')
-      let rect = this.el().firstChild.getBoundingClientRect()
+      const bc = document.querySelector('.body_container')
+      const rect = this.el().firstChild.getBoundingClientRect()
       this.xpos(Math.max(0, Math.min(xpos, bc.offsetWidth - rect.width)))
       this.ypos(Math.max(0, Math.min(ypos, bc.offsetHeight - rect.height)))
       this.el().style.left = this.xpos() + 'px'
@@ -228,7 +228,7 @@ let dialog = {
     }
     this.center = () => {
       if (this.dragging()) return
-      let rect = this.el().firstChild.getBoundingClientRect()
+      const rect = this.el().firstChild.getBoundingClientRect()
       this.move(
         Math.max(document.documentElement.scrollLeft, (window.innerWidth / 2) - (rect.width / 2) + document.documentElement.scrollLeft),
         Math.max(document.documentElement.scrollTop, 100 + document.documentElement.scrollTop)
@@ -242,7 +242,7 @@ let dialog = {
   },
 
   view (vnode) {
-    let ctrl = vnode.state
+    const ctrl = vnode.state
     return m('.drop-down-pop-up-container', { oncreate: ctrl.onOpen.bind(ctrl) }, m('.drop-down-pop-up', { style: { 'min-width': '720px' } }, [
       m('h1', { onmousedown: ctrl.ondown }, m('i.fa.fa-book'), 'Export to EPUB (v' + FIMFIC2EPUB_VERSION + ')', m('a.close_button', { onclick: closeDialog })),
       m('.drop-down-pop-up-content', [
@@ -295,7 +295,7 @@ let dialog = {
           ffcProgress() >= 0 ? m('.rating_container',
             m('.rating-bar', { style: { background: 'rgba(0, 0, 0, 0.2)', 'margin-right': '5px' } }, m('.like-bar', { style: { width: Math.max(0, ffcProgress()) * 100 + '%' } })),
             ' ',
-            ffcProgress() >= 0 && ffcProgress() < 1 ? [ m('i.fa.fa-spin.fa-spinner'), m.trust('&nbsp;&nbsp;') ] : null,
+            ffcProgress() >= 0 && ffcProgress() < 1 ? [m('i.fa.fa-spin.fa-spinner'), m.trust('&nbsp;&nbsp;')] : null,
             ffcStatus()
           ) : null,
           m('div', { style: 'clear: both' })

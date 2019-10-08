@@ -9,13 +9,13 @@ import { unicode } from './constants'
 export function replaceAsync (str, re, callback) {
   // http://es5.github.io/#x15.5.4.11
   str = String(str)
-  let parts = []
+  const parts = []
   let i = 0
   if (Object.prototype.toString.call(re) === '[object RegExp]') {
     if (re.global) { re.lastIndex = i }
     let m
     while ((m = re.exec(str))) {
-      let args = m.concat([m.index, m.input])
+      const args = m.concat([m.index, m.input])
       parts.push(str.slice(i, m.index), callback.apply(null, args))
       i = re.lastIndex
       if (!re.global) { break } // for non-global regexes only take the first match
@@ -45,22 +45,22 @@ export function webp2png (data) {
       webpdecoder = new libwebp.WebPDecoder()
     }
 
-    let frame = WebPRiffParser(data, 0).frames[0]
-    let width = [0]
-    let height = [0]
-    let decodedData = webpdecoder.WebPDecodeRGBA(
+    const frame = WebPRiffParser(data, 0).frames[0]
+    const width = [0]
+    const height = [0]
+    const decodedData = webpdecoder.WebPDecodeRGBA(
       data,
-      frame['src_off'], frame['src_size'],
+      frame.src_off, frame.src_size,
       width, height
     )
 
-    let png = new PNGPacker({})
-    let buffers = []
+    const png = new PNGPacker({})
+    const buffers = []
     png.on('data', (chunk) => {
       buffers.push(chunk)
     })
     png.once('end', () => {
-      let pngData = Buffer.concat(buffers)
+      const pngData = Buffer.concat(buffers)
       resolve(pngData)
     })
     png.pack(decodedData, width[0], height[0])
@@ -122,7 +122,7 @@ export async function readingEase (text, wakeupInterval = Infinity, progresscb) 
   let lastTime = Date.now()
 
   for (let i = 0; i < tokenSentences.length; i++) {
-    let now = Date.now()
+    const now = Date.now()
     if (lastTime + wakeupInterval < now) {
       lastTime = now
       if (typeof progresscb === 'function') {

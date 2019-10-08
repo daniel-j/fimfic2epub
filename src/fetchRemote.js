@@ -7,25 +7,25 @@ const safariQueue = {}
 
 // messaging with the safari extension global page
 function safariHandler (ev) {
-  let type = ev.message.type
-  let url = ev.message.input
-  let data = ev.message.output // arraybuffer
+  const type = ev.message.type
+  const url = ev.message.input
+  const data = ev.message.output // arraybuffer
   if (!safariQueue[url]) {
     // console.error("Unable to get callback for " + url, JSON.stringify(safariQueue))
     return
   }
-  let cb = safariQueue[url].cb
-  let responseType = safariQueue[url].responseType
+  const cb = safariQueue[url].cb
+  const responseType = safariQueue[url].responseType
   console.log(url, cb, responseType, data)
   delete safariQueue[url]
 
   if (responseType === 'blob') {
-    let blob = new Blob([data], { type: type })
+    const blob = new Blob([data], { type: type })
     cb(blob, type)
   } else {
     if (!responseType) {
-      let blob = new Blob([data], { type: type })
-      let fr = new FileReader()
+      const blob = new Blob([data], { type: type })
+      const fr = new FileReader()
       fr.onloadend = function () {
         cb(fr.result, type)
       }

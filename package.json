@@ -9,7 +9,7 @@
     "url": "https://github.com/daniel-j/fimfic2epub.git"
   },
   "scripts": {
-    "build": "NODE_ENV=production gulp",
+    "build": "gulp",
     "dev": "NODE_ENV=development gulp"
   },
   "bin": {

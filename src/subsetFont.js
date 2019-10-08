@@ -7,8 +7,8 @@ import fileType from 'file-type'
 
 async function subsetFont (fontPath, glyphs, options = {}) {
   let data
-  let fontdata = Buffer.from(fontPath, 'binary')
-  let type = fileType(fontdata)
+  const fontdata = Buffer.from(fontPath, 'binary')
+  const type = fileType(fontdata)
   if (type && type.mime === 'font/ttf') {
     data = fontdata.buffer
   } else {

@@ -46,7 +46,7 @@ function textToSentences (text) {
     .split(/\s*\0/)
 
   for (let i = 0; i < tokenSentences.length; i++) {
-    let s = tokenSentences[i]
+    const s = tokenSentences[i]
     if (s.trim().length === 0) {
       if (i - 1 >= 0) tokenSentences[i - 1] += s
       tokenSentences.splice(i, 1)
@@ -61,15 +61,15 @@ function textToSentences (text) {
 function fixupTree (node, parent) {
   if (node.tag !== '#') {
     if (node.text && !node.tag.match(specialTags)) {
-      let el = et.Element('#')
+      const el = et.Element('#')
       el.text = node.text
       node._children.unshift(el)
       delete node.text
     }
     if (node.tail) {
-      let el = et.Element('#')
+      const el = et.Element('#')
       el.text = node.tail
-      let pos = parent._children.indexOf(node) + 1
+      const pos = parent._children.indexOf(node) + 1
       parent._children.splice(pos, 0, el)
       delete node.tail
     }
@@ -84,11 +84,11 @@ function addSpansToNode (node, parent, state) {
   if (node.tag === '#') {
     state.segment++
 
-    let sentences = textToSentences(node.text)
+    const sentences = textToSentences(node.text)
     let pos
 
     sentences.forEach((sentence) => {
-      let span = createSpan(state.paragraph, state.segment++)
+      const span = createSpan(state.paragraph, state.segment++)
       span.text = sentence
 
       // insert the span before the text node

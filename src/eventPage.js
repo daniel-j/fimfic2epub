@@ -4,7 +4,7 @@ import fetch from './fetch'
 
 if (typeof safari !== 'undefined') {
   safari.application.addEventListener('message', function (ev) {
-    let url = ev.message
+    const url = ev.message
     fetch(url, 'arraybuffer').then((buffer) => {
       console.log('Fetched ' + url)
       ev.target.page.dispatchMessage('remote', {
@@ -14,12 +14,12 @@ if (typeof safari !== 'undefined') {
     })
   }, false)
 } else {
-  let onMessage = chrome.extension.onMessage ? chrome.extension.onMessage : chrome.runtime.onMessage
+  const onMessage = chrome.extension.onMessage ? chrome.extension.onMessage : chrome.runtime.onMessage
 
   onMessage.addListener(function (request, sender, sendResponse) {
     if (typeof request === 'string') {
       fetch(request, 'blob').then((blob) => {
-        let ourl = URL.createObjectURL(blob)
+        const ourl = URL.createObjectURL(blob)
         console.log('Fetched', request)
         sendResponse(ourl)
       })

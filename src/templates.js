@@ -18,7 +18,7 @@ function nth (d) {
 
 export function prettyDate (d) {
   // format: 27th Oct 2011
-  let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   return d.getDate() + nth(d) + ' ' + months[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear()
 }
 
@@ -28,7 +28,7 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
   if (chapters.length <= 1) return null
   let windowSize = 50
   let wordCounts = []
-  let highestWordCount = chapters.reduce((max, ch) => {
+  const highestWordCount = chapters.reduce((max, ch) => {
     wordCounts.push(ch.realWordCount)
     if (ch.realWordCount > max) return ch.realWordCount
     return max
@@ -42,9 +42,9 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
     currentChapter -= start
   }
   wordCounts = wordCounts.map((c) => c / highestWordCount)
-  let barWidth = 9
-  let barSpacing = 2
-  let rowSpacing = 9
+  const barWidth = 9
+  const barSpacing = 2
+  const rowSpacing = 9
   const barCount = Math.min(wordCounts.length, windowSize)
   const rows = Math.floor(wordCounts.length / barCount) + 1
   const rowHeight = 30 + rowSpacing
@@ -68,9 +68,9 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
 }
 
 export function createChapter (ffc, ch, isNotesChapter) {
-  let { content, notes, notesFirst, title, link, linkNotes, index, showHeadings, showDuration, showWordCount } = ch
+  const { content, notes, notesFirst, title, link, linkNotes, index, showHeadings, showDuration, showWordCount } = ch
 
-  let sections = [
+  const sections = [
     m.trust(content || ''),
     notes ? m('div#author_notes', { className: notesFirst ? 'top' : 'bottom' }, [
       m('p', m('b', 'Author\'s Note:')),
@@ -124,7 +124,7 @@ export function createChapter (ffc, ch, isNotesChapter) {
 function sortSpineItems (items) {
   let count = items.length
   for (let i = 0; i < count; i++) {
-    let item = items[i]
+    const item = items[i]
     if (!item) {
       continue
     }
@@ -140,9 +140,9 @@ function sortSpineItems (items) {
 }
 
 export function createOpf (ffc) {
-  let remotes = []
+  const remotes = []
   // let remoteCounter = 0
-  let remoteCache = new Set()
+  const remoteCache = new Set()
   ffc.remoteResources.forEach((r, url) => {
     // remoteCounter++
     if (!ffc.options.includeExternal) {
@@ -176,18 +176,18 @@ export function createOpf (ffc) {
     remotes.push(m('item', { id: r.filename, href: r.dest, 'media-type': r.type }))
   })
 
-  let manifestChapters = ffc.storyInfo.chapters.map((ch, num) =>
+  const manifestChapters = ffc.storyInfo.chapters.map((ch, num) =>
     m('item', { id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ((ch.remote ? 'remote-resources' : '') + (ffc.options.addChapterBars ? ' svg' : '')).trim() || null })
   )
-  let spineChapters = ffc.storyInfo.chapters.map((ch, num) =>
+  const spineChapters = ffc.storyInfo.chapters.map((ch, num) =>
     m('itemref', { idref: 'chapter_' + zeroFill(3, num + 1) })
   )
-  let manifestNotes = []
-  let spineNotes = []
+  const manifestNotes = []
+  const spineNotes = []
   if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
     spineNotes.push(m('itemref', { idref: 'notesnav' }))
     ffc.chaptersWithNotes.forEach((num) => {
-      let id = 'note_' + zeroFill(3, num + 1)
+      const id = 'note_' + zeroFill(3, num + 1)
       manifestNotes.push(m('item', { id: id, href: 'Text/' + id + '.xhtml', 'media-type': 'application/xhtml+xml' }))
       spineNotes.push(m('itemref', { idref: id }))
     })
@@ -219,8 +219,8 @@ export function createOpf (ffc) {
       m('manifest', [
         ffc.coverImage ? m('item', { id: 'cover', href: ffc.coverFilename, 'media-type': ffc.coverType, properties: 'cover-image' }) : null,
         m('item', { id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml' }),
-        m('item', { id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav' + (ffc.options.addChapterBars && ffc.storyInfo.chapters.length > 1 ? ' svg' : '') }),
-        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? m('item', { id: 'notesnav', 'href': 'notesnav.xhtml', 'media-type': 'application/xhtml+xml' }) : null,
+        m('item', { id: 'nav', href: 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav' + (ffc.options.addChapterBars && ffc.storyInfo.chapters.length > 1 ? ' svg' : '') }),
+        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? m('item', { id: 'notesnav', href: 'notesnav.xhtml', 'media-type': 'application/xhtml+xml' }) : null,
 
         m('item', { id: 'style', href: 'Styles/style.css', 'media-type': 'text/css' }),
         m('item', { id: 'coverstyle', href: 'Styles/coverstyle.css', 'media-type': 'text/css' }),
@@ -255,7 +255,7 @@ export function createOpf (ffc) {
 
 function navPoints (list) {
   let playOrder = 1
-  let arr = []
+  const arr = []
   for (let i = 0; i < list.length; i++) {
     if (!list[i]) continue
     arr.push(m('navPoint', { id: 'navPoint-' + (i + 1), playOrder: playOrder++ }, [
@@ -290,7 +290,7 @@ export function createNcx (ffc) {
 }
 
 export function createNav (ffc) {
-  let list = [
+  const list = [
     m('li', m('a', { href: 'Text/cover.xhtml' }, 'Cover')),
     m('li', m('a', { href: 'Text/title.xhtml' }, 'Title Page')),
     ffc.storyInfo.chapters.length > 1 || (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? m('li', m('a', { href: 'nav.xhtml' }, 'Contents')) : null
@@ -299,7 +299,7 @@ export function createNav (ffc) {
       m('a', { href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml' }, ch.title)
     ])
   ))
-  let prettyList = ffc.storyInfo.chapters.map((ch, num) =>
+  const prettyList = ffc.storyInfo.chapters.map((ch, num) =>
     m('li.item', [
       m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB'))),
       m('a', { href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml' }, ch.title),
@@ -334,8 +334,8 @@ export function createNav (ffc) {
 }
 
 export function createNotesNav (ffc) {
-  let list = ffc.chaptersWithNotes.map((num) => {
-    let ch = ffc.storyInfo.chapters[num]
+  const list = ffc.chaptersWithNotes.map((num) => {
+    const ch = ffc.storyInfo.chapters[num]
     return m('.item', m('a.leftalign', { href: 'Text/note_' + zeroFill(3, num + 1) + '.xhtml' }, ch.title))
   })
 
@@ -362,7 +362,7 @@ export function createNotesNav (ffc) {
 export function createCoverPage (ffc) {
   let body
 
-  let { width, height } = ffc.coverImageDimensions
+  const { width, height } = ffc.coverImageDimensions
 
   if (ffc.coverImage) {
     body = m('svg#cover', { xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + width + ' ' + height },
@@ -402,7 +402,7 @@ function infoBox (heading, data, title) {
 
 function calcReadingTime (ffc, wordCount = 0) {
   const wpm = ffc.options.wordsPerMinute
-  let time = (wordCount || ffc.totalWordCount) / wpm
+  const time = (wordCount || ffc.totalWordCount) / wpm
   let value = 0
   let unit = ''
   if (time < 1) {

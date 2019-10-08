@@ -2,7 +2,7 @@
 import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 
-let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 const bundleExtensionConfig = {
   entry: {

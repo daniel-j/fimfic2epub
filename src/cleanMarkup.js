@@ -44,12 +44,12 @@ export async function cleanMarkup (html) {
   html = html.replace('<blockquote style="margin: 10px 0px; box-sizing:border-box; -moz-box-sizing:border-box;margin-left:25px; padding: 15px;background-color: #F7F7F7;border: 1px solid #AAA;width: 50%;float:right;box-shadow: 5px 5px 0px #EEE;">', '<blockquote class="right_insert">')
 
   // add alt attributes to images that don't have them
-  let imageEmbed = /<img src="(.*?)" \/>/g
+  const imageEmbed = /<img src="(.*?)" \/>/g
   html = await replaceAsync(html, imageEmbed, (match, src) => render(m('img', { src: entities.decode(src), alt: 'Image' }), { strict: true }))
 
   // Fix links pointing to pages on fimfiction
   // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
-  let matchLink = /(<a .?href=")(.+?)(".+?>)/g
+  const matchLink = /(<a .?href=")(.+?)(".+?>)/g
   html = html.replace(matchLink, (match, head, url, tail) => {
     if (url.substring(0, 1) !== '#' && url.substring(0, 2) !== '//' && url.substring(0, 4) !== 'http' && url.substring(0, 1) === '/') {
       url = 'https://fimfiction.net' + url
@@ -62,14 +62,14 @@ export async function cleanMarkup (html) {
   const query = new Map()
   let completeCount = 0
 
-  let matchYouTube = /<p><a class="embed" href="https:\/\/www\.youtube\.com\/watch\?v=(.*?)">.*?<\/a><\/p>/g
+  const matchYouTube = /<p><a class="embed" href="https:\/\/www\.youtube\.com\/watch\?v=(.*?)">.*?<\/a><\/p>/g
   for (let ma; (ma = matchYouTube.exec(html));) {
-    let youtubeId = ma[1].match(/^[^&]+/)[0]
+    const youtubeId = ma[1].match(/^[^&]+/)[0]
     cache.set(youtubeId, null)
     query.set(entities.decode(ma[1]), youtubeId)
   }
 
-  let matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
+  const matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
   html = await replaceAsync(html, matchSoundCloud, (match, url) => {
     return render(m('.soundcloud.leftalign', [
       'SoundCloud: ', m('a', { href: entities.decode(url), rel: 'nofollow' }, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
@@ -104,12 +104,12 @@ export async function cleanMarkup (html) {
 
   function replaceYouTube (match, queryString) {
     queryString = entities.decode(queryString)
-    let youtubeId = query.get(queryString)
+    const youtubeId = query.get(queryString)
     let thumbnail = 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
-    let youtubeUrl = 'https://youtube.com/watch?v=' + queryString
+    const youtubeUrl = 'https://youtube.com/watch?v=' + queryString
     let title = 'Youtube Video'
     let caption = ''
-    let data = cache.get(youtubeId)
+    const data = cache.get(youtubeId)
 
     if (data) {
       thumbnail = (data.thumbnails.standard || data.thumbnails.high || data.thumbnails.medium || data.thumbnails.default).url
@@ -138,7 +138,7 @@ export function fixDoubleSpacing (html) {
 
 export function fixParagraphIndent (html) {
   // from FimFictionConverter by Nyerguds
-  let fixIndent = 2
+  const fixIndent = 2
   if (fixIndent > 0) {
     // only trigger indenting when finding as many whitespace characters in a row as indicated by the FixIndent setting.
 
