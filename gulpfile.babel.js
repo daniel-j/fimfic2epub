@@ -6,7 +6,7 @@ import watch from 'gulp-watch'
 import filter from 'gulp-filter'
 import change from 'gulp-change'
 import rename from 'gulp-rename'
-import banner from 'gulp-banner'
+import header from 'gulp-header'
 import chmod from 'gulp-chmod'
 import PluginError from 'plugin-error'
 import log from 'fancy-log'
@@ -137,7 +137,7 @@ gulp.task('fontawesome', () => {
 gulp.task('binaries', gulp.series('version', function binariesTask () {
   return gulp.src(['build/fimfic2epub.js'])
     .pipe(rename({ extname: '' }))
-    .pipe(banner('#!/usr/bin/env node\n// fimfic2epub ' + packageVersion + '\n'))
+    .pipe(header('#!/usr/bin/env node\n// fimfic2epub ' + packageVersion + '\n'))
     .pipe(chmod(0o777))
     .pipe(gulp.dest('bin/'))
 }))
