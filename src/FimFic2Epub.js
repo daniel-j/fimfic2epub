@@ -31,7 +31,7 @@ const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 class FimFic2Epub extends EventEmitter {
   static getStoryId (id) {
     if (isNaN(id)) {
-      let url = URL.parse(id, false, true)
+      let url = URL(id)
       if (url.hostname === 'www.fimfiction.net' || url.hostname === 'fimfiction.net') {
         let m = url.pathname.match(/^\/story\/(\d+)/)
         if (m) {

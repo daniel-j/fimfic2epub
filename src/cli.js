@@ -36,7 +36,9 @@ if (outputStdout) {
 }
 
 // use a mock DOM so we can run mithril in nodejs
-require('mithril/test-utils/browserMock')(global)
+const mock = require('mithril/test-utils/browserMock')(global)
+global.requestAnimationFrame = mock.requestAnimationFrame
+
 
 const htmlToText = require('./utils').htmlToText
 const FimFic2Epub = require('./FimFic2Epub').default

@@ -8,6 +8,12 @@ import { saveAs } from 'file-saver'
 import autosize from 'autosize'
 import { htmlToText } from './utils'
 
+m.withAttr = function(attrName, callback, context) {
+	return function(e) {
+		callback.call(context || this, attrName in e.currentTarget ? e.currentTarget[attrName] : e.currentTarget.getAttribute(attrName))
+	}
+}
+
 function blobToDataURL (blob) {
   return new Promise((resolve, reject) => {
     let fr = new FileReader()
@@ -172,7 +178,6 @@ let dialog = {
         this.coverUrl('')
       }
       this.coverFile(el.files ? el.files[0] : null)
-      console.log('files:', el.files)
     }
 
     this.setSubjects = function () {
