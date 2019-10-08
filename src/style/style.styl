@@ -2,28 +2,15 @@
 @require 'mixins'
 @require 'reset'
 
-@page {
-  margin-top: 0.3em;
-  margin-bottom: 0.2em;
-}
-
 
 body {
-  background-color: white;
-  color: black;
   text-align: justify;
 
-  -epub-hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
-  -ms-hyphens: auto;
-  hyphens: auto;
+  // Ligatures on Kobo
+  text-rendering: optimizeLegibility;
 
-  font-kerning: normal;
-  font-variant: common-ligatures lining-nums;
-  -webkit-font-feature-settings: "kern", "liga", "clig", "lnum";
-  font-feature-settings: "kern", "liga", "clig", "lnum";
-
+  // Fix for Webkit ereaders with zero margins. Such as Foliate.
+  -webkit-line-box-contain: block glyphs replaced;
 }
 
 a, u {
@@ -31,11 +18,9 @@ a, u {
 }
 
 p {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
   text-indent: 0;
 
-  -epub-hyphens: auto;
   -webkit-hyphens: auto;
   -moz-hyphens: auto;
   -ms-hyphens: auto;
@@ -47,6 +32,9 @@ p {
   hyphenate-limit-chars: 6 3 2;
   -webkit-hyphenate-limit-lines: 2;
   hyphenate-limit-lines: 2;
+
+  widows: 1;
+  orphans: 1;
 
   &.double {
     margin-top: 1em;
@@ -66,7 +54,6 @@ div p {
 h1, h2, h3, h4, h5, h6, header {
   text-align: left !important;
   adobe-hyphenate: none;
-  -epub-hyphens: none;
   -webkit-hyphens: none;
   -moz-hyphens: none;
   -ms-hyphens: none;
@@ -283,7 +270,6 @@ code {
 }
 pre {
   margin: 1em 0;
-  -epub-hyphens: none;
   -webkit-hyphens: none;
   -moz-hyphens: none;
   -ms-hyphens: none;
@@ -416,4 +402,3 @@ a.chaptercomments {
   background: -webkit-linear-gradient(top, #7bb042 0%, #6fa03c 100%);
   background: linear-gradient(to bottom, #7bb042 0%, #6fa03c 100%);
 }
-
