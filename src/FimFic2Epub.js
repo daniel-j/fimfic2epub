@@ -4,7 +4,7 @@ import escapeStringRegexp from 'escape-string-regexp'
 import zeroFill from 'zero-fill'
 import { XmlEntities } from 'html-entities'
 import sanitize from 'sanitize-filename'
-import URL from 'url'
+import { URL } from 'url'
 import isNode from 'detect-node'
 import fileType from 'file-type'
 import isSvg from 'is-svg'
@@ -31,7 +31,7 @@ const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 class FimFic2Epub extends EventEmitter {
   static getStoryId (id) {
     if (isNaN(id)) {
-      const url = URL(id)
+      const url = new URL(id)
       if (url.hostname === 'www.fimfiction.net' || url.hostname === 'fimfiction.net') {
         const m = url.pathname.match(/^\/story\/(\d+)/)
         if (m) {
