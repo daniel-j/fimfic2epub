@@ -7,7 +7,7 @@ export default function kepubify (html) {
   const tree = et.parse(html)
   const body = tree.find('./body')
   addDivs(body)
-  const state = {paragraph: 0, segment: 0}
+  const state = { paragraph: 0, segment: 0 }
   body.getchildren().forEach((child) => {
     fixupTree(child, body)
     addSpansToNode(child, body, state)
@@ -21,8 +21,8 @@ const specialTags = /^(img|pre|svg)$/i
 const paragraphTags = /^(p|ol|ul)$/i
 
 function addDivs (body) {
-  const bookInner = et.Element('div', {class: 'book-inner'})
-  const bookColumns = et.SubElement(bookInner, 'div', {class: 'book-columns'})
+  const bookInner = et.Element('div', { class: 'book-inner' })
+  const bookColumns = et.SubElement(bookInner, 'div', { class: 'book-columns' })
 
   bookColumns._children = body.getchildren()
   body._children = [bookInner]

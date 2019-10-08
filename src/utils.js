@@ -183,7 +183,7 @@ export function typogrify (content) {
   let closeMatch
   const reSkipTags = /<(\/)?(style|pre|code|kbd|script|math|title)[^>]*>/i
 
-  content = typogr.tokenize(content).map(({type, txt}) => {
+  content = typogr.tokenize(content).map(({ type, txt }) => {
     if (type === 'tag') {
       closeMatch = reSkipTags.exec(txt)
       if (closeMatch && closeMatch[1] === undefined) {

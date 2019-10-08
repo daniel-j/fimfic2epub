@@ -17,7 +17,7 @@ export async function cleanMarkup (html) {
 
   html = html.normalize('NFC') // normalize unicode
 
-  html = twemoji.parse(html, {ext: '.svg', folder: 'svg'})
+  html = twemoji.parse(html, { ext: '.svg', folder: 'svg' })
 
   // replace HTML entities with decimal entities
   html = html.replace(/\xA0/g, '&#160;')
@@ -45,7 +45,7 @@ export async function cleanMarkup (html) {
 
   // add alt attributes to images that don't have them
   let imageEmbed = /<img src="(.*?)" \/>/g
-  html = await replaceAsync(html, imageEmbed, (match, src) => render(m('img', {src: entities.decode(src), alt: 'Image'}), {strict: true}))
+  html = await replaceAsync(html, imageEmbed, (match, src) => render(m('img', { src: entities.decode(src), alt: 'Image' }), { strict: true }))
 
   // Fix links pointing to pages on fimfiction
   // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
@@ -72,8 +72,8 @@ export async function cleanMarkup (html) {
   let matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
   html = await replaceAsync(html, matchSoundCloud, (match, url) => {
     return render(m('.soundcloud.leftalign', [
-      'SoundCloud: ', m('a', {href: entities.decode(url), rel: 'nofollow'}, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
-    ]), {strict: true})
+      'SoundCloud: ', m('a', { href: entities.decode(url), rel: 'nofollow' }, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
+    ]), { strict: true })
   })
 
   if (cache.size === 0) {
@@ -119,11 +119,11 @@ export async function cleanMarkup (html) {
       return Promise.resolve(match)
     }
     return render(m('figure.youtube', [
-      m('a', {href: youtubeUrl, rel: 'nofollow'},
-        m('img', {src: thumbnail, alt: title})
+      m('a', { href: youtubeUrl, rel: 'nofollow' },
+        m('img', { src: thumbnail, alt: title })
       ),
-      m('figcaption', m('a', {href: youtubeUrl, rel: 'nofollow'}, caption))
-    ]), {strict: true})
+      m('figcaption', m('a', { href: youtubeUrl, rel: 'nofollow' }, caption))
+    ]), { strict: true })
   }
 }
 

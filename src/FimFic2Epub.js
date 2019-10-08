@@ -136,7 +136,7 @@ class FimFic2Epub extends EventEmitter {
     this.coverImage = null
     this.coverFilename = ''
     this.coverType = ''
-    this.coverImageDimensions = {width: 0, height: 0}
+    this.coverImageDimensions = { width: 0, height: 0 }
     this.readingEase = null
 
     this.hasRemoteResources = {
@@ -246,7 +246,7 @@ class FimFic2Epub extends EventEmitter {
         }
 
         chapterContent = chapterContent.trim().replace(trimWhitespace, '')
-        const chapter = {content: chapterContent, notes: notesContent, notesFirst}
+        const chapter = { content: chapterContent, notes: notesContent, notesFirst }
         ch.realWordCount = utils.htmlWordCount(chapter.content)
 
         p = p.then(() => cleanMarkup(chapter.content).then((content) => {
@@ -413,7 +413,7 @@ class FimFic2Epub extends EventEmitter {
         notesFirst: chapter.notesFirst,
         index: i
       })).then((html) => {
-        this.findRemoteResources('ch_' + zeroFill(3, i + 1), {chapter: i}, html)
+        this.findRemoteResources('ch_' + zeroFill(3, i + 1), { chapter: i }, html)
         if (this.options.kepubify) {
           html = kepubify(html)
         }
@@ -426,7 +426,7 @@ class FimFic2Epub extends EventEmitter {
           content: chapter.notes,
           index: i
         }, true)).then((html) => {
-          this.findRemoteResources('note_' + zeroFill(3, i + 1), {note: i}, html)
+          this.findRemoteResources('note_' + zeroFill(3, i + 1), { note: i }, html)
           if (this.options.kepubify) {
             html = kepubify(html)
           }
@@ -466,7 +466,7 @@ class FimFic2Epub extends EventEmitter {
 
     this.zip = new JSZip()
 
-    this.zip.file('mimetype', 'application/epub+zip', {compression: 'STORE'})
+    this.zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' })
     this.zip.file('META-INF/container.xml', containerXml)
 
     this.zip.file('OEBPS/content.opf', Buffer.from(await template.createOpf(this), 'utf8'))
@@ -539,7 +539,7 @@ class FimFic2Epub extends EventEmitter {
         type: isNode ? 'nodebuffer' : 'blob',
         mimeType: 'application/epub+zip',
         compression: 'DEFLATE',
-        compressionOptions: {level: 9}
+        compressionOptions: { level: 9 }
       }, (metadata) => { // onUpdate
         let currentPercent = Math.round(metadata.percent / 10) * 10
         if (lastPercent !== currentPercent) {
@@ -572,7 +572,7 @@ class FimFic2Epub extends EventEmitter {
         streamFiles: false,
         mimeType: 'application/epub+zip',
         compression: 'DEFLATE',
-        compressionOptions: {level: 9}
+        compressionOptions: { level: 9 }
       }, (metadata) => {
         if (onUpdate) onUpdate(metadata)
         let currentPercent = Math.round(metadata.percent / 20) * 20
@@ -639,7 +639,7 @@ class FimFic2Epub extends EventEmitter {
         filename = 'emoticon_' + emoticon[1]
       }
       remoteCounter++
-      this.remoteResources.set(cleanurl, {filename: filename, where: [where], originalUrl: url})
+      this.remoteResources.set(cleanurl, { filename: filename, where: [where], originalUrl: url })
     }
   }
 
@@ -671,7 +671,7 @@ class FimFic2Epub extends EventEmitter {
       return fontAwesomeCodes[name].charCodeAt(0)
     })
     let fontFile = require('font-awesome/fonts/fontawesome-webfont.ttf')
-    this.iconsFont = await subsetFont(fontFile, glyphs, {local: isNode})
+    this.iconsFont = await subsetFont(fontFile, glyphs, { local: isNode })
   }
 
   iconsStyle () {
@@ -720,7 +720,7 @@ class FimFic2Epub extends EventEmitter {
       let fontSize = 150
       let width
       do {
-        ctx.font = "bold " + fontSize + "px sans-serif"
+        ctx.font = 'bold ' + fontSize + 'px sans-serif'
         width = ctx.measureText(title).width
         fontSize -= 5
       } while (width > canvas.width * 0.85)
@@ -728,7 +728,7 @@ class FimFic2Epub extends EventEmitter {
       ctx.fillText(title, canvas.width / 2, canvas.height * 0.2)
       fontSize = 75
       do {
-        ctx.font = fontSize + "px sans-serif"
+        ctx.font = fontSize + 'px sans-serif'
         width = ctx.measureText(author).width
         fontSize -= 5
       } while (width > canvas.width * 0.7)
@@ -869,7 +869,7 @@ class FimFic2Epub extends EventEmitter {
 
     // remove leading and trailing <br /> tags and whitespace
     chapter = chapter.replace(trimWhitespace, '')
-    return {content: chapter, notes: authorNotes, notesFirst: authorNotesPos < chapterPos}
+    return { content: chapter, notes: authorNotes, notesFirst: authorNotesPos < chapterPos }
   }
 
   replaceRemoteResources () {

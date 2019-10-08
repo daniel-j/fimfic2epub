@@ -122,7 +122,7 @@ const bundleNpmModuleConfig = {
     __dirname: false
   },
 
-  externals: [nodeExternals({whitelist: [/^babel-runtime/, /fontawesome-webfont\.ttf/]})],
+  externals: [nodeExternals({ whitelist: [/^babel-runtime/, /fontawesome-webfont\.ttf/] })],
 
   plugins: [],
   performance: {

@@ -47,7 +47,7 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
   const rows = Math.floor(wordCounts.length / barCount) + 1
   const rowHeight = 30 + rowSpacing
   return m('svg.chapterbars', {
-    style: {height: rows * 3 + 'em'},
+    style: { height: rows * 3 + 'em' },
     viewBox: '0 0 ' + barCount * (barWidth + barSpacing) + ' ' + rowHeight * rows,
     xmlns: NS.SVG,
     fill: 'currentColor'
@@ -61,16 +61,16 @@ function chapterBars (chapters, currentChapter = -1, highlightCurrent = false) {
     } else if (i > currentChapter) {
       opacity = 0.35
     }
-    return m('rect', {x: x * (barWidth + barSpacing), width: barWidth, y: y * rowHeight + (rowHeight - rowSpacing - height), height, opacity})
+    return m('rect', { x: x * (barWidth + barSpacing), width: barWidth, y: y * rowHeight + (rowHeight - rowSpacing - height), height, opacity })
   }))
 }
 
 export function createChapter (ffc, ch, isNotesChapter) {
-  let {content, notes, notesFirst, title, link, linkNotes, index, showHeadings, showDuration, showWordCount} = ch
+  let { content, notes, notesFirst, title, link, linkNotes, index, showHeadings, showDuration, showWordCount } = ch
 
   let sections = [
     m.trust(content || ''),
-    notes ? m('div#author_notes', {className: notesFirst ? 'top' : 'bottom'}, [
+    notes ? m('div#author_notes', { className: notesFirst ? 'top' : 'bottom' }, [
       m('p', m('b', 'Author\'s Note:')),
       m.trust(notes)]) : null
   ]
@@ -84,13 +84,13 @@ export function createChapter (ffc, ch, isNotesChapter) {
 
   return Promise.all([
     render(
-      m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
+      m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
         m('head', [
-          m('meta', {charset: 'utf-8'}),
-          m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
+          m('meta', { charset: 'utf-8' }),
+          m('link', { rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css' }),
           m('title', title)
         ]),
-        m('body', {'epub:type': 'bodymatter chapter'}, m('div', [
+        m('body', { 'epub:type': 'bodymatter chapter' }, m('div', [
           showHeadings ? m('.chapter-title', [
             !isNotesChapter && (showDuration || showWordCount) ? m('aside.info',
               showDuration ? m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : '') : null,
@@ -100,15 +100,15 @@ export function createChapter (ffc, ch, isNotesChapter) {
             m('hr.old')
           ]) : null,
           tokenContent,
-          (link || linkNotes || isNotesChapter) ? m('p.double', {style: 'text-align: center; clear: both;'},
-            link ? m('a.chaptercomments', {href: link + '#comment_list'}, 'Read chapter comments online') : null,
-            linkNotes ? m('a.chaptercomments', {href: linkNotes}, 'Read author\'s note') : null,
-            isNotesChapter ? m('a.chaptercomments', {href: './chapter_' + zeroFill(3, index + 1) + '.xhtml'}, 'Read chapter') : null
+          (link || linkNotes || isNotesChapter) ? m('p.double', { style: 'text-align: center; clear: both;' },
+            link ? m('a.chaptercomments', { href: link + '#comment_list' }, 'Read chapter comments online') : null,
+            linkNotes ? m('a.chaptercomments', { href: linkNotes }, 'Read author\'s note') : null,
+            isNotesChapter ? m('a.chaptercomments', { href: './chapter_' + zeroFill(3, index + 1) + '.xhtml' }, 'Read chapter') : null
           ) : null,
           !isNotesChapter && ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, index) : null
         ]))
       ])
-      , {strict: true}),
+      , { strict: true }),
     render(sections)
   ]).then(([chapterPage, sectionsData]) => {
     chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + chapterPage
@@ -170,23 +170,23 @@ export function createOpf (ffc) {
     // only add each file once
     if (remoteCache.has(r.dest)) return
     remoteCache.add(r.dest)
-    remotes.push(m('item', {id: r.filename, href: r.dest, 'media-type': r.type}))
+    remotes.push(m('item', { id: r.filename, href: r.dest, 'media-type': r.type }))
   })
 
   let manifestChapters = ffc.storyInfo.chapters.map((ch, num) =>
-    m('item', {id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ((ch.remote ? 'remote-resources' : '') + (ffc.options.addChapterBars ? ' svg' : '')).trim() || null})
+    m('item', { id: 'chapter_' + zeroFill(3, num + 1), href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml', 'media-type': 'application/xhtml+xml', properties: ((ch.remote ? 'remote-resources' : '') + (ffc.options.addChapterBars ? ' svg' : '')).trim() || null })
   )
   let spineChapters = ffc.storyInfo.chapters.map((ch, num) =>
-    m('itemref', {idref: 'chapter_' + zeroFill(3, num + 1)})
+    m('itemref', { idref: 'chapter_' + zeroFill(3, num + 1) })
   )
   let manifestNotes = []
   let spineNotes = []
   if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
-    spineNotes.push(m('itemref', {idref: 'notesnav'}))
+    spineNotes.push(m('itemref', { idref: 'notesnav' }))
     ffc.chaptersWithNotes.forEach((num) => {
       let id = 'note_' + zeroFill(3, num + 1)
-      manifestNotes.push(m('item', {id: id, href: 'Text/' + id + '.xhtml', 'media-type': 'application/xhtml+xml'}))
-      spineNotes.push(m('itemref', {idref: id}))
+      manifestNotes.push(m('item', { id: id, href: 'Text/' + id + '.xhtml', 'media-type': 'application/xhtml+xml' }))
+      spineNotes.push(m('itemref', { idref: id }))
     })
   }
 
@@ -196,55 +196,55 @@ export function createOpf (ffc) {
   }
 
   return render(
-    m('package', {xmlns: NS.OPF, version: '3.0', 'unique-identifier': 'BookId'}, [
-      m('metadata', {'xmlns:dc': NS.DC, 'xmlns:opf': NS.OPF}, [
+    m('package', { xmlns: NS.OPF, version: '3.0', 'unique-identifier': 'BookId' }, [
+      m('metadata', { 'xmlns:dc': NS.DC, 'xmlns:opf': NS.OPF }, [
         m('dc:identifier#BookId', ffc.storyInfo.uuid),
         m('dc:title', ffc.storyInfo.title),
         m('dc:creator#cre', ffc.storyInfo.author.name),
-        m('meta', {refines: '#cre', property: 'role', scheme: 'marc:relators'}, 'aut'),
+        m('meta', { refines: '#cre', property: 'role', scheme: 'marc:relators' }, 'aut'),
         m('dc:date', new Date((ffc.storyInfo.publishDate || ffc.storyInfo.date_modified) * 1000).toISOString().substring(0, 10)),
         m('dc:publisher', 'Fimfiction'),
         ffc.storyInfo.short_description ? m('dc:description', ffc.storyInfo.short_description) : null,
         m('dc:source', ffc.storyInfo.url),
         m('dc:language', 'en'),
-        ffc.coverImage ? m('meta', {name: 'cover', content: 'cover'}) : null,
-        m('meta', {property: 'dcterms:modified'}, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', ''))
+        ffc.coverImage ? m('meta', { name: 'cover', content: 'cover' }) : null,
+        m('meta', { property: 'dcterms:modified' }, new Date(ffc.storyInfo.date_modified * 1000).toISOString().replace('.000', ''))
       ].concat(subjects.map((s) =>
         m('dc:subject', s)
-      ), m('meta', {name: 'fimfic2epub version', content: FIMFIC2EPUB_VERSION}))),
+      ), m('meta', { name: 'fimfic2epub version', content: FIMFIC2EPUB_VERSION }))),
 
       m('manifest', [
-        ffc.coverImage ? m('item', {id: 'cover', href: ffc.coverFilename, 'media-type': ffc.coverType, properties: 'cover-image'}) : null,
-        m('item', {id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml'}),
-        m('item', {id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav' + (ffc.options.addChapterBars && ffc.storyInfo.chapters.length > 1 ? ' svg' : '')}),
-        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? m('item', {id: 'notesnav', 'href': 'notesnav.xhtml', 'media-type': 'application/xhtml+xml'}) : null,
+        ffc.coverImage ? m('item', { id: 'cover', href: ffc.coverFilename, 'media-type': ffc.coverType, properties: 'cover-image' }) : null,
+        m('item', { id: 'ncx', href: 'toc.ncx', 'media-type': 'application/x-dtbncx+xml' }),
+        m('item', { id: 'nav', 'href': 'nav.xhtml', 'media-type': 'application/xhtml+xml', properties: 'nav' + (ffc.options.addChapterBars && ffc.storyInfo.chapters.length > 1 ? ' svg' : '') }),
+        ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? m('item', { id: 'notesnav', 'href': 'notesnav.xhtml', 'media-type': 'application/xhtml+xml' }) : null,
 
-        m('item', {id: 'style', href: 'Styles/style.css', 'media-type': 'text/css'}),
-        m('item', {id: 'coverstyle', href: 'Styles/coverstyle.css', 'media-type': 'text/css'}),
-        m('item', {id: 'titlestyle', href: 'Styles/titlestyle.css', 'media-type': 'text/css'}),
-        m('item', {id: 'navstyle', href: 'Styles/navstyle.css', 'media-type': 'text/css'}),
+        m('item', { id: 'style', href: 'Styles/style.css', 'media-type': 'text/css' }),
+        m('item', { id: 'coverstyle', href: 'Styles/coverstyle.css', 'media-type': 'text/css' }),
+        m('item', { id: 'titlestyle', href: 'Styles/titlestyle.css', 'media-type': 'text/css' }),
+        m('item', { id: 'navstyle', href: 'Styles/navstyle.css', 'media-type': 'text/css' }),
 
-        ffc.iconsFont ? m('item', {id: 'font-awesome', href: 'Fonts/fontawesome-webfont-subset.ttf', 'media-type': 'application/x-font-ttf'}) : null,
+        ffc.iconsFont ? m('item', { id: 'font-awesome', href: 'Fonts/fontawesome-webfont-subset.ttf', 'media-type': 'application/x-font-ttf' }) : null,
 
-        m('item', {id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.coverImage ? 'svg' : undefined}),
-        m('item', {id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasRemoteResources.titlePage ? 'remote-resources' : null})
+        m('item', { id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.coverImage ? 'svg' : undefined }),
+        m('item', { id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasRemoteResources.titlePage ? 'remote-resources' : null })
 
       ].concat(manifestChapters, manifestNotes, remotes)),
 
-      m('spine', {toc: 'ncx'}, sortSpineItems([
-        m('itemref', {idref: 'coverpage'}),
-        m('itemref', {idref: 'titlepage'}),
-        m('itemref', {idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 && !(ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? 'no' : undefined})
+      m('spine', { toc: 'ncx' }, sortSpineItems([
+        m('itemref', { idref: 'coverpage' }),
+        m('itemref', { idref: 'titlepage' }),
+        m('itemref', { idref: 'nav', linear: ffc.storyInfo.chapters.length <= 1 && !(ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? 'no' : undefined })
       ].concat(
         spineChapters,
         spineNotes
       ))),
       m('guide', [
-        m('reference', {type: 'cover', title: 'Cover', href: 'Text/cover.xhtml'}),
-        m('reference', {type: 'toc', title: 'Contents', href: 'nav.xhtml'})
+        m('reference', { type: 'cover', title: 'Cover', href: 'Text/cover.xhtml' }),
+        m('reference', { type: 'toc', title: 'Contents', href: 'nav.xhtml' })
       ])
     ])
-    , {strict: true}).then((contentOpf) => {
+    , { strict: true }).then((contentOpf) => {
     contentOpf = '<?xml version="1.0" encoding="utf-8"?>\n' + pretty.xml(contentOpf)
     return contentOpf
   })
@@ -255,21 +255,21 @@ function navPoints (list) {
   let arr = []
   for (let i = 0; i < list.length; i++) {
     if (!list[i]) continue
-    arr.push(m('navPoint', {id: 'navPoint-' + (i + 1), playOrder: playOrder++}, [
+    arr.push(m('navPoint', { id: 'navPoint-' + (i + 1), playOrder: playOrder++ }, [
       m('navLabel', m('text', list[i][0])),
-      m('content', {src: list[i][1]})
+      m('content', { src: list[i][1] })
     ]))
   }
   return arr
 }
 export function createNcx (ffc) {
   return render(
-    m('ncx', {version: '2005-1', xmlns: NS.DAISY}, [
+    m('ncx', { version: '2005-1', xmlns: NS.DAISY }, [
       m('head', [
-        m('meta', {content: ffc.storyInfo.uuid, name: 'dtb:uid'}),
-        m('meta', {content: 0, name: 'dtb:depth'}),
-        m('meta', {content: 0, name: 'dtb:totalPageCount'}),
-        m('meta', {content: 0, name: 'dtb:maxPageNumber'})
+        m('meta', { content: ffc.storyInfo.uuid, name: 'dtb:uid' }),
+        m('meta', { content: 0, name: 'dtb:depth' }),
+        m('meta', { content: 0, name: 'dtb:totalPageCount' }),
+        m('meta', { content: 0, name: 'dtb:maxPageNumber' })
       ]),
       m('docTitle', m('text', ffc.storyInfo.title)),
       m('navMap', navPoints([
@@ -280,7 +280,7 @@ export function createNcx (ffc) {
         [ch.title, 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml']
       ), ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes ? [['Author\'s Notes', 'notesnav.xhtml']] : null)))
     ])
-    , {strict: true}).then((tocNcx) => {
+    , { strict: true }).then((tocNcx) => {
     tocNcx = '<?xml version="1.0" encoding="utf-8" ?>\n' + pretty.xml(tocNcx)
     return tocNcx
   })
@@ -288,42 +288,42 @@ export function createNcx (ffc) {
 
 export function createNav (ffc) {
   let list = [
-    m('li', m('a', {href: 'Text/cover.xhtml'}, 'Cover')),
-    m('li', m('a', {href: 'Text/title.xhtml'}, 'Title Page')),
-    ffc.storyInfo.chapters.length > 1 || (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? m('li', m('a', {href: 'nav.xhtml'}, 'Contents')) : null
+    m('li', m('a', { href: 'Text/cover.xhtml' }, 'Cover')),
+    m('li', m('a', { href: 'Text/title.xhtml' }, 'Title Page')),
+    ffc.storyInfo.chapters.length > 1 || (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) ? m('li', m('a', { href: 'nav.xhtml' }, 'Contents')) : null
   ].concat(ffc.storyInfo.chapters.map((ch, num) =>
     m('li.leftalign', [
-      m('a', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title)
+      m('a', { href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml' }, ch.title)
     ])
   ))
   let prettyList = ffc.storyInfo.chapters.map((ch, num) =>
     m('li.item', [
       m('.floatbox', m('span.wordcount', ch.realWordCount.toLocaleString('en-GB'))),
-      m('a', {href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title),
+      m('a', { href: 'Text/chapter_' + zeroFill(3, num + 1) + '.xhtml' }, ch.title),
       m('span.date', [m('b', ' · '), prettyDate(new Date(ch.date_modified * 1000))])
     ])
   )
   if (ffc.options.includeAuthorNotes && ffc.options.useAuthorNotesIndex && ffc.hasAuthorNotes) {
-    list.push(m('li', m('a', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
-    prettyList.push(m('li.item.double', m('a', {href: 'notesnav.xhtml'}, 'Author\'s Notes')))
+    list.push(m('li', m('a', { href: 'notesnav.xhtml' }, 'Author\'s Notes')))
+    prettyList.push(m('li.item.double', m('a', { href: 'notesnav.xhtml' }, 'Author\'s Notes')))
   }
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
       m('head', [
-        m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css'}),
+        m('meta', { charset: 'utf-8' }),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css' }),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css' }),
         m('title', 'Contents')
       ]),
-      m('body', {'epub:type': 'frontmatter toc'}, m('div', [
-        m('nav.invisible', {'epub:type': 'toc'}, m('ol', list)),
+      m('body', { 'epub:type': 'frontmatter toc' }, m('div', [
+        m('nav.invisible', { 'epub:type': 'toc' }, m('ol', list)),
         m('h3', 'Contents'),
         m('ul#toc.hidden', prettyList),
         ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters) : null
       ]))
     ])
-    , {strict: true}).then((navDocument) => {
+    , { strict: true }).then((navDocument) => {
     navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
     return navDocument
   })
@@ -332,23 +332,23 @@ export function createNav (ffc) {
 export function createNotesNav (ffc) {
   let list = ffc.chaptersWithNotes.map((num) => {
     let ch = ffc.storyInfo.chapters[num]
-    return m('.item', m('a.leftalign', {href: 'Text/note_' + zeroFill(3, num + 1) + '.xhtml'}, ch.title))
+    return m('.item', m('a.leftalign', { href: 'Text/note_' + zeroFill(3, num + 1) + '.xhtml' }, ch.title))
   })
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
       m('head', [
-        m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css'}),
+        m('meta', { charset: 'utf-8' }),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: 'Styles/style.css' }),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: 'Styles/navstyle.css' }),
         m('title', 'Author\'s Notes')
       ]),
-      m('body#navpage', {'epub:type': 'frontmatter toc'}, m('div', [
+      m('body#navpage', { 'epub:type': 'frontmatter toc' }, m('div', [
         m('h3', 'Author\'s Notes'),
         m('#toc', list)
       ]))
     ])
-    , {strict: true}).then((navDocument) => {
+    , { strict: true }).then((navDocument) => {
     navDocument = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(navDocument)
     return navDocument
   })
@@ -357,11 +357,11 @@ export function createNotesNav (ffc) {
 export function createCoverPage (ffc) {
   let body
 
-  let {width, height} = ffc.coverImageDimensions
+  let { width, height } = ffc.coverImageDimensions
 
   if (ffc.coverImage) {
-    body = m('svg#cover', {xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + width + ' ' + height},
-      m('image', {width: width, height: height, 'xlink:href': '../' + ffc.coverFilename})
+    body = m('svg#cover', { xmlns: NS.SVG, 'xmlns:xlink': NS.XLINK, version: '1.1', viewBox: '0 0 ' + width + ' ' + height },
+      m('image', { width: width, height: height, 'xlink:href': '../' + ffc.coverFilename })
     )
   } else {
     body = [
@@ -371,22 +371,22 @@ export function createCoverPage (ffc) {
   }
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
       m('head', [
-        ffc.coverImage ? m('meta', {name: 'viewport', content: 'width=' + width + ', height=' + height}) : null,
+        ffc.coverImage ? m('meta', { name: 'viewport', content: 'width=' + width + ', height=' + height }) : null,
         m('title', 'Cover'),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/coverstyle.css'})
+        m('link', { rel: 'stylesheet', type: 'text/css', href: '../Styles/coverstyle.css' })
       ]),
-      m('body#coverpage', {'epub:type': 'frontmatter cover'}, body)
+      m('body#coverpage', { 'epub:type': 'frontmatter cover' }, body)
     ])
-    , {strict: true}).then((coverPage) => {
+    , { strict: true }).then((coverPage) => {
     coverPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + pretty.xml(coverPage)
     return coverPage
   })
 }
 
 function infoBox (heading, data, title) {
-  return m('.infobox', {title}, m('.wrap', [
+  return m('.infobox', { title }, m('.wrap', [
     m('span.heading', heading),
     m('br'),
     m('span.data', data)
@@ -425,33 +425,33 @@ export function createTitlePage (ffc) {
   }
 
   return render(
-    m('html', {xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en'}, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
       m('head', [
-        m('meta', {charset: 'utf-8'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css'}),
-        m('link', {rel: 'stylesheet', type: 'text/css', href: '../Styles/titlestyle.css'}),
+        m('meta', { charset: 'utf-8' }),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css' }),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: '../Styles/titlestyle.css' }),
         m('title', ffc.storyInfo.title)
       ]),
-      m('body#titlepage', {'epub:type': 'frontmatter titlepage'}, m('div', [
+      m('body#titlepage', { 'epub:type': 'frontmatter titlepage' }, m('div', [
         m('header.title', [
-          m('div', {className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase()}, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
+          m('div', { className: 'content-rating content-rating-' + ffc.storyInfo.content_rating_text.toLowerCase() }, ffc.storyInfo.content_rating_text.charAt(0).toUpperCase()),
           m('span.story_name', ffc.storyInfo.title + ' '),
           m('span.author', ['by ', m('b', ffc.storyInfo.author.name)])
         ]),
         // m('hr'),
         m('.tags', ffc.tags.filter((tag) => tag.type !== 'character').map((tag) =>
-          [m('span.tagbox', m('span', {className: tag.className}, tag.name))]
+          [m('span.tagbox', m('span', { className: tag.className }, tag.name))]
         )),
-        m('.readlink', m('a', {href: ffc.storyInfo.url}, 'Story on Fimfiction')),
+        m('.readlink', m('a', { href: ffc.storyInfo.url }, 'Story on Fimfiction')),
         // m('hr'),
         ffc.storyInfo.prequel ? [m('div', [
           m('br'),
           'This story is a sequel to ',
-          m('a', {href: ffc.storyInfo.prequel.url}, ffc.storyInfo.prequel.title)
+          m('a', { href: ffc.storyInfo.prequel.url }, ffc.storyInfo.prequel.title)
         ]), m('hr.old')] : null,
         m('#description', tokenContent),
         m('.bottom', [
-          m('section', {className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase()}, [
+          m('section', { className: 'completed-status completed-status-' + ffc.storyInfo.status.toLowerCase() }, [
             m('i.fa.fa-fw.fa-' + completedIcon[ffc.storyInfo.status.toLowerCase()], ' '),
             ffc.storyInfo.status
           ]),
@@ -463,11 +463,11 @@ export function createTitlePage (ffc) {
         ]),
         // m('hr'),
         m('.tags', ffc.tags.filter((tag) => tag.type === 'character').map((tag) =>
-          [m('span.tagbox', m('span', {className: tag.className}, tag.name))]
+          [m('span.tagbox', m('span', { className: tag.className }, tag.name))]
         ))
       ]))
     ])
-    , {strict: true}).then((titlePage) => {
+    , { strict: true }).then((titlePage) => {
     titlePage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + titlePage
     titlePage = titlePage.replace(tokenContent, '\n' + ffc.storyInfo.description + '\n')
     return titlePage

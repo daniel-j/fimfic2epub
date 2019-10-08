@@ -20,11 +20,11 @@ function safariHandler (ev) {
   delete safariQueue[url]
 
   if (responseType === 'blob') {
-    let blob = new Blob([data], {type: type})
+    let blob = new Blob([data], { type: type })
     cb(blob, type)
   } else {
     if (!responseType) {
-      let blob = new Blob([data], {type: type})
+      let blob = new Blob([data], { type: type })
       let fr = new FileReader()
       fr.onloadend = function () {
         cb(fr.result, type)
@@ -49,7 +49,7 @@ function fetchBackground (url, responseType) {
         }))
       })
     } else if (typeof safari !== 'undefined') {
-      safariQueue[url] = {cb: resolve, responseType: responseType}
+      safariQueue[url] = { cb: resolve, responseType: responseType }
       safari.self.tab.dispatchMessage('remote', url)
     } else {
       resolve(null)
