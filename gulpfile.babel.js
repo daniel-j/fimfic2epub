@@ -1,7 +1,6 @@
 
 // gulp and utilities
 import gulp from 'gulp'
-import gutil from 'gulp-util'
 import del from 'del'
 import watch from 'gulp-watch'
 import filter from 'gulp-filter'
@@ -9,6 +8,8 @@ import change from 'gulp-change'
 import rename from 'gulp-rename'
 import banner from 'gulp-banner'
 import chmod from 'gulp-chmod'
+import PluginError from 'plugin-error'
+import log from 'fancy-log'
 
 import jsonedit from 'gulp-json-editor'
 import zip from 'gulp-zip'
@@ -70,8 +71,8 @@ function webpackTask () {
     p.then((results) => {
       // run webpack compiler
       wpCompiler.run(function (err, stats) {
-        if (err) throw new gutil.PluginError('webpack', err)
-        gutil.log('[webpack]', stats.toString({
+        if (err) throw new PluginError('webpack', err)
+        log('[webpack]', stats.toString({
           colors: true,
           hash: false,
           version: false,
@@ -207,9 +208,9 @@ gulp.task('watch', gulp.series('default', gulp.parallel('watch:lint', 'watch:pac
 /*
 gulp.task('pack:safari', (done) => {
   exec('rm -rf fimfic2epub.safariextension/; cp -r extension/ fimfic2epub.safariextension', [], (error, stdout, stderr) => {
-    // gutil.log('[pack:safari]', stdout)
+    // log('[pack:safari]', stdout)
     if (error || stderr) {
-      done(new gutil.PluginError('pack:safari', stderr, {showStack: false}))
+      done(new PluginError('pack:safari', stderr, {showStack: false}))
       return
     }
     done()
