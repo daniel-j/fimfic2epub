@@ -18,7 +18,7 @@
 	"content_scripts": [
 		{
 			"matches": ["https://www.fimfiction.net/*", "http://www.fimfiction.net/*"],
-			"js": ["build/vendors~fimfic2epub.js", "build/fimfic2epub.js"],
+			"js": ["build/vendors_fimfic2epub.js", "build/fimfic2epub.js"],
 			"css": ["inject.css"]
 		}
 	],

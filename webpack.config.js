@@ -67,7 +67,8 @@ const bundleExtensionConfig = {
     concatenateModules: inProduction,
     minimize: inProduction,
     splitChunks: {
-      chunks: 'all'
+      chunks: 'all',
+      automaticNameDelimiter: '_'
     }
   },
   devtool: 'source-map',
