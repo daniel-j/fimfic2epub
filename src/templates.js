@@ -86,7 +86,7 @@ export function createChapter (ffc, ch, isNotesChapter) {
 
   return Promise.all([
     render(
-      m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
+      m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
         m('head', [
           m('meta', { charset: 'utf-8' }),
           metaGenerator(),
@@ -227,7 +227,7 @@ export function createOpf (ffc) {
         m('item', { id: 'titlestyle', href: 'Styles/titlestyle.css', 'media-type': 'text/css' }),
         m('item', { id: 'navstyle', href: 'Styles/navstyle.css', 'media-type': 'text/css' }),
 
-        ffc.iconsFont ? m('item', { id: 'font-awesome', href: 'Fonts/fontawesome-webfont-subset.ttf', 'media-type': 'application/x-font-ttf' }) : null,
+        ffc.iconsFont ? m('item', { id: 'font-awesome', href: 'Fonts/fontawesome-webfont-subset.ttf', 'media-type': 'font/ttf' }) : null,
 
         m('item', { id: 'coverpage', href: 'Text/cover.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.coverImage ? 'svg' : undefined }),
         m('item', { id: 'titlepage', href: 'Text/title.xhtml', 'media-type': 'application/xhtml+xml', properties: ffc.hasRemoteResources.titlePage ? 'remote-resources' : null })
@@ -312,7 +312,7 @@ export function createNav (ffc) {
   }
 
   return render(
-    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
       m('head', [
         m('meta', { charset: 'utf-8' }),
         metaGenerator(),
@@ -321,7 +321,7 @@ export function createNav (ffc) {
         m('title', 'Contents')
       ]),
       m('body', { 'epub:type': 'frontmatter toc' }, m('div', [
-        m('nav.invisible', { 'epub:type': 'toc' }, m('ol', list)),
+        m('nav.invisible', { 'epub:type': 'toc', role: 'doc-toc' }, m('ol', list)),
         m('h3', 'Contents'),
         m('ul#toc.hidden', prettyList),
         ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters) : null
@@ -340,7 +340,7 @@ export function createNotesNav (ffc) {
   })
 
   return render(
-    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
       m('head', [
         m('meta', { charset: 'utf-8' }),
         metaGenerator(),
@@ -376,7 +376,7 @@ export function createCoverPage (ffc) {
   }
 
   return render(
-    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
       m('head', [
         m('meta', { charset: 'utf-8' }),
         metaGenerator(),
@@ -432,7 +432,7 @@ export function createTitlePage (ffc) {
   }
 
   return render(
-    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en' }, [
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
       m('head', [
         m('meta', { charset: 'utf-8' }),
         metaGenerator(),
