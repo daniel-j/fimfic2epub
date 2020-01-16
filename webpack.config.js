@@ -204,7 +204,7 @@ const bundleStaticNpmModuleConfig = {
 
   output: {
     path: path.join(__dirname, '/'),
-    filename: './build/fimfic2epub-static.js'
+    filename: './build/fimfic2epub.js'
   },
 
   target: 'node',
@@ -233,6 +233,10 @@ const bundleStaticNpmModuleConfig = {
       {
         test: /\.ttf$/,
         use: 'binary-loader'
+      },
+      {
+        test: /\.node$/,
+        use: 'node-loader'
       }
     ]
   },
