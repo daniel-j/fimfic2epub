@@ -3,12 +3,12 @@ import isNode from 'detect-node'
 import { Font } from 'fonteditor-core'
 import fs from 'fs'
 import fetch from './fetch'
-import fileType from 'file-type'
+import FileType from 'file-type'
 
 async function subsetFont (fontPath, glyphs, options = {}) {
   let data
   const fontdata = Buffer.from(fontPath, 'binary')
-  const type = fileType(fontdata)
+  const type = await FileType.fromBuffer(fontdata)
   if (type && type.mime === 'font/ttf') {
     data = fontdata.buffer
   } else {

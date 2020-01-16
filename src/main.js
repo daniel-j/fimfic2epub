@@ -329,9 +329,8 @@ function createEpub (model) {
   } else if (model.coverFile()) {
     chain = chain
       .then(() => blobToArrayBuffer(model.coverFile()))
-      .then((buf) => {
-        ffc.setCoverImage(buf)
-      }).catch((err) => console.error(err))
+      .then((buf) => ffc.setCoverImage(buf))
+      .catch((err) => console.error(err))
   }
 
   ffc.setTitle(model.title())

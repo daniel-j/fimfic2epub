@@ -6,7 +6,7 @@ import { XmlEntities } from 'html-entities'
 import sanitize from 'sanitize-filename'
 import { URL } from 'url'
 import isNode from 'detect-node'
-import fileType from 'file-type'
+import FileType from 'file-type'
 import isSvg from 'is-svg'
 import sizeOf from 'image-size'
 import EventEmitter from 'events'
@@ -324,7 +324,7 @@ class FimFic2Epub extends EventEmitter {
 
         fetchRemote(url, 'arraybuffer').then(async (data) => {
           r.dest = null
-          let info = fileType(isNode ? data : new Uint8Array(data))
+          let info = await FileType.fromBuffer(isNode ? data : new Uint8Array(data))
           if (!info || info.mime === 'application/xml') {
             // file-type doesn't support SVG, extra check:
             if (isSvg(Buffer.from(data).toString('utf8'))) {
@@ -346,7 +346,7 @@ class FimFic2Epub extends EventEmitter {
               checksums.set(checksum, url)
               if (info.mime === 'image/webp') {
                 data = await utils.webp2png(isNode ? data : new Uint8Array(data))
-                info = fileType(data)
+                info = await FileType.fromBuffer(data)
               }
               const type = info.mime
               r.type = type
@@ -593,9 +593,9 @@ class FimFic2Epub extends EventEmitter {
     this.filename = FimFic2Epub.getFilename(this.storyInfo)
   }
 
-  setCoverImage (buffer) {
+  async setCoverImage (buffer) {
     buffer = isNode ? buffer : Buffer.from(new Uint8Array(buffer))
-    const info = fileType(buffer)
+    const info = await FileType.fromBuffer(buffer)
     if (!info || !info.mime.startsWith('image/')) {
       throw new Error('Invalid image')
     }
@@ -603,6 +603,7 @@ class FimFic2Epub extends EventEmitter {
     this.coverFilename = 'Images/cover.' + info.ext
     this.coverType = info.mime
     this.coverImageDimensions = sizeOf(Buffer.from(buffer))
+    return this.coverImage
   }
 
   // Internal/private methods
@@ -737,16 +738,14 @@ class FimFic2Epub extends EventEmitter {
 
       ctx.fillText(author, canvas.width / 2, canvas.height * 0.9)
 
-      this.setCoverImage(Buffer.from(canvas.toDataURL('image/jpeg').split(',')[1], 'base64'))
-
-      return Promise.resolve(this.coverImage)
+      return this.setCoverImage(Buffer.from(canvas.toDataURL('image/jpeg').split(',')[1], 'base64'))
     }
 
     this.progress(0, 0, 'Fetching cover image...')
 
-    this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then((data) => {
+    this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then(async (data) => {
       data = isNode ? data : new Uint8Array(data)
-      const info = fileType(data)
+      const info = await FileType.fromBuffer(data)
       if (info) {
         const type = info.mime
         const isImage = type.startsWith('image/')
