@@ -20,10 +20,12 @@ export async function cleanMarkup (html) {
   html = twemoji.parse(html, { ext: '.svg', folder: 'svg' })
 
   // replace HTML entities with decimal entities
+  /* eslint-disable no-control-regex */
   html = html.replace(/\xA0/g, '&#160;')
   html = html.replace(/&nbsp;/ig, '&#160;')
   html = html.replace(/&emsp;/ig, '&#8195;')
-  html = html.replace(/\u007F/g, '') // remove invalid token
+  html = html.replace(/[\u000C\u007F]/g, '') // remove invalid token (formfeed and u007F)
+  /* eslint-enable no-control-regex */
 
   // fix some tags
   html = html.replace(/<u>/ig, '<span style="text-decoration: underline">')
