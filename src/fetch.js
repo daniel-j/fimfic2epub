@@ -2,27 +2,27 @@
 import isNode from 'detect-node'
 
 function fetchNode (url, responseType) {
-  const request = require('request')
+  const fetch = require('node-fetch')
   if (url.startsWith('/')) {
     url = 'https://fimfiction.net' + url
   }
-  return new Promise((resolve, reject) => {
-    request({
-      url: url,
-      encoding: responseType ? null : 'utf8',
-      headers: {
-        referer: 'https://fimfiction.net/',
-        cookie: 'view_mature=true',
-        accept: '*/*'
-      }
-    }, (error, response, body) => {
-      if (error) {
-        reject(error)
-        return
-      }
-      // let type = response.headers['content-type']
-      resolve(body)
-    })
+  return fetch(url, {
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'include',
+    cache: 'default',
+    redirect: 'follow',
+    headers: {
+      cookie: 'view_mature=true',
+      referer: 'https://fimfiction.net/',
+      accept: 'Accept: text/*, image/png, image/jpeg' // Fix for not getting webp images from Fimfiction
+    }
+  }).then((response) => {
+    if (responseType) {
+      return response.buffer()
+    } else {
+      return response.text()
+    }
   })
 }
 
@@ -46,7 +46,7 @@ export default function fetch (url, responseType) {
         cache: 'default',
         redirect: 'follow',
         headers: {
-          accept: '*/*' // Fix for not getting webp images from Fimfiction
+          accept: 'Accept: text/*, image/png, image/jpeg' // Fix for not getting webp images from Fimfiction
         },
         referrer: window.location.origin
       }).then((response) => {
@@ -63,7 +63,7 @@ export default function fetch (url, responseType) {
     } else {
       const x = new XMLHttpRequest()
       x.withCredentials = true
-      x.setRequestHeader('accept', '*/*') // Fix for not getting webp images from Fimfiction
+      x.setRequestHeader('accept', 'text/*, image/png, image/jpeg') // Fix for not getting webp images from Fimfiction
       x.open('get', url, true)
       if (responseType) {
         x.responseType = responseType

@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.7.42",
+  "version": "1.7.43",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
   "license": "MIT",
@@ -23,7 +23,7 @@
   ],
   "dependencies": {
     "canvas": "^2.6.1",
-    "commander": "^4.1.1",
+    "commander": "^5.0.0",
     "crc-32": "^1.2.0",
     "detect-node": "^2.0.4",
     "elementtree": "^0.1.7",
@@ -38,9 +38,9 @@
     "match-words": "^1.0.0",
     "mithril": "^2.0.4",
     "mithril-node-render": "^2.3.2",
+    "node-fetch": "^2.6.0",
     "node-png": "^0.4.3",
     "pretty-data": "^0.40.0",
-    "request": "^2.88.2",
     "sanitize-filename": "^1.6.3",
     "syllable": "^4.0.1",
     "twemoji": "^12.1.5",
@@ -49,8 +49,8 @@
     "zero-fill": "^2.2.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.6",
-    "@babel/preset-env": "^7.8.6",
+    "@babel/core": "^7.8.7",
+    "@babel/preset-env": "^7.8.7",
     "@babel/register": "^7.8.6",
     "autosize": "^4.0.2",
     "babel-loader": "^8.0.6",
@@ -75,7 +75,7 @@
     "node-loader": "^0.6.0",
     "plugin-error": "^1.0.1",
     "raw-loader": "^4.0.0",
-    "regenerator-runtime": "^0.13.3",
+    "regenerator-runtime": "^0.13.5",
     "removeNPMAbsolutePaths": "^2.0.0",
     "standard": "^14.3.1",
     "stylus": "^0.54.7",

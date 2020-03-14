@@ -55,7 +55,7 @@ const bundleExtensionConfig = {
     fs: 'empty'
   },
 
-  externals: ['request'],
+  externals: ['node-fetch'],
 
   plugins: [
     // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()

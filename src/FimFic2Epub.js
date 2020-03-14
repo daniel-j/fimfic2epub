@@ -14,7 +14,6 @@ import { buf as crc32 } from 'crc-32'
 
 import { cleanMarkup } from './cleanMarkup'
 import fetch from './fetch'
-import fetchRemote from './fetchRemote'
 import * as template from './templates'
 import { styleCss, coverstyleCss, titlestyleCss, iconsCss, navstyleCss, paragraphsCss } from './styles'
 import * as utils from './utils'
@@ -274,6 +273,8 @@ class FimFic2Epub extends EventEmitter {
     }).then(() => {
       this.totalWordCount = this.storyInfo.chapters.reduce((count, ch) => count + ch.realWordCount, 0)
       this.pcache.chapters = null
+    }).catch((err) => {
+      console.error(err)
     })
 
     return this.pcache.chapters
@@ -322,7 +323,7 @@ class FimFic2Epub extends EventEmitter {
           return
         }
 
-        fetchRemote(url, 'arraybuffer').then(async (data) => {
+        fetch(url, 'arraybuffer').then(async (data) => {
           r.dest = null
           let info = await FileType.fromBuffer(isNode ? data : new Uint8Array(data))
           if (!info || info.mime === 'application/xml') {
@@ -743,7 +744,7 @@ class FimFic2Epub extends EventEmitter {
 
     this.progress(0, 0, 'Fetching cover image...')
 
-    this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then(async (data) => {
+    this.pcache.coverImage = fetch(url, 'arraybuffer').then(async (data) => {
       data = isNode ? data : new Uint8Array(data)
       const info = await FileType.fromBuffer(data)
       if (info) {

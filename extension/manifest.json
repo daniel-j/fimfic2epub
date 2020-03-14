@@ -32,8 +32,11 @@
 	],
 
 	"permissions": [
-		"http://*/*",
-		"https://*/*",
+		"https://fimfiction.net/*",
+		"https://*.fimfiction.net/*",
+		"https://www.googleapis.com/youtube/v3/videos?id=*",
+		"https://i.ytimg.com/*",
+		"https://twemoji.maxcdn.com/*",
 		"storage"
 	]
 }

@@ -5,6 +5,7 @@ import fetch from './fetch'
 if (typeof safari !== 'undefined') {
   safari.application.addEventListener('message', function (ev) {
     const url = ev.message
+    console.log('Fetching', url)
     fetch(url, 'arraybuffer').then((buffer) => {
       console.log('Fetched ' + url)
       ev.target.page.dispatchMessage('remote', {
@@ -18,6 +19,7 @@ if (typeof safari !== 'undefined') {
 
   onMessage.addListener(function (request, sender, sendResponse) {
     if (typeof request === 'string') {
+      console.log('Fetching', request)
       fetch(request, 'blob').then((blob) => {
         const ourl = URL.createObjectURL(blob)
         console.log('Fetched', request)
