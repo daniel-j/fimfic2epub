@@ -182,11 +182,6 @@ const bundleNpmBinaryConfig = {
     __dirname: false
   },
 
-  externals: [nodeExternals(), {
-    './FimFic2Epub': 'require(\'../dist/fimfic2epub\')',
-    '../package.json': 'require(\'../package.json\')'
-  }],
-
   plugins: [],
   performance: {
     hints: false
