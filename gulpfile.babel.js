@@ -139,7 +139,7 @@ gulp.task('binaries', gulp.series('version', function binariesTask () {
     .pipe(rename({ extname: '' }))
     .pipe(header('#!/usr/bin/env node\n// fimfic2epub ' + packageVersion + '\n'))
     .pipe(chmod(0o777))
-    .pipe(gulp.dest('bin/'))
+    .pipe(gulp.dest('build/'))
 }))
 
 gulp.task('pack:firefox', gulp.series('version', function packFirefox () {
