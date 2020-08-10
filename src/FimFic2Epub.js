@@ -323,6 +323,8 @@ class FimFic2Epub extends EventEmitter {
           return
         }
 
+        console.log('Remote file URL: ' + url)
+
         fetch(url, 'arraybuffer').then(async (data) => {
           r.dest = null
           let info = await FileType.fromBuffer(isNode ? data : new Uint8Array(data))
