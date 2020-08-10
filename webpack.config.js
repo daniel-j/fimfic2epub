@@ -11,8 +11,8 @@ const bundleExtensionConfig = {
   },
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './extension/build/[name].js'
+    path: path.join(__dirname, '/extension/build'),
+    filename: './[name].js'
   },
 
   module: {
@@ -144,8 +144,8 @@ const bundleNpmBinaryConfig = {
   entry: './src/cli',
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './build/fimfic2epub.js'
+    path: path.join(__dirname, '/build'),
+    filename: './fimfic2epub.js'
   },
 
   target: 'node',
@@ -203,8 +203,8 @@ const bundleStaticNpmModuleConfig = {
   entry: './src/cli',
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './build/fimfic2epub.js'
+    path: path.join(__dirname, '/build'),
+    filename: './fimfic2epub.js'
   },
 
   target: 'node',
