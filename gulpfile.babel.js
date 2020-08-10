@@ -108,7 +108,6 @@ function lintPipe (stream) {
 
 // Cleanup task
 gulp.task('clean', () => del([
-  'bin/',
   'build/',
   'extension/build/',
   'dist/',

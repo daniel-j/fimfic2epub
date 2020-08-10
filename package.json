@@ -13,12 +13,12 @@
     "dev": "NODE_ENV=development gulp"
   },
   "bin": {
-    "fimfic2epub": "./bin/fimfic2epub"
+    "fimfic2epub": "./build/fimfic2epub"
   },
   "main": "dist/fimfic2epub.js",
   "files": [
     "dist/",
-    "bin/fimfic2epub",
+    "build/fimfic2epub",
     "LICENSE"
   ],
   "dependencies": {
