@@ -2,7 +2,7 @@
 import isNode from 'detect-node'
 
 function fetchNode (url, responseType) {
-  const fetch = require('node-fetch')
+  const fetch = require('node-fetch').default
   if (url.startsWith('/')) {
     url = 'https://fimfiction.net' + url
   }
