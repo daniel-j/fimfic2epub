@@ -82,42 +82,33 @@ export function createChapter (ffc, ch, isNotesChapter) {
     sections.reverse()
   }
 
-  const tokenContent = '%%HTML_CONTENT_' + Math.random() + '%%'
-
-  return Promise.all([
-    render(
-      m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
-        m('head', [
-          m('meta', { charset: 'utf-8' }),
-          metaGenerator(),
-          m('link', { rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css' }),
-          m('title', title)
-        ]),
-        m('body', { 'epub:type': 'bodymatter chapter' }, m('div', [
-          showHeadings ? m('.chapter-title', [
-            !isNotesChapter && (showDuration || showWordCount) ? m('aside.info',
-              showDuration ? m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : '') : null,
-              showWordCount ? m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words') : null
-            ) : null,
-            m('header', m('h1', title)),
-            m('hr.old')
-          ]) : null,
-          tokenContent,
-          (link || linkNotes || isNotesChapter) ? m('p.double', { style: 'text-align: center; clear: both;' },
-            link ? m('a.chaptercomments', { href: link + '#comment_list' }, 'Read chapter comments online') : null,
-            linkNotes ? m('a.chaptercomments', { href: linkNotes }, 'Read author\'s note') : null,
-            isNotesChapter ? m('a.chaptercomments', { href: './chapter_' + zeroFill(3, index + 1) + '.xhtml' }, 'Read chapter') : null
+  return render(
+    m('html', { xmlns: NS.XHTML, 'xmlns:epub': NS.OPS, lang: 'en', 'xml:lang': 'en' }, [
+      m('head', [
+        m('meta', { charset: 'utf-8' }),
+        metaGenerator(),
+        m('link', { rel: 'stylesheet', type: 'text/css', href: '../Styles/style.css' }),
+        m('title', title)
+      ]),
+      m('body', { 'epub:type': 'bodymatter chapter' }, m('div', [
+        showHeadings ? m('.chapter-title', [
+          !isNotesChapter && (showDuration || showWordCount) ? m('aside.info',
+            showDuration ? m('span.label', ffc.options.wordsPerMinute ? calcReadingTime(ffc, ffc.storyInfo.chapters[index].realWordCount) : '') : null,
+            showWordCount ? m('span.label', ffc.storyInfo.chapters[index].realWordCount.toLocaleString('en-GB') + ' words') : null
           ) : null,
-          !isNotesChapter && ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, index) : null
-        ]))
-      ])
-      , { strict: true }),
-    render(sections)
-  ]).then(([chapterPage, sectionsData]) => {
-    chapterPage = '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + chapterPage
-    chapterPage = chapterPage.replace(tokenContent, '\n' + sectionsData + '\n')
-    return chapterPage
-  })
+          m('header', m('h1', title)),
+          m('hr.old')
+        ]) : null,
+        ...sections,
+        (link || linkNotes || isNotesChapter) ? m('p.double', { style: 'text-align: center; clear: both;' },
+          link ? m('a.chaptercomments', { href: link + '#comment_list' }, 'Read chapter comments online') : null,
+          linkNotes ? m('a.chaptercomments', { href: linkNotes }, 'Read author\'s note') : null,
+          isNotesChapter ? m('a.chaptercomments', { href: './chapter_' + zeroFill(3, index + 1) + '.xhtml' }, 'Read chapter') : null
+        ) : null,
+        !isNotesChapter && ffc.options.addChapterBars ? chapterBars(ffc.storyInfo.chapters, index) : null
+      ]))
+    ])
+    , { strict: true }).then((chapterPage) => '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' + chapterPage)
 }
 
 // some eReaders doesn't understand linear=no, so push those items to the end of the spine/book.
