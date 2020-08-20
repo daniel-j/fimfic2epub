@@ -37,7 +37,7 @@
     "jszip": "^3.5.0",
     "match-words": "^1.0.0",
     "mithril": "^2.0.4",
-    "mithril-node-render": "^3.0.0",
+    "mithril-node-render": "^2.3.2",
     "node-fetch": "^2.6.0",
     "node-png": "^0.4.3",
     "pretty-data": "^0.40.0",
