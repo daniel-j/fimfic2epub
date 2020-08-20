@@ -412,7 +412,7 @@ class FimFic2Epub extends EventEmitter {
         link: this.options.addCommentsLink ? ch.link : null,
         linkNotes: this.options.includeAuthorNotes && this.options.useAuthorNotesIndex && chapter.notes ? 'note_' + zeroFill(3, i + 1) + '.xhtml' : null,
         content: content,
-        notes: !this.options.useAuthorNotesIndex ? chapter.notes : '',
+        notes: this.options.includeAuthorNotes && !this.options.useAuthorNotesIndex ? chapter.notes : '',
         notesFirst: chapter.notesFirst,
         index: i
       })).then((html) => {
