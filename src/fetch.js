@@ -4,7 +4,7 @@ import isNode from 'detect-node'
 function fetchNode (url, responseType) {
   const fetch = require('node-fetch').default
   if (url.startsWith('/')) {
-    url = 'https://fimfiction.net' + url
+    url = 'https://www.fimfiction.net' + url
   }
   return fetch(url, {
     method: 'GET',
@@ -14,7 +14,7 @@ function fetchNode (url, responseType) {
     redirect: 'follow',
     headers: {
       cookie: 'view_mature=true',
-      referer: 'https://fimfiction.net/',
+      referer: 'https://www.fimfiction.net/',
       accept: 'Accept: text/*, image/png, image/jpeg' // Fix for not getting webp images from Fimfiction
     }
   }).then((response) => {
@@ -30,12 +30,12 @@ export default function fetch (url, responseType) {
   if (url.startsWith('//')) {
     url = 'http:' + url
   }
-  if (url.startsWith('/')) {
-    url = 'https://fimfiction.net' + url
-  }
 
   if (isNode) {
     return fetchNode(url, responseType)
+  }
+  if (url.startsWith('/')) {
+    url = window.location.origin + url
   }
   return new Promise((resolve, reject) => {
     if (typeof window.fetch === 'function') {

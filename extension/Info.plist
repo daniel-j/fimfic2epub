@@ -32,7 +32,7 @@
 		</dict>
 		<key>Whitelist</key>
 		<array>
-			<string>http://www.fimfiction.net/story/*</string>
+			<string>https://fimfiction.net/story/*</string>
 			<string>https://www.fimfiction.net/story/*</string>
 		</array>
 	</dict>

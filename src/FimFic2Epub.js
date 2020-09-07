@@ -223,7 +223,7 @@ class FimFic2Epub extends EventEmitter {
     this.progress(0, 0, 'Fetching chapters...')
 
     const chapterCount = this.storyInfo.chapters.length
-    const url = 'https://fimfiction.net/story/download/' + this.storyInfo.id + '/html'
+    const url = '/story/download/' + this.storyInfo.id + '/html'
 
     this.pcache.chapters = fetch(url).then((html) => {
       let p = Promise.resolve()
@@ -813,7 +813,7 @@ class FimFic2Epub extends EventEmitter {
     const matchTag = /<a href="([^"]*?)" class="([^"]*?)" title="[^"]*?" data-tag="([^"]*?)".*?>(.*?)<\/a>/g
     for (;(c = matchTag.exec(tagsHtml));) {
       const cat = {
-        url: 'https://fimfiction.net' + c[1],
+        url: 'https://www.fimfiction.net' + c[1],
         className: 'story-tag ' + c[2],
         name: entities.decode(c[4]),
         type: c[2].replace('tag-', '')
@@ -829,7 +829,7 @@ class FimFic2Epub extends EventEmitter {
     let ma = html.match(/This story is a sequel to <a href="([^"]*)">(.*?)<\/a>/)
     if (ma) {
       this.storyInfo.prequel = {
-        url: 'https://fimfiction.net' + ma[1],
+        url: 'https://www.fimfiction.net' + ma[1],
         title: entities.decode(ma[2])
       }
       html = html.substring(html.indexOf('<hr />') + 6)
