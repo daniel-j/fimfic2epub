@@ -44,7 +44,7 @@ You can then run the tool it like this:
 
 `$ fimfic2epub <story id/url> [<optional filename>]`
 
-By default the EPUB will be saved in the current working directory with the filename `Title by Author.epub`. Run `fimfic2epub -h` to see a list of all flags.
+By default the EPUB will be saved in the current working directory with the filename `Author - Title.epub`. Run `fimfic2epub -h` to see a list of all flags.
 
 ```
   Usage: fimfic2epub [options] <story> [filename]

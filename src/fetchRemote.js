@@ -61,7 +61,10 @@ export default function fetchRemote (url, responseType) {
   if (url.startsWith('//')) {
     url = 'https:' + url
   }
-  if (!isNode && document.location.protocol === 'https:' && url.startsWith('http:')) {
+  if (!isNode && document.location.protocol === 'https:') {
+    if (url.startsWith('/')) {
+      url = window.location.origin + url
+    }
     return fetchBackground(url, responseType)
   }
   return fetch(url, responseType).then((data) => {

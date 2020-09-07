@@ -14,6 +14,7 @@ import { buf as crc32 } from 'crc-32'
 
 import { cleanMarkup } from './cleanMarkup'
 import fetch from './fetch'
+import fetchRemote from './fetchRemote'
 import * as template from './templates'
 import { styleCss, coverstyleCss, titlestyleCss, iconsCss, navstyleCss, paragraphsCss } from './styles'
 import * as utils from './utils'
@@ -42,7 +43,7 @@ class FimFic2Epub extends EventEmitter {
   }
 
   static getFilename (storyInfo) {
-    return sanitize(storyInfo.title + ' by ' + storyInfo.author.name + '.epub')
+    return sanitize(storyInfo.author.name + ' - ' + storyInfo.title + '.epub')
   }
 
   static fetchStoryInfo (storyId, raw = false) {
@@ -325,7 +326,7 @@ class FimFic2Epub extends EventEmitter {
 
         console.log('Remote file URL: ' + url)
 
-        fetch(url, 'arraybuffer').then(async (data) => {
+        fetchRemote(url, 'arraybuffer').then(async (data) => {
           r.dest = null
           let info = await FileType.fromBuffer(isNode ? data : new Uint8Array(data))
           if (!info || info.mime === 'application/xml') {
@@ -746,7 +747,7 @@ class FimFic2Epub extends EventEmitter {
 
     this.progress(0, 0, 'Fetching cover image...')
 
-    this.pcache.coverImage = fetch(url, 'arraybuffer').then(async (data) => {
+    this.pcache.coverImage = fetchRemote(url, 'arraybuffer').then(async (data) => {
       data = isNode ? data : new Uint8Array(data)
       const info = await FileType.fromBuffer(data)
       if (info) {
