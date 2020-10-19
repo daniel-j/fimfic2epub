@@ -4,7 +4,7 @@ import { XmlEntities } from 'html-entities'
 import twemoji from 'twemoji'
 import render from 'mithril-node-render'
 
-import fetch from './fetch'
+import fetchRemote from './fetchRemote'
 import { youtubeKey } from './constants'
 import { replaceAsync } from './utils'
 
@@ -85,15 +85,18 @@ export async function cleanMarkup (html) {
   }
 
   async function getYoutubeInfo (ids) {
-    return fetch('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey).then(async (raw) => {
+    return fetchRemote('https://www.googleapis.com/youtube/v3/videos?id=' + ids + '&part=snippet&maxResults=50&key=' + youtubeKey).then(async (raw) => {
       let data = []
       try {
         data = JSON.parse(raw).items
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error parsing Youtube API response:', e)
+      }
       if (!data) {
         data = []
       }
       data.forEach((video) => {
+        console.log('Adding Youtube video ' + video.id + ' to cache')
         cache.set(video.id, video.snippet)
         completeCount++
       })

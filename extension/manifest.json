@@ -34,7 +34,7 @@
 	"permissions": [
 		"https://fimfiction.net/*",
 		"https://*.fimfiction.net/*",
-		"https://www.googleapis.com/youtube/v3/videos?id=*",
+		"https://www.googleapis.com/*",
 		"https://i.ytimg.com/*",
 		"https://twemoji.maxcdn.com/*",
 		"storage"
