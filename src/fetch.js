@@ -44,7 +44,6 @@ export default function fetch (url, responseType) {
         mode: 'cors',
         credentials: 'include',
         cache: 'default',
-        redirect: 'follow',
         headers: {
           accept: 'Accept: text/*, image/png, image/jpeg' // Fix for not getting webp images from Fimfiction
         },
