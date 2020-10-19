@@ -378,11 +378,11 @@ function createEpub (model) {
 
 function openStory (id) {
   chrome.storage.sync.get(['ffcOptions', 'version'], function (result) {
-    let options = result.ffcOptions
+    const options = result.ffcOptions
     // Reset options on new version
-    if (result.version !== FIMFIC2EPUB_VERSION) {
-      options = {}
-    }
+    // if (result.version !== FIMFIC2EPUB_VERSION) {
+    //   options = {}
+    // }
 
     if (!ffc) {
       ffc = new FimFic2Epub(id, options)
