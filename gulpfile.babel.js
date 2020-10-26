@@ -47,7 +47,7 @@ const webpackDefines = new webpack.DefinePlugin({
 })
 
 // No need to bloat the build with a list of all tlds...
-const replaceTlds = new webpack.NormalModuleReplacementPlugin(/^tlds$/, '../../src/false')
+const replaceTlds = new webpack.NormalModuleReplacementPlugin(/^tlds$/, '../../../src/false')
 
 webpackConfig.forEach((c) => {
   c.plugins.push(webpackDefines)

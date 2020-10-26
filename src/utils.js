@@ -1,6 +1,6 @@
 
 import htmlToTextModule from 'html-to-text'
-import urlRegex from 'url-regex'
+import urlRegexSafe from 'url-regex-safe'
 import matchWords from 'match-words'
 import syllable from 'syllable'
 import typogr from 'typogr'
@@ -83,7 +83,7 @@ export function htmlToText (html, options = {}) {
 export function htmlWordCount (html) {
   html = html.replace(/<pre>.*?<\/pre>/g, '') // Ignore codeblocks
   let text = htmlToText(html)
-  text = text.replace(urlRegex(), '') // Remove urls
+  text = text.replace(urlRegexSafe(), '') // Remove urls
 
   let count = 0
   try {
