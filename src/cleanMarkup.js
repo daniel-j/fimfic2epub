@@ -1,14 +1,12 @@
 
 import m from 'mithril'
-import { XmlEntities } from 'html-entities'
+import { decode } from 'html-entities'
 import twemoji from 'twemoji'
 import render from 'mithril-node-render'
 
 import fetchRemote from './fetchRemote'
 import { youtubeKey } from './constants'
 import { replaceAsync } from './utils'
-
-const entities = new XmlEntities()
 
 export async function cleanMarkup (html) {
   if (!html) {
@@ -47,7 +45,7 @@ export async function cleanMarkup (html) {
 
   // add alt attributes to images that don't have them
   const imageEmbed = /<img src="(.*?)" \/>/g
-  html = await replaceAsync(html, imageEmbed, (match, src) => render(m('img', { src: entities.decode(src), alt: 'Image' }), { strict: true }))
+  html = await replaceAsync(html, imageEmbed, (match, src) => render(m('img', { src: decode(src, { level: 'xml' }), alt: 'Image' }), { strict: true }))
 
   // Fix links pointing to pages on fimfiction
   // Example: <a href="/user/djazz" rel="nofollow">djazz</a>
@@ -68,13 +66,13 @@ export async function cleanMarkup (html) {
   for (let ma; (ma = matchYouTube.exec(html));) {
     const youtubeId = ma[1].match(/^[^&]+/)[0]
     cache.set(youtubeId, null)
-    query.set(entities.decode(ma[1]), youtubeId)
+    query.set(decode(ma[1], { level: 'xml' }), youtubeId)
   }
 
   const matchSoundCloud = /<p><a class="embed" href="(https:\/\/soundcloud\.com\/.*?)">.*?<\/a><\/p>/g
   html = await replaceAsync(html, matchSoundCloud, (match, url) => {
     return render(m('.soundcloud.leftalign', [
-      'SoundCloud: ', m('a', { href: entities.decode(url), rel: 'nofollow' }, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
+      'SoundCloud: ', m('a', { href: decode(url, { level: 'xml' }), rel: 'nofollow' }, url.replace('https://soundcloud.com/', '').replace(/[-_]/g, ' ').replace('/', ' - ').replace(/ {2}/g, ' '))
     ]), { strict: true })
   })
 
@@ -108,7 +106,7 @@ export async function cleanMarkup (html) {
   }
 
   function replaceYouTube (match, queryString) {
-    queryString = entities.decode(queryString)
+    queryString = decode(queryString, { level: 'xml' })
     const youtubeId = query.get(queryString)
     let thumbnail = 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg'
     const youtubeUrl = 'https://youtube.com/watch?v=' + queryString

@@ -1,4 +1,4 @@
-
+import webpack from 'webpack'
 import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 
@@ -26,15 +26,15 @@ const bundleExtensionConfig = {
             presets: [['@babel/env', {
               targets: {
                 browsers: ['chrome 50', 'firefox 47']
-              },
-              modules: false
+              }
             }]]
           }
         }
       },
       {
         test: /\.styl$/,
-        use: ['raw-loader', 'stylus-loader']
+        use: ['stylus-loader'],
+        type: 'asset/source'
       },
       {
         test: /\.ttf$/,
@@ -43,22 +43,34 @@ const bundleExtensionConfig = {
     ]
   },
 
+  target: 'web',
+
   resolve: {
     extensions: ['.js', '.json', '.styl'],
     modules: [
       path.resolve('./src'),
       'node_modules'
-    ]
-  },
-
-  node: {
-    fs: 'empty'
+    ],
+    fallback: {
+      url: false,
+      fs: false,
+      zlib: require.resolve('browserify-zlib'),
+      buffer: require.resolve('buffer/'),
+      assert: require.resolve('assert/'),
+      stream: require.resolve('stream-browserify')
+    },
+    alias: {
+      path: false
+    }
   },
 
   externals: ['node-fetch'],
 
   plugins: [
     // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer']
+    })
   ],
   performance: {
     hints: false
@@ -105,7 +117,8 @@ const bundleNpmModuleConfig = {
       },
       {
         test: /\.styl$/,
-        use: ['raw-loader', 'stylus-loader']
+        use: ['stylus-loader'],
+        type: 'asset/source'
       },
       {
         test: /\.ttf$/,
@@ -161,17 +174,22 @@ const bundleNpmBinaryConfig = {
             sourceMaps: !inProduction,
             presets: [['@babel/env', {
               targets: {
-                node: '8.0.0'
+                node: '14.0.0'
               }
             }]]
           }
         }
+      },
+      {
+        test: /\.styl$/,
+        use: ['stylus-loader'],
+        type: 'asset/resource'
       }
     ]
   },
 
   resolve: {
-    extensions: ['.js', '.json', '.node'],
+    extensions: ['.js', '.json', '.node', '.styl'],
     modules: [
       path.resolve('./src'),
       'node_modules'
@@ -213,7 +231,8 @@ const bundleStaticNpmModuleConfig = {
     rules: [
       {
         test: /\.styl$/,
-        use: ['raw-loader', 'stylus-loader']
+        use: ['stylus-loader'],
+        type: 'asset/source'
       },
       {
         test: /\.ttf$/,

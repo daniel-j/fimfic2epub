@@ -15,8 +15,6 @@ import jsonedit from 'gulp-json-editor'
 import zip from 'gulp-zip'
 import removeNPMAbsolutePaths from 'removeNPMAbsolutePaths'
 
-// import { execFile, exec } from 'child_process'
-
 // script
 import standard from 'gulp-standard'
 import webpack from 'webpack'

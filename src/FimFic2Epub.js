@@ -2,7 +2,7 @@
 import JSZip from 'jszip'
 import escapeStringRegexp from 'escape-string-regexp'
 import zeroFill from 'zero-fill'
-import { XmlEntities } from 'html-entities'
+import { decode } from 'html-entities'
 import sanitize from 'sanitize-filename'
 import { URL } from 'url'
 import isNode from 'detect-node'
@@ -20,11 +20,10 @@ import { styleCss, coverstyleCss, titlestyleCss, iconsCss, navstyleCss, paragrap
 import * as utils from './utils'
 import kepubify from './kepubify'
 import subsetFont from './subsetFont'
-import fontAwesomeCodes from '../build/font-awesome-codes.json'
 
 import { containerXml } from './constants'
 
-const entities = new XmlEntities()
+const fontAwesomeCodes = require('../build/font-awesome-codes.json')
 
 const trimWhitespace = /^\s*(<br\s*\/?\s*>)+|(<br\s*\/?\s*>)+\s*$/ig
 
@@ -632,7 +631,7 @@ class FimFic2Epub extends EventEmitter {
 
     for (let ma; (ma = matchUrl.exec(html));) {
       const url = ma[1]
-      const cleanurl = entities.decode(url)
+      const cleanurl = decode(url, { level: 'xml' })
       if (this.remoteResources.has(cleanurl)) {
         const r = this.remoteResources.get(cleanurl)
         if (r.where.indexOf(where) === -1) {
@@ -816,7 +815,7 @@ class FimFic2Epub extends EventEmitter {
       const cat = {
         url: 'https://www.fimfiction.net' + c[1],
         className: 'story-tag ' + c[2],
-        name: entities.decode(c[4]),
+        name: decode(c[4], { level: 'xml' }),
         type: c[2].replace('tag-', '')
       }
       tags.push(cat)
@@ -831,7 +830,7 @@ class FimFic2Epub extends EventEmitter {
     if (ma) {
       this.storyInfo.prequel = {
         url: 'https://www.fimfiction.net' + ma[1],
-        title: entities.decode(ma[2])
+        title: decode(ma[2], { level: 'xml' })
       }
       html = html.substring(html.indexOf('<hr />') + 6)
     }
