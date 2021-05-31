@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.7.53",
+  "version": "1.7.54",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
   "license": "MIT",
@@ -36,7 +36,7 @@
     "is-svg": "^4.3.1",
     "jszip": "^3.6.0",
     "match-words": "^1.0.0",
-    "mithril": "^2.0.4",
+    "mithril": "^1.1.6",
     "mithril-node-render": "^2.3.2",
     "node-fetch": "^2.6.1",
     "node-png": "^0.4.3",
