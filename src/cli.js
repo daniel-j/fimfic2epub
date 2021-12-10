@@ -1,5 +1,5 @@
 
-const args = require('commander')
+const program = require('commander')
   .command('fimfic2epub <story> [filename]')
   .description(require('../package.json').description)
   .version(require('../package.json').version)
@@ -23,12 +23,14 @@ const args = require('commander')
   .option('-C, --cover <url>', 'Set cover image url')
   .parse(process.argv)
 
-if (args.args.length < 1) {
+if (program.args.length < 1) {
   console.error('Error: No story id/url provided')
   process.exit(1)
 }
 
-const outputStdout = args.args[1] === '-' || args.args[1] === '/dev/stdout'
+const options = program.opts()
+
+const outputStdout = program.args[1] === '-' || program.args[1] === '/dev/stdout'
 
 if (outputStdout) {
   console.log = console.error
@@ -44,34 +46,34 @@ const FimFic2Epub = require('./FimFic2Epub').default
 const fs = require('fs')
 const path = require('path')
 
-const STORY_ID = args.args[0]
+const STORY_ID = program.args[0]
 
 const ffc = new FimFic2Epub(STORY_ID, {
-  typogrify: !!args.typogrify,
-  addCommentsLink: !!args.commentsLink,
-  includeAuthorNotes: !!args.notes,
-  useAuthorNotesIndex: !!args.notesIndex,
-  showChapterHeadings: !!args.headings,
-  showChapterWordCount: !!args.chapterWordCount,
-  showChapterDuration: !!args.chapterDuration,
-  includeExternal: !!args.external,
-  paragraphStyle: args.paragraphs,
-  kepubify: !!args.kepubify,
-  joinSubjects: !!args.joinSubjects,
-  calculateReadingEase: !!args.readingEase,
+  typogrify: !!options.typogrify,
+  addCommentsLink: !!options.commentsLink,
+  includeAuthorNotes: !!options.notes,
+  useAuthorNotesIndex: !!options.notesIndex,
+  showChapterHeadings: !!options.headings,
+  showChapterWordCount: !!options.chapterWordCount,
+  showChapterDuration: !!options.chapterDuration,
+  includeExternal: !!options.external,
+  paragraphStyle: options.paragraphs,
+  kepubify: !!options.kepubify,
+  joinSubjects: !!options.joinSubjects,
+  calculateReadingEase: !!options.readingEase,
   readingEaseWakeupInterval: 800,
-  wordsPerMinute: args.wpm,
-  addChapterBars: !!args.bars
+  wordsPerMinute: options.wpm,
+  addChapterBars: !!options.bars
 })
-ffc.coverUrl = args.cover
+ffc.coverUrl = options.cover
 
 ffc.fetchMetadata()
   .then(() => {
-    if (args.title) {
-      ffc.setTitle(args.title)
+    if (options.title) {
+      ffc.setTitle(options.title)
     }
-    if (args.author) {
-      ffc.setAuthorName(args.author)
+    if (options.author) {
+      ffc.setAuthorName(options.author)
     }
     ffc.storyInfo.short_description = htmlToText(ffc.storyInfo.description)
   })
@@ -82,11 +84,11 @@ ffc.fetchMetadata()
     if (ffc.options.kepubify) {
       filename = filename.replace(/\.epub$/, '.kepub.epub')
     }
-    filename = (args.args[1] || '').replace('%id%', ffc.storyInfo.id) || filename
+    filename = (program.args[1] || '').replace('%id%', ffc.storyInfo.id) || filename
     let stream
 
-    if (args.dir) {
-      filename = path.join(args.dir, filename)
+    if (options.dir) {
+      filename = path.join(options.dir, filename)
     }
 
     if (outputStdout) {

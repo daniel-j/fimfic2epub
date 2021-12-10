@@ -33,40 +33,6 @@ export function replaceAsync (str, re, callback) {
   })
 }
 
-let webpdecoder = null
-
-export function webp2png (data) {
-  return new Promise((resolve, reject) => {
-    const libwebp = require('./vendor/libwebp')
-    const WebPRiffParser = require('./vendor/libwebp-demux').WebPRiffParser
-    const PNGPacker = require('node-png/lib/packer')
-
-    if (!webpdecoder) {
-      webpdecoder = new libwebp.WebPDecoder()
-    }
-
-    const frame = WebPRiffParser(data, 0).frames[0]
-    const width = [0]
-    const height = [0]
-    const decodedData = webpdecoder.WebPDecodeRGBA(
-      data,
-      frame.src_off, frame.src_size,
-      width, height
-    )
-
-    const png = new PNGPacker({})
-    const buffers = []
-    png.on('data', (chunk) => {
-      buffers.push(chunk)
-    })
-    png.once('end', () => {
-      const pngData = Buffer.concat(buffers)
-      resolve(pngData)
-    })
-    png.pack(decodedData, width[0], height[0])
-  })
-}
-
 export function sleep (ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

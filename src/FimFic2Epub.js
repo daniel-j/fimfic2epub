@@ -347,10 +347,6 @@ class FimFic2Epub extends EventEmitter {
               r.data = sameFile.data
             } else {
               checksums.set(checksum, url)
-              if (info.mime === 'image/webp') {
-                data = await utils.webp2png(isNode ? data : new Uint8Array(data))
-                info = await FileType.fromBuffer(data)
-              }
               const type = info.mime
               r.type = type
               const isImage = type.startsWith('image/')

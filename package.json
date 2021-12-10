@@ -39,7 +39,6 @@
     "mithril": "^1.1.6",
     "mithril-node-render": "^2.3.2",
     "node-fetch": "^2.6.1",
-    "node-png": "^0.4.3",
     "pretty-data": "^0.40.0",
     "sanitize-filename": "^1.6.3",
     "syllable": "^4.1.0",
