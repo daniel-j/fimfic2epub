@@ -69,7 +69,8 @@ const bundleExtensionConfig = {
   plugins: [
     // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
     new webpack.ProvidePlugin({
-      Buffer: ['buffer', 'Buffer']
+      Buffer: ['buffer', 'Buffer'],
+      process: 'process/browser'
     })
   ],
   performance: {
@@ -77,11 +78,7 @@ const bundleExtensionConfig = {
   },
   optimization: {
     concatenateModules: inProduction,
-    minimize: inProduction,
-    splitChunks: {
-      chunks: 'all',
-      automaticNameDelimiter: '_'
-    }
+    minimize: inProduction
   },
   devtool: 'source-map',
   mode: inProduction ? 'production' : 'development'

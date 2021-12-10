@@ -18,7 +18,7 @@
 	"content_scripts": [
 		{
 			"matches": ["https://www.fimfiction.net/*", "https://fimfiction.net/*"],
-			"js": ["build/vendors-node_modules_autosize_dist_autosize_js-node_modules_font-awesome_fonts_fontawesome-we-7f0b12.js", "build/fimfic2epub.js"],
+			"js": ["build/fimfic2epub.js"],
 			"css": ["inject.css"]
 		}
 	],
