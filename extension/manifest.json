@@ -1,5 +1,5 @@
 {
-	"manifest_version": 2,
+	"manifest_version": 3,
 
 	"name": "fimfic2epub",
 	"short_name": "fimfic2epub",
@@ -11,8 +11,7 @@
 	},
 
 	"background": {
-		"scripts": ["build/eventPage.js"],
-		"persistent": false
+		"service_worker": "build/eventPage.js"
 	},
 
 	"content_scripts": [
@@ -23,20 +22,25 @@
 		}
 	],
 
-	"page_action": {
+	"action": {
 		"default_icon": "fimfic2epub-logo.png"
 	},
 
 	"web_accessible_resources": [
-		"fimfic2epub-logo.png"
+		{
+			"resources": ["fimfic2epub-logo.png"],
+			"matches": ["https://www.fimfiction.net/*"]
+		}
 	],
 
 	"permissions": [
+		"storage"
+	],
+	"host_permissions": [
 		"https://fimfiction.net/*",
 		"https://*.fimfiction.net/*",
 		"https://www.googleapis.com/*",
 		"https://i.ytimg.com/*",
-		"https://twemoji.maxcdn.com/*",
-		"storage"
+		"https://twemoji.maxcdn.com/*"
 	]
 }

@@ -15,6 +15,10 @@ if (typeof safari !== 'undefined') {
     })
   }, false)
 } else {
+  chrome.runtime.onInstalled.addListener(() => {
+    chrome.action.disable()
+  })
+
   const onMessage = chrome.extension.onMessage ? chrome.extension.onMessage : chrome.runtime.onMessage
 
   onMessage.addListener(function (request, sender, sendResponse) {
@@ -28,11 +32,11 @@ if (typeof safari !== 'undefined') {
       // required for async
       return true
     } else if (request.showPageAction) {
-      chrome.pageAction.show(sender.tab.id)
+      chrome.action.enable(sender.tab.id)
     }
   })
 
-  chrome.pageAction.onClicked.addListener(function (tab) {
+  chrome.action.onClicked.addListener(function (tab) {
     chrome.tabs.sendMessage(tab.id, 'pageAction')
   })
 }
