@@ -37,7 +37,7 @@ try {
   pageStoryId = document.location.pathname.match(/^\/story\/(\d*)/)[1]
 } catch (e) {}
 
-const logoUrl = chrome.extension.getURL('fimfic2epub-logo.png')
+const logoUrl = chrome.runtime.getURL('fimfic2epub-logo.png')
 let ffc
 const stories = document.querySelectorAll('.story_container')
 

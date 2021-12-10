@@ -15,9 +15,7 @@ if (typeof safari !== 'undefined') {
     })
   }, false)
 } else {
-  const onMessage = chrome.extension.onMessage ? chrome.extension.onMessage : chrome.runtime.onMessage
-
-  onMessage.addListener(function (request, sender, sendResponse) {
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (typeof request === 'string') {
       console.log('Fetching', request)
       fetch(request, 'blob').then((blob) => {
