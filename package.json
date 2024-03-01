@@ -6,14 +6,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/daniel-j/fimfic2epub.git"
+    "url": "git+https://github.com/daniel-j/fimfic2epub.git"
   },
   "scripts": {
     "build": "gulp",
     "dev": "NODE_ENV=development gulp"
   },
   "bin": {
-    "fimfic2epub": "./build/fimfic2epub"
+    "fimfic2epub": "build/fimfic2epub"
   },
   "main": "dist/fimfic2epub.js",
   "files": [
