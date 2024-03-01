@@ -29,7 +29,7 @@
     "elementtree": "^0.1.7",
     "escape-string-regexp": "^4.0.0",
     "file-type": "^16.4.0",
-    "fonteditor-core": "2.1.9",
+    "fonteditor-core": "2.1.2",
     "html-entities": "^2.3.2",
     "html-to-text": "^7.1.1",
     "image-size": "^1.0.0",
