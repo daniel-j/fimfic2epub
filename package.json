@@ -1,6 +1,6 @@
 {
   "name": "fimfic2epub",
-  "version": "1.7.56",
+  "version": "1.7.57",
   "description": "Tool to generate improved EPUB ebooks from Fimfiction stories",
   "author": "djazz",
   "license": "MIT",
@@ -22,9 +22,9 @@
     "LICENSE"
   ],
   "dependencies": {
-    "canvas": "^2.8.0",
+    "canvas": "^2.11.2",
     "commander": "^7.2.0",
-    "crc-32": "^1.2.0",
+    "crc-32": "^1.2.2",
     "detect-node": "^2.1.0",
     "elementtree": "^0.1.7",
     "escape-string-regexp": "^4.0.0",
@@ -42,16 +42,16 @@
     "pretty-data": "^0.40.0",
     "sanitize-filename": "^1.6.3",
     "syllable": "^4.1.0",
-    "twemoji": "^13.0.2",
+    "twemoji": "^14.0.2",
     "typogr": "^0.6.8",
     "url-regex-safe": "^2.0.2",
     "zero-fill": "^2.2.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.3",
-    "@babel/preset-env": "^7.14.2",
-    "@babel/register": "^7.13.16",
-    "assert": "^2.0.0",
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/register": "^7.23.7",
+    "assert": "^2.1.0",
     "autosize": "^4.0.4",
     "babel-loader": "^8.2.2",
     "binary-loader": "0.0.1",
@@ -83,7 +83,7 @@
     "stream-browserify": "^3.0.0",
     "stylus": "^0.54.8",
     "stylus-loader": "^6.0.0",
-    "webpack": "^5.37.1",
+    "webpack": "^5.90.3",
     "webpack-node-externals": "^3.0.0"
   },
   "standard": {
@@ -93,5 +93,8 @@
     "globals": [
       "FIMFIC2EPUB_VERSION"
     ]
+  },
+  "overrides": {
+    "graceful-fs": "^4.2.11"
   }
 }
