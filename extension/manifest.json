@@ -37,6 +37,13 @@
 		"https://www.googleapis.com/*",
 		"https://i.ytimg.com/*",
 		"https://twemoji.maxcdn.com/*",
+		"https://cdn.jsdelivr.net/gh/twitter/*",
 		"storage"
-	]
+	],
+
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "fimfic2epub@mozilla.org"
+		}
+	}
 }
